@@ -112,7 +112,7 @@ def helper(func):
         for i,constr in enumerate(constrs):
             f.write("constr_{0} {1}\n".format(i+1,float(constr)))
 
-def setup_problem(name,additive_chance=False, risk_obj=True):
+def setup_problem(name,additive_chance=False, risk_obj=False):
     test_d = os.path.join(test_root,"{0}_template".format(name))
     if os.path.exists(test_d):
         shutil.rmtree(test_d)
@@ -644,6 +644,35 @@ def plot_results_single(master_d):
     plt.savefig(os.path.join(plt_dir,os.path.split(master_d)[-1]+".pdf"))
     plt.close("all")
 
+
+def test_zdt1():
+    case ="zdt1"
+    noptmax = 5
+    t_d = setup_problem(case)
+    m_d = run_problem(t_d,noptnmax=noptmax)
+    arc_file = os.path.join(m_d,"{case}.pareto.archive.summary.csv")
+    assert os.path.exists(arc_file)
+    arc_df = pd.read_csv(arc_file,index_col=0)
+    assert arc_file.shape[0] > 0
+
+    m_d = run_problem_chance(t_d,noptnmax=noptmax,pop_size=10,chance_points="all",recalc=100)
+    arc_file = os.path.join(m_d,"{case}.pareto.archive.summary.csv")
+    assert os.path.exists(arc_file)
+    arc_df = pd.read_csv(arc_file,index_col=0)
+    assert arc_file.shape[0] > 0
+
+    m_d = run_problem_chance(t_d,noptnmax=noptmax,pop_size=10,chance_points="single",recalc=100)
+    arc_file = os.path.join(m_d,"{case}.pareto.archive.summary.csv")
+    assert os.path.exists(arc_file)
+    arc_df = pd.read_csv(arc_file,index_col=0)
+    assert arc_file.shape[0] > 0
+
+    m_d = run_problem_chance(t_d,noptnmax=noptmax,pop_size=10,chance_points="single",recalc=1)
+    arc_file = os.path.join(m_d,"{case}.pareto.archive.summary.csv")
+    assert os.path.exists(arc_file)
+    arc_df = pd.read_csv(arc_file,index_col=0)
+    assert arc_file.shape[0] > 0
+
 if __name__ == "__main__":
         
     #zdt1_test()
@@ -668,6 +697,8 @@ if __name__ == "__main__":
     #for case in ["zdt1","zdt2","zdt3","zdt4","zdt6","sch","srn","constr"]:
     #  master_d = run_problem_chance(case,noptmax=100)
     #  plot_results(master_d)
+
+    test_zdt1()
 
     setup_problem("water",additive_chance=True, risk_obj=True)
     #setup_problem("zdt1",30, additive_chance=True)
