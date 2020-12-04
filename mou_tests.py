@@ -200,7 +200,7 @@ def setup_problem(name,additive_chance=False, risk_obj=False):
             break
     #print(func_lines)
     if len(func_lines) == 0:
-        raise Exception()
+        raise Exception(name + " function not found")
     helper_lines = []
     for i in range(len(lines)):
         if lines[i].startswith("def helper(".format(name)):
@@ -648,30 +648,64 @@ def plot_results_single(master_d):
 def test_zdt1():
     case ="zdt1"
     noptmax = 5
-    t_d = setup_problem(case)
-    m_d = run_problem(t_d,noptnmax=noptmax)
-    arc_file = os.path.join(m_d,"{case}.pareto.archive.summary.csv")
+    m_d = run_problem(case,noptmax=noptmax)
+    arc_file = os.path.join(m_d,"{0}.pareto.archive.summary.csv".format(case))
     assert os.path.exists(arc_file)
     arc_df = pd.read_csv(arc_file,index_col=0)
     assert arc_file.shape[0] > 0
 
-    m_d = run_problem_chance(t_d,noptnmax=noptmax,pop_size=10,chance_points="all",recalc=100)
-    arc_file = os.path.join(m_d,"{case}.pareto.archive.summary.csv")
+    m_d = run_problem_chance(case,noptmax=noptmax,pop_size=10,chance_points="all",recalc=100)
+    arc_file = os.path.join(m_d,"{0}.pareto.archive.summary.csv".format(case))
     assert os.path.exists(arc_file)
     arc_df = pd.read_csv(arc_file,index_col=0)
     assert arc_file.shape[0] > 0
 
-    m_d = run_problem_chance(t_d,noptnmax=noptmax,pop_size=10,chance_points="single",recalc=100)
-    arc_file = os.path.join(m_d,"{case}.pareto.archive.summary.csv")
+    m_d = run_problem_chance(case,noptmax=noptmax,pop_size=10,chance_points="single",recalc=100)
+    arc_file = os.path.join(m_d,"{0}.pareto.archive.summary.csv".format(case))
     assert os.path.exists(arc_file)
     arc_df = pd.read_csv(arc_file,index_col=0)
     assert arc_file.shape[0] > 0
 
-    m_d = run_problem_chance(t_d,noptnmax=noptmax,pop_size=10,chance_points="single",recalc=1)
-    arc_file = os.path.join(m_d,"{case}.pareto.archive.summary.csv")
+    m_d = run_problem_chance(case,noptmax=noptmax,pop_size=10,chance_points="single",recalc=1)
+    arc_file = os.path.join(m_d,"{0}.pareto.archive.summary.csv".format(case))
     assert os.path.exists(arc_file)
     arc_df = pd.read_csv(arc_file,index_col=0)
     assert arc_file.shape[0] > 0
+
+
+def test_setup_and_three_iters():
+    cases = ["zdt1","zdt2","zdt3","zdt4","zdt6","sch","srn","ackley","rosen","water","constr"]
+
+    for case in cases:
+        print("\n\n\n\n\n-----------------------------------------")
+        print("                 {0}                  ".format(case))
+        print("-----------------------------------------\n\n\n\n")
+        noptmax = 3
+        #t_d = setup_problem(case)
+        m_d = run_problem(case,noptmax=noptmax)
+        arc_file = os.path.join(m_d,"{case}.pareto.archive.summary.csv")
+        assert os.path.exists(arc_file)
+        arc_df = pd.read_csv(arc_file,index_col=0)
+        assert arc_file.shape[0] > 0
+
+        m_d = run_problem_chance(t_d,noptnmax=noptmax,pop_size=10,chance_points="all",recalc=100)
+        arc_file = os.path.join(m_d,"{case}.pareto.archive.summary.csv")
+        assert os.path.exists(arc_file)
+        arc_df = pd.read_csv(arc_file,index_col=0)
+        assert arc_file.shape[0] > 0
+
+        m_d = run_problem_chance(t_d,noptnmax=noptmax,pop_size=10,chance_points="single",recalc=100)
+        arc_file = os.path.join(m_d,"{case}.pareto.archive.summary.csv")
+        assert os.path.exists(arc_file)
+        arc_df = pd.read_csv(arc_file,index_col=0)
+        assert arc_file.shape[0] > 0
+
+        m_d = run_problem_chance(t_d,noptnmax=noptmax,pop_size=10,chance_points="single",recalc=1)
+        arc_file = os.path.join(m_d,"{case}.pareto.archive.summary.csv")
+        assert os.path.exists(arc_file)
+        arc_df = pd.read_csv(arc_file,index_col=0)
+        assert arc_file.shape[0] > 0
+
 
 if __name__ == "__main__":
         
@@ -698,9 +732,9 @@ if __name__ == "__main__":
     #  master_d = run_problem_chance(case,noptmax=100)
     #  plot_results(master_d)
 
-    test_zdt1()
-
-    setup_problem("water",additive_chance=True, risk_obj=True)
+    #test_zdt1()
+    test_setup_and_three_iters()
+    #setup_problem("water",additive_chance=True, risk_obj=True)
     #setup_problem("zdt1",30, additive_chance=True)
     #test_sorting_fake_problem()
     #start_workers()
