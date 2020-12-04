@@ -680,31 +680,37 @@ def test_setup_and_three_iters():
         print("\n\n\n\n\n-----------------------------------------")
         print("                 {0}                  ".format(case))
         print("-----------------------------------------\n\n\n\n")
-        noptmax = 3
+        noptmax = 1
         #t_d = setup_problem(case)
         m_d = run_problem(case,noptmax=noptmax)
-        arc_file = os.path.join(m_d,"{case}.pareto.archive.summary.csv")
-        assert os.path.exists(arc_file)
+        arc_file = os.path.join(m_d,"{0}.pareto.archive.summary.csv".format(case))
+        assert os.path.exists(arc_file), arc_file
         arc_df = pd.read_csv(arc_file,index_col=0)
-        assert arc_file.shape[0] > 0
+        assert arc_df.shape[0] > 0
 
         m_d = run_problem_chance(t_d,noptnmax=noptmax,pop_size=10,chance_points="all",recalc=100)
-        arc_file = os.path.join(m_d,"{case}.pareto.archive.summary.csv")
+        arc_file = os.path.join(m_d,"{0}.pareto.archive.summary.csv".format(case))
         assert os.path.exists(arc_file)
         arc_df = pd.read_csv(arc_file,index_col=0)
-        assert arc_file.shape[0] > 0
+        assert arc_df.shape[0] > 0
 
         m_d = run_problem_chance(t_d,noptnmax=noptmax,pop_size=10,chance_points="single",recalc=100)
-        arc_file = os.path.join(m_d,"{case}.pareto.archive.summary.csv")
+        arc_file = os.path.join(m_d,"{0}.pareto.archive.summary.csv".format(case))
         assert os.path.exists(arc_file)
         arc_df = pd.read_csv(arc_file,index_col=0)
-        assert arc_file.shape[0] > 0
+        assert arc_df.shape[0] > 0
+
+        m_d = run_problem_chance(t_d,noptnmax=noptmax,pop_size=10,chance_points="single",recalc=100, risk_obj=True)
+        arc_file = os.path.join(m_d,"{0}.pareto.archive.summary.csv".format(case))
+        assert os.path.exists(arc_file)
+        arc_df = pd.read_csv(arc_file,index_col=0)
+        assert arc_df.shape[0] > 0
 
         m_d = run_problem_chance(t_d,noptnmax=noptmax,pop_size=10,chance_points="single",recalc=1)
-        arc_file = os.path.join(m_d,"{case}.pareto.archive.summary.csv")
+        arc_file = os.path.join(m_d,"{0}.pareto.archive.summary.csv".format(case))
         assert os.path.exists(arc_file)
         arc_df = pd.read_csv(arc_file,index_col=0)
-        assert arc_file.shape[0] > 0
+        assert arc_df .shape[0] > 0
 
 
 if __name__ == "__main__":
