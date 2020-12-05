@@ -150,6 +150,9 @@ def setup_problem(name,additive_chance=False, risk_obj=False):
             if name.lower() in ["srn","constr"]:
                 f.write("constr1_add_par ~   constr1_add_par   ~\n")
                 f.write("constr2_add_par ~   constr2_add_par   ~\n")
+            elif name.lower() == "water":
+                [f.write("constr{0}_add_par ~   constr{0}_add_par   ~\n".format(i)) for i in range(7)]
+
 
         with open(os.path.join(test_d,additive_chance_tpl_file.replace(".tpl","")),'w') as f:
             f.write("obj1_add_par 0.0\n")
@@ -157,6 +160,8 @@ def setup_problem(name,additive_chance=False, risk_obj=False):
             if name.lower() in ["srn","constr"]:
                 f.write("constr1_add_par 0.0\n")
                 f.write("constr2_add_par 0.0\n")
+            elif name.lower() == "water":
+                [f.write("constr{0}_add_par 0.0\n".format(i)) for i in range(7)]
 
     if risk_obj:
         risk_tpl_file = os.path.join(test_d,"risk.dat.tpl")
@@ -674,7 +679,7 @@ def test_zdt1():
 
 
 def test_setup_and_three_iters():
-    cases = ["zdt1","zdt2","zdt3","zdt4","zdt6","sch","srn","ackley","rosen","water","constr"]
+    cases = ["water","constr","zdt1","zdt2","zdt3","zdt4","zdt6","sch","srn","ackley","rosen"]
     noptmax = 3
     for case in cases:
         print("\n\n\n\n\n-----------------------------------------")
@@ -742,15 +747,15 @@ if __name__ == "__main__":
     #  plot_results(master_d)
 
     #test_zdt1()
-    test_setup_and_three_iters()
+    #test_setup_and_three_iters()
     #setup_problem("water",additive_chance=True, risk_obj=True)
     #setup_problem("zdt1",30, additive_chance=True)
     #test_sorting_fake_problem()
     #start_workers()
     #setup_problem("zdt1")
-    #run_problem_chance_external_fixed("zdt1")
+    run_problem_chance_external_fixed("zdt1")
     #run_problem_chance("constr",noptmax=10,risk_obj=True)
-    #plot_results(os.path.join("mou_tests","srn_master"))
+    #plot_results(os.path.join("mou_tests","zdt1_master"))
     #setup_problem("constr")
     #run_problem("constr",noptmax=100)
     #master_d = run_single_obj_sch_prob(risk_obj=True)
