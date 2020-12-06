@@ -388,7 +388,7 @@ def run_problem_chance_external_fixed(test_case="zdt1"):
     pst.pestpp_options["mou_population_size"] = 10
     pst.pestpp_options["panther_echo"] = True
     pst.pestpp_options["mou_generator"] = "de"
-    pst.pestpp_options["panther_agent_freeze_on_fail"] = True
+    pst.pestpp_options["panther_agent_freeze_on_fail"] = False
     pst.pestpp_options["opt_stack_size"] = 10
     pst.pestpp_options["opt_risk"] = 0.95
     pst.pestpp_options["opt_recalc_chance_every"] = 100
@@ -396,15 +396,16 @@ def run_problem_chance_external_fixed(test_case="zdt1"):
     #pyemu.os_utils.run("{0} {1}.pst".format(exe_path,test_case),cwd=test_d)
     master_d = test_d.replace("template","master_chance_external_fixed")
     pyemu.os_utils.start_workers(test_d, exe_path, "{0}.pst".format(test_case),
-                                  num_workers=20, master_dir=master_d,worker_root=test_root,
+                                  num_workers=35, master_dir=master_d,worker_root=test_root,
                                   port=port)
+    return master_d
 
 def run_problem(test_case="zdt1",pop_size=100,noptmax=100):
     test_d = setup_problem(test_case,additive_chance=False)
     pst = pyemu.Pst(os.path.join(test_d,"{0}.pst".format(test_case)))
     pst.control_data.noptmax = noptmax
     pst.pestpp_options["mou_population_size"] = pop_size
-    pst.pestpp_options["panther_echo"] = True
+    pst.pestpp_options["panther_echo"] = False
     pst.pestpp_options["mou_generator"] = "de"
     pst.pestpp_options["panther_agent_freeze_on_fail"] = True
     pst.write(os.path.join(test_d,"{0}.pst".format(test_case)))
@@ -432,6 +433,7 @@ def plot_results(master_d):
     case = os.path.split(master_d)[1].split('_')[0]
     df = pd.read_csv(os.path.join(master_d,"{0}.pareto.summary.csv".format(case)))
     df_arc = pd.read_csv(os.path.join(master_d,"{0}.pareto.archive.summary.csv".format(case)))
+    print(df_arc.columns)
 
     import matplotlib.colors as colors
     import matplotlib.pyplot as plt
@@ -461,10 +463,13 @@ def plot_results(master_d):
     #for i,gen in enumerate(gens):
     #    ax.scatter(df_arc.loc[df_arc.generation==gen,cols[0]],df_arc.loc[df_arc.generation==gen,cols[1]],marker=".",
     #        c=cmap(i/len(gens)),s=50,alpha=0.25)
-
-    ax.scatter(df_arc.loc[df_arc.generation==gens[-1],cols[0]],
-        df_arc.loc[df_arc.generation==gens[-1],cols[1]],
-        marker="+",c='k',s=100,label="final non dom solutions")
+    if "_risk_" in df_arc.columns:
+        rvals = df_arc._risk_.unique()
+        print(rvals)
+    else:
+        ax.scatter(df_arc.loc[df_arc.generation==gens[-1],cols[0]],
+            df_arc.loc[df_arc.generation==gens[-1],cols[1]],
+            marker="+",c='k',s=100,label="final non dom solutions")
 
     possibles = globals().copy()
     possibles.update(locals())
@@ -502,7 +507,7 @@ def run_problem_chance(test_case="zdt1",pop_size=100,noptmax=100,stack_size=50,
     pst.pestpp_options["opt_risk"] = 0.95
     pst.pestpp_options["opt_stack_size"] = stack_size
     pst.pestpp_options["opt_chance_points"] = chance_points
-    pst.pestpp_options["panther_echo"] = True
+    pst.pestpp_options["panther_echo"] = False
     pst.pestpp_options["mou_generator"] = "de"
     pst.pestpp_options["opt_recalc_chance_every"] = recalc
     pst.write(os.path.join(test_d,"{0}.pst".format(test_case)))
@@ -720,6 +725,14 @@ def test_setup_and_three_iters():
         arc_df = pd.read_csv(arc_file,index_col=0)
         assert arc_df .shape[0] > 0, arc_df.shape
 
+        if "zdt" not in case:
+            continue
+        m_d = run_problem_chance_external_fixed(case)
+        arc_file = os.path.join(m_d, "{0}.pareto.summary.csv".format(case))
+        assert os.path.exists(arc_file)
+        arc_df = pd.read_csv(arc_file, index_col=0)
+        assert arc_df.shape[0] > 0, arc_df.shape
+
 
 if __name__ == "__main__":
         
@@ -747,13 +760,18 @@ if __name__ == "__main__":
     #  plot_results(master_d)
 
     #test_zdt1()
-    #test_setup_and_three_iters()
+    test_setup_and_three_iters()
     #setup_problem("water",additive_chance=True, risk_obj=True)
     #setup_problem("zdt1",30, additive_chance=True)
     #test_sorting_fake_problem()
     #start_workers()
     #setup_problem("zdt1")
-    run_problem_chance_external_fixed("zdt1")
+    #run_problem_chance_external_fixed("zdt1")
+    run_problem("zdt1")
+    run_problem_chance("zdt1",chance_points="all",risk_obj=True)
+    #plot_results(os.path.join("mou_tests","zdt1_master"))
+    #plot_results(os.path.join("mou_tests","zdt1_master_chance"))
+    
     #run_problem_chance("constr",noptmax=10,risk_obj=True)
     #plot_results(os.path.join("mou_tests","zdt1_master"))
     #setup_problem("constr")
