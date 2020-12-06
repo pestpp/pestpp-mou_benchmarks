@@ -655,34 +655,6 @@ def plot_results_single(master_d):
     plt.close("all")
 
 
-def test_zdt1():
-    case ="zdt1"
-    noptmax = 5
-    m_d = run_problem(case,noptmax=noptmax)
-    arc_file = os.path.join(m_d,"{0}.pareto.archive.summary.csv".format(case))
-    assert os.path.exists(arc_file)
-    arc_df = pd.read_csv(arc_file,index_col=0)
-    assert arc_file.shape[0] > 0
-
-    m_d = run_problem_chance(case,noptmax=noptmax,pop_size=10,chance_points="all",recalc=100)
-    arc_file = os.path.join(m_d,"{0}.pareto.archive.summary.csv".format(case))
-    assert os.path.exists(arc_file)
-    arc_df = pd.read_csv(arc_file,index_col=0)
-    assert arc_file.shape[0] > 0
-
-    m_d = run_problem_chance(case,noptmax=noptmax,pop_size=10,chance_points="single",recalc=100)
-    arc_file = os.path.join(m_d,"{0}.pareto.archive.summary.csv".format(case))
-    assert os.path.exists(arc_file)
-    arc_df = pd.read_csv(arc_file,index_col=0)
-    assert arc_file.shape[0] > 0
-
-    m_d = run_problem_chance(case,noptmax=noptmax,pop_size=10,chance_points="single",recalc=1)
-    arc_file = os.path.join(m_d,"{0}.pareto.archive.summary.csv".format(case))
-    assert os.path.exists(arc_file)
-    arc_df = pd.read_csv(arc_file,index_col=0)
-    assert arc_file.shape[0] > 0
-
-
 def test_setup_and_three_iters():
     cases = ["water","constr","zdt1","zdt2","zdt3","zdt4","zdt6","sch","srn","ackley","rosen"]
     noptmax = 3
@@ -760,14 +732,14 @@ if __name__ == "__main__":
     #  plot_results(master_d)
 
     #test_zdt1()
-    test_setup_and_three_iters()
+    #test_setup_and_three_iters()
     #setup_problem("water",additive_chance=True, risk_obj=True)
     #setup_problem("zdt1",30, additive_chance=True)
     #test_sorting_fake_problem()
     #start_workers()
     #setup_problem("zdt1")
     #run_problem_chance_external_fixed("zdt1")
-    run_problem("zdt1")
+    #run_problem("zdt1")
     run_problem_chance("zdt1",chance_points="all",risk_obj=True)
     #plot_results(os.path.join("mou_tests","zdt1_master"))
     #plot_results(os.path.join("mou_tests","zdt1_master_chance"))
