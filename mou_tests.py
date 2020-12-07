@@ -140,28 +140,27 @@ def setup_problem(name,additive_chance=False, risk_obj=False):
         for i in range(num_dv):
             f.write("dv_{0} ~ dv_{0}     ~\n".format(i))
     
-    additive_chance_tpl_file = None
-    if additive_chance:
-        additive_chance_tpl_file = "additive_par.dat.tpl"
-        with open(os.path.join(test_d,additive_chance_tpl_file),'w') as f:
-            f.write("ptf ~\n")
-            f.write("obj1_add_par ~   obj1_add_par   ~\n")
-            f.write("obj2_add_par ~   obj2_add_par   ~\n")
-            if name.lower() in ["srn","constr"]:
-                f.write("constr1_add_par ~   constr1_add_par   ~\n")
-                f.write("constr2_add_par ~   constr2_add_par   ~\n")
-            elif name.lower() == "water":
-                [f.write("constr{0}_add_par ~   constr{0}_add_par   ~\n".format(i)) for i in range(7)]
+
+    additive_chance_tpl_file = "additive_par.dat.tpl"
+    with open(os.path.join(test_d,additive_chance_tpl_file),'w') as f:
+        f.write("ptf ~\n")
+        f.write("obj1_add_par ~   obj1_add_par   ~\n")
+        f.write("obj2_add_par ~   obj2_add_par   ~\n")
+        if name.lower() in ["srn","constr"]:
+            f.write("constr1_add_par ~   constr1_add_par   ~\n")
+            f.write("constr2_add_par ~   constr2_add_par   ~\n")
+        elif name.lower() == "water":
+            [f.write("constr{0}_add_par ~   constr{0}_add_par   ~\n".format(i)) for i in range(7)]
 
 
-        with open(os.path.join(test_d,additive_chance_tpl_file.replace(".tpl","")),'w') as f:
-            f.write("obj1_add_par 0.0\n")
-            f.write("obj2_add_par 0.0\n")
-            if name.lower() in ["srn","constr"]:
-                f.write("constr1_add_par 0.0\n")
-                f.write("constr2_add_par 0.0\n")
-            elif name.lower() == "water":
-                [f.write("constr{0}_add_par 0.0\n".format(i)) for i in range(7)]
+    with open(os.path.join(test_d,additive_chance_tpl_file.replace(".tpl","")),'w') as f:
+        f.write("obj1_add_par 0.0\n")
+        f.write("obj2_add_par 0.0\n")
+        if name.lower() in ["srn","constr"]:
+            f.write("constr1_add_par 0.0\n")
+            f.write("constr2_add_par 0.0\n")
+        elif name.lower() == "water":
+            [f.write("constr{0}_add_par 0.0\n".format(i)) for i in range(7)]
 
     if risk_obj:
         risk_tpl_file = os.path.join(test_d,"risk.dat.tpl")
@@ -304,22 +303,29 @@ def setup_problem(name,additive_chance=False, risk_obj=False):
         par.loc["dv_1","parubnd"] = 4
         par.loc["dv_1","parval1"] = -1.
 
-    if additive_chance_tpl_file is not None:
-        adf = pst.add_parameters(os.path.join(test_d,additive_chance_tpl_file),pst_path=".")
-        print(adf)
-        
-        par = pst.parameter_data
-        par.loc[adf.parnme,"partrans"] = "none"
-        par.loc[adf.parnme,"parubnd"] = 0.5
-        par.loc[adf.parnme,"parval1"] = 0.0
-        par.loc[adf.parnme,"parlbnd"] = -0.5
-        par.loc[adf.parnme,"parchglim"] = "relative"
-        par.loc[adf.parnme,"pargp"] = "obj_add"
-        #much less uncertainty in the second obj
-        par.loc[adf.parnme[1],"parubnd"] = 0.05
-        par.loc[adf.parnme[1],"parlbnd"] = -0.05
-        pst.rectify_pgroups()
-        pst.parameter_groups.loc["obj_add","inctyp"] = "absolute"
+
+    adf = pst.add_parameters(os.path.join(test_d,additive_chance_tpl_file),pst_path=".")
+    print(adf)
+
+    par = pst.parameter_data
+
+    par.loc[adf.parnme,"parubnd"] = 0.5
+    par.loc[adf.parnme,"parval1"] = 0.0
+    par.loc[adf.parnme,"parlbnd"] = -0.5
+    par.loc[adf.parnme,"parchglim"] = "relative"
+    par.loc[adf.parnme,"pargp"] = "obj_add"
+    #much less uncertainty in the second obj
+    par.loc[adf.parnme[1],"parubnd"] = 0.05
+    par.loc[adf.parnme[1],"parlbnd"] = -0.05
+
+    if additive_chance:
+        par.loc[adf.parnme, "partrans"] = "none"
+    else:
+        par.loc[adf.parnme, "partrans"] = "fixed"
+
+
+    pst.rectify_pgroups()
+    pst.parameter_groups.loc["obj_add","inctyp"] = "absolute"
 
     if risk_obj:
         rdf = pst.add_parameters(risk_tpl_file,pst_path=".")
@@ -464,12 +470,26 @@ def plot_results(master_d):
     #    ax.scatter(df_arc.loc[df_arc.generation==gen,cols[0]],df_arc.loc[df_arc.generation==gen,cols[1]],marker=".",
     #        c=cmap(i/len(gens)),s=50,alpha=0.25)
     if "_risk_" in df_arc.columns:
+        rcmap = plt.get_cmap("jet")
         rvals = df_arc._risk_.unique()
-        print(rvals)
+        #df = df_arc.loc[df_arc._risk_>0.9,:]
+        df = df_arc.copy()
+        print(df._risk_.values)
+        df = df.loc[df.generation == gens[-1],:]
+        cb = ax.scatter(df.loc[:, cols[0]],
+                   df.loc[:, cols[1]],
+                   marker="+", c=df._risk_.values, s=100, label="final non dom solutions",
+                   cmap="jet")
+        plt.colorbar(cb)
     else:
-        ax.scatter(df_arc.loc[df_arc.generation==gens[-1],cols[0]],
-            df_arc.loc[df_arc.generation==gens[-1],cols[1]],
-            marker="+",c='k',s=100,label="final non dom solutions")
+        if df_arc.shape[0] > 0:
+            ax.scatter(df_arc.loc[df_arc.generation==gens[-1],cols[0]],
+                df_arc.loc[df_arc.generation==gens[-1],cols[1]],
+                marker="+",c='k',s=100,label="final non dom solutions")
+        else:
+            ax.scatter(df.loc[df.generation == gens[-1], cols[0]],
+                       df.loc[df.generation == gens[-1], cols[1]],
+                       marker="+", c='k', s=100, label="final non dom solutions")
 
     possibles = globals().copy()
     possibles.update(locals())
@@ -498,13 +518,14 @@ def plot_results(master_d):
 
 
 def run_problem_chance(test_case="zdt1",pop_size=100,noptmax=100,stack_size=50,
-                       chance_points="single",recalc=100,risk_obj=False):
+                       chance_points="single",recalc=100,risk_obj=False,
+                       risk=0.95):
     
     test_d = setup_problem(test_case,additive_chance=True, risk_obj=risk_obj)
     pst = pyemu.Pst(os.path.join(test_d,"{0}.pst".format(test_case)))
     pst.control_data.noptmax = noptmax
     pst.pestpp_options["mou_population_size"] = pop_size   
-    pst.pestpp_options["opt_risk"] = 0.95
+    pst.pestpp_options["opt_risk"] = risk
     pst.pestpp_options["opt_stack_size"] = stack_size
     pst.pestpp_options["opt_chance_points"] = chance_points
     pst.pestpp_options["panther_echo"] = False
@@ -512,7 +533,7 @@ def run_problem_chance(test_case="zdt1",pop_size=100,noptmax=100,stack_size=50,
     pst.pestpp_options["opt_recalc_chance_every"] = recalc
     pst.write(os.path.join(test_d,"{0}.pst".format(test_case)))
     #pyemu.os_utils.run("{0} {1}.pst".format(exe_path,test_case),cwd=test_d)
-    master_d = test_d.replace("template","master_chance")
+    master_d = test_d.replace("template","master_chance_{0:04.3f}_{1}".format(risk,risk_obj))
     pyemu.os_utils.start_workers(test_d, exe_path, "{0}.pst".format(test_case), 
                                   num_workers=35, master_dir=master_d,worker_root=test_root,
                                   port=port)
@@ -673,25 +694,39 @@ def test_setup_and_three_iters():
         if case in ["ackley","rosen"]:
             continue
 
-        m_d = run_problem_chance(case,noptmax=noptmax,pop_size=10,chance_points="all",recalc=100)
+        #fosm
+        m_d = run_problem_chance(case, noptmax=noptmax, pop_size=10, chance_points="all", recalc=200,
+                                 stack_size=0)
+        arc_file = os.path.join(m_d, "{0}.pareto.summary.csv".format(case))
+        assert os.path.exists(arc_file)
+        arc_df = pd.read_csv(arc_file, index_col=0)
+        assert arc_df.shape[0] > 0, arc_df.shape
+
+        # stack with all point and full reuse
+        m_d = run_problem_chance(case,noptmax=noptmax,pop_size=10,chance_points="all",recalc=200,
+                                 stack_size=10)
         arc_file = os.path.join(m_d,"{0}.pareto.summary.csv".format(case))
         assert os.path.exists(arc_file)
         arc_df = pd.read_csv(arc_file,index_col=0)
         assert arc_df.shape[0] > 0, arc_df.shape
 
-        m_d = run_problem_chance(case,noptmax=noptmax,pop_size=10,chance_points="single",recalc=100)
+        # stack with single point and full reuse
+        m_d = run_problem_chance(case,noptmax=noptmax,pop_size=10,chance_points="single",recalc=200)
         arc_file = os.path.join(m_d,"{0}.pareto.summary.csv".format(case))
         assert os.path.exists(arc_file)
         arc_df = pd.read_csv(arc_file,index_col=0)
         assert arc_df.shape[0] > 0, arc_df.shape
 
-        m_d = run_problem_chance(case,noptmax=noptmax,pop_size=10,chance_points="single",recalc=100, risk_obj=True)
+        # stack with single point, full reuse and risk obj
+        m_d = run_problem_chance(case,noptmax=noptmax,pop_size=10,chance_points="single",recalc=200, risk_obj=True)
         arc_file = os.path.join(m_d,"{0}.pareto.summary.csv".format(case))
         assert os.path.exists(arc_file)
         arc_df = pd.read_csv(arc_file,index_col=0)
         assert arc_df.shape[0] > 0, arc_df.shape
 
-        m_d = run_problem_chance(case,noptmax=noptmax,pop_size=10,chance_points="single",recalc=1)
+        # stack with single point, recalc every iter
+        m_d = run_problem_chance(case,noptmax=noptmax,pop_size=10,chance_points="single",recalc=1,
+                                 stack_size=10)
         arc_file = os.path.join(m_d,"{0}.pareto.summary.csv".format(case))
         assert os.path.exists(arc_file)
         arc_df = pd.read_csv(arc_file,index_col=0)
@@ -699,11 +734,166 @@ def test_setup_and_three_iters():
 
         if "zdt" not in case:
             continue
+        # a restart test with fixed dec vars
         m_d = run_problem_chance_external_fixed(case)
         arc_file = os.path.join(m_d, "{0}.pareto.summary.csv".format(case))
         assert os.path.exists(arc_file)
         arc_df = pd.read_csv(arc_file, index_col=0)
         assert arc_df.shape[0] > 0, arc_df.shape
+
+
+def risk_compare_plot():
+    plt_dir = os.path.join("mou_tests", "test_result_plots")
+    if not os.path.exists(plt_dir):
+        os.mkdir(plt_dir)
+    master_d = os.path.join("mou_tests","zdt1_master_chance_0.950_True")
+    assert os.path.exists(master_d)
+
+    case = os.path.split(master_d)[1].split('_')[0]
+    df = pd.read_csv(os.path.join(master_d, "{0}.pareto.summary.csv".format(case)))
+    df_arc = pd.read_csv(os.path.join(master_d, "{0}.pareto.archive.summary.csv".format(case)))
+    print(df_arc.columns)
+
+    import matplotlib.colors as colors
+    import matplotlib.pyplot as plt
+    cols = ["obj_1", "obj_2"]
+
+    fig, axes = plt.subplots(1, 2, figsize=(12, 6))
+    # df = df.loc[df.generation<80,:]
+    gens = df.generation.unique()
+    gens.sort()
+    print(gens)
+    ax = axes[0]
+    cmap = plt.get_cmap("jet", lut=len(gens))
+    # for i,df in enumerate(odfs_all):
+    # for i,gen in enumerate(gens):
+    #    ax.scatter(df_arc.loc[df_arc.generation==gen,cols[0]],df_arc.loc[df_arc.generation==gen,cols[1]],marker=".",
+    #        c=cmap(i/len(gens)),s=50,alpha=0.25)
+    if "_risk_" in df_arc.columns:
+        rcmap = plt.get_cmap("jet")
+        rvals = df_arc._risk_.unique()
+        # df = df_arc.loc[df_arc._risk_>0.9,:]
+        df = df_arc.copy()
+        print(df._risk_.values)
+        df = df.loc[df.generation == gens[-1], :]
+        cb = ax.scatter(df.loc[:, cols[0]],
+                        df.loc[:, cols[1]],
+                        marker="+", c=df._risk_.values, s=100, label="final non dom solutions",
+                        cmap="jet")
+        cb.set_label("risk")
+        plt.colorbar(cb)
+    else:
+        ax.scatter(df_arc.loc[df_arc.generation == gens[-1], cols[0]],
+                   df_arc.loc[df_arc.generation == gens[-1], cols[1]],
+                   marker="+", c='k', s=100, label="final non dom solutions")
+
+    ax.set_title("{0}, {1} generations shown, {2} members in archive, {3} total members". \
+                 format(case, len(gens), df_arc.shape[0], df.shape[0]))
+    ax.legend()
+
+    ax = axes[1]
+    master_ds = [os.path.join("mou_tests",m_d) for m_d in os.listdir("mou_tests")\
+                 if "zdt1_master_chance_" in m_d and "False" in m_d]
+
+    print(master_ds)
+    for master_d in master_ds:
+        r = float(master_d.split('_')[-2])
+        case = os.path.split(master_d)[1].split('_')[0]
+        df = pd.read_csv(os.path.join(master_d, "{0}.pareto.summary.csv".format(case)))
+        df_arc = pd.read_csv(os.path.join(master_d, "{0}.pareto.archive.summary.csv".format(case)))
+        gens = df.generation.unique()
+        gens.sort()
+
+        ax.scatter(df_arc.loc[df_arc.generation == gens[-1], cols[0]],
+                   df_arc.loc[df_arc.generation == gens[-1], cols[1]],
+                   marker="+", c=rcmap(r), s=100)
+
+    possibles = globals().copy()
+    possibles.update(locals())
+    method = possibles.get(case)
+
+    for ax in axes:
+        x0 = np.linspace(0, 1, 1000)
+        o1, o2 = [], []
+        for xx0 in x0:
+            x = np.zeros(30)
+            x[0] = xx0
+            ret_vals = method(x)
+            o1.append(ret_vals[0][0])
+            o2.append(ret_vals[0][1])
+
+        ax.plot(o1, o2, "k", label="truth")
+
+    # ax.set_xlim(-0.1,1.1)
+    # ax.set_ylim(-0.1,7.0)
+    plt.tight_layout()
+    plt.savefig(os.path.join(plt_dir, "risk.pdf"))
+    plt.close("all")
+
+
+def test_risk_obj():
+    t_d = setup_problem("zdt1",True,True)
+    df = pd.read_csv(os.path.join(t_d,"prior.csv"),index_col=0)
+    df.loc[:,"_risk_"] = 0.95
+    print(df.columns)
+    df.to_csv(os.path.join(t_d,"prior.csv"))
+    pst = pyemu.Pst(os.path.join(t_d,"zdt1.pst"))
+    pst.pestpp_options["mou_dv_population_file"] = "prior.csv"
+    pst.pestpp_options["opt_chance_points"] = "single"
+    pst.pestpp_options["opt_recalc_chance_every"] = 1000
+    pst.pestpp_options["opt_stack_size"] = 10
+    pst.pestpp_options["opt_par_stack"] = "prior.csv"
+    pst.pestpp_options["mou_generator"] = "de"
+    pst.control_data.noptmax = -1
+    pst.write(os.path.join(t_d,"zdt1.pst"))
+    m1 = os.path.join("mou_tests","zdt1_test_master_riskobj")
+    pyemu.os_utils.start_workers(t_d,exe_path,"zdt1.pst",35,worker_root="mou_tests",
+                                 master_dir=m1,verbose=True)
+
+    t_d = setup_problem("zdt1", True, False)
+    df.pop("_risk_")
+    df.to_csv(os.path.join(t_d, "prior.csv"))
+    pst = pyemu.Pst(os.path.join(t_d, "zdt1.pst"))
+    pst.pestpp_options["mou_dv_population_file"] = "prior.csv"
+    pst.pestpp_options["opt_chance_points"] = "single"
+    pst.pestpp_options["opt_recalc_chance_every"] = 1000
+    pst.pestpp_options["opt_risk"] = 0.95
+    pst.pestpp_options["opt_stack_size"] = 10
+    pst.pestpp_options["opt_par_stack"] = "prior.csv"
+    pst.pestpp_options["mou_generator"] = "de"
+    pst.control_data.noptmax = -1
+    pst.write(os.path.join(t_d, "zdt1.pst"))
+    m2 = os.path.join("mou_tests","zdt1_test_master")
+    pyemu.os_utils.start_workers(t_d, exe_path, "zdt1.pst", 35,
+                                 worker_root="mou_tests",
+                                 master_dir=m2,
+                                 verbose=True)
+
+    test_files = ["zdt1.0.obs_pop.csv","zdt1.0.obs_stack.csv","zdt1.0.obs_pop.chance.csv"]
+    for test_file in test_files:
+        df1 = pd.read_csv(os.path.join(m1,test_file),index_col=0)
+        df2 = pd.read_csv(os.path.join(m2, test_file), index_col=0)
+        d = (df1 - df2).apply(np.abs)
+        print(d.max().max())
+
+
+def invest_risk_obj():
+    t_d = setup_problem("zdt1",True,True)
+    df = pd.read_csv(os.path.join(t_d,"prior.csv"),index_col=0)
+    print(df.columns)
+    df.to_csv(os.path.join(t_d,"prior.csv"))
+    pst = pyemu.Pst(os.path.join(t_d,"zdt1.pst"))
+    pst.pestpp_options["mou_dv_population_file"] = "prior.csv"
+    pst.pestpp_options["opt_chance_points"] = "single"
+    pst.pestpp_options["opt_recalc_chance_every"] = 1000
+    pst.pestpp_options["opt_stack_size"] = 10
+    pst.pestpp_options["opt_par_stack"] = "prior.csv"
+    pst.pestpp_options["mou_generator"] = "de"
+    pst.control_data.noptmax = 100
+    pst.write(os.path.join(t_d,"zdt1.pst"))
+    m1 = os.path.join("mou_tests","zdt1_test_master_riskobj_full")
+    pyemu.os_utils.start_workers(t_d,exe_path,"zdt1.pst",35,worker_root="mou_tests",
+                                 master_dir=m1,verbose=True)
 
 
 if __name__ == "__main__":
@@ -714,7 +904,10 @@ if __name__ == "__main__":
     # setup_zdt_problem("zdt3",30)
     # setup_zdt_problem("zdt4",10)
     # setup_zdt_problem("zdt6",10)
-    shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-mou.exe"),os.path.join("..","bin","pestpp-mou.exe"))
+    #shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-mou.exe"),os.path.join("..","bin","pestpp-mou.exe"))
+    #test_risk_obj()
+    #start_workers("zdt1")
+
     #shutil.copy2(os.path.join("..","bin","win","pestpp-mou.exe"),os.path.join("..","bin","pestpp-mou.exe"))
     
     #for case in ["srn","constr","zdt4","zdt3","zdt2","zdt1"]:
@@ -723,7 +916,8 @@ if __name__ == "__main__":
 
     #setup_problem("srn",additive_chance=True)
     #master_d = run_problem_chance("srn",noptmax=5,chance_points="all",pop_size=10,stack_size=10,recalc=3)
-    #plot_results(os.path.join("mou_tests","zdt6_master"))
+    #plot_results(os.path.join("mou_tests","zdt1_invest"))
+    #plot_results(os.path.join("mou_tests", "zdt1_test_master_riskobj"))
 
     #master_d = os.path.join("mou_tests","zdt6_master")
     #plot_results(master_d)
@@ -731,7 +925,6 @@ if __name__ == "__main__":
     #  master_d = run_problem_chance(case,noptmax=100)
     #  plot_results(master_d)
 
-    #test_zdt1()
     #test_setup_and_three_iters()
     #setup_problem("water",additive_chance=True, risk_obj=True)
     #setup_problem("zdt1",30, additive_chance=True)
@@ -740,8 +933,21 @@ if __name__ == "__main__":
     #setup_problem("zdt1")
     #run_problem_chance_external_fixed("zdt1")
     #run_problem("zdt1")
-    run_problem_chance("zdt1",chance_points="all",risk_obj=True)
-    #plot_results(os.path.join("mou_tests","zdt1_master"))
+    #run_problem_chance()
+    test_risk_obj()
+    #plot_results(os.path.join("mou_tests","zdt1_test_master"))
+    #plot_results(os.path.join("mou_tests", "zdt1_test_master_riskobj"))
+    #invest()
+    # run_problem_chance("zdt1",chance_points="all", noptmax=300,
+    #                    recalc=1000,risk_obj=True)
+    #
+    # for r in np.linspace(0.011,0.985,20):
+    #     if r == 0.5:
+    #         r = 0.51
+    #     run_problem_chance("zdt1", chance_points="all", noptmax=100,
+    #                        recalc=1000, risk_obj=False,risk=r)
+    # plot_results(os.path.join("mou_tests","zdt1_master"))
+    #risk_compare_plot()
     #plot_results(os.path.join("mou_tests","zdt1_master_chance"))
     
     #run_problem_chance("constr",noptmax=10,risk_obj=True)
