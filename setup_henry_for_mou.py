@@ -32,10 +32,10 @@ exe_path = os.path.join(bin_path, "pestpp-mou" + exe)
 noptmax = 4
 num_reals = 20
 port = 4021
-test_root = "mou_tests"
+test_root = "henry"
 
 
-org_d = os.path.join("mou_tests","ex-gwt-henry-b")
+org_d = os.path.join("henry","ex-gwt-henry-b")
 
 def run_and_plot_results(cwd):
     pyemu.os_utils.run("mf6",cwd=cwd)
@@ -62,7 +62,7 @@ def run_and_plot_results(cwd):
             print(time,d.min(),d.max())
 
 def prep_model():
-    new_d = os.path.join("mou_tests","henry_temp")
+    new_d = os.path.join("henry","henry_temp")
     if os.path.exists(new_d):
         shutil.rmtree(new_d)
     shutil.copytree(org_d,new_d)
@@ -122,8 +122,8 @@ def test_add_artrch(test_d,dist=80,width=10,rate=1,concen=0.0,write_tpl=False):
     return tpl_file
 
 def setup_pst():
-    old_dir = os.path.join("mou_tests","henry_temp")
-    new_dir = os.path.join("mou_tests","henry_template")
+    old_dir = os.path.join("henry","henry_temp")
+    new_dir = os.path.join("henry","henry_template")
     sim = flopy.mf6.MFSimulation.load(sim_ws=old_dir)
     m = sim.get_model("flow")
     # setup a fake model grid
@@ -335,8 +335,8 @@ def plot_pr_real():
     plt.show()
 
 def start_workers_for_debug(with_master=True):
-    t_d = os.path.join("mou_tests", "henry_template")
-    m_d = os.path.join("mou_tests","henry_master_chance_risk_obj")
+    t_d = os.path.join("henry", "henry_template")
+    m_d = os.path.join("henry","henry_master_chance_risk_obj")
     if with_master:
         if os.path.exists(m_d):
             shutil.rmtree(m_d)
@@ -345,14 +345,14 @@ def start_workers_for_debug(with_master=True):
         pst.control_data.noptmax = 100
         pst.pestpp_options["opt_par_stack"] = "prior.jcb"
         pst.pestpp_options["opt_stack_size"] = 20
-        pst.pestpp_options["opt_recalc_chance_every"] = 100
+        pst.pestpp_options["opt_recalc_chance_every"] = 1000
         pst.pestpp_options["mou_population_size"] = 100
         pst.pestpp_options["opt_chance_points"] = "all"
         pst.pestpp_options["opt_risk"] = 0.70
 
         pst.write(os.path.join(m_d,"henry.pst"))
     pyemu.os_utils.start_workers(t_d, exe_path, "henry.pst",
-                                  num_workers=15, worker_root="mou_tests",
+                                  num_workers=15, worker_root="henry",
                                   port=4004)
 
 def plot_results(m_d):
@@ -430,7 +430,7 @@ def plot_results(m_d):
             #    break
 
 def invest():
-    m_d = os.path.join("mou_tests","henry_master_chance")
+    m_d = os.path.join("henry","henry_master_chance")
     pst = pyemu.Pst(os.path.join(m_d,"henry.pst"))
     dv = pd.read_csv(os.path.join(m_d,"henry.0.dv_pop.csv"),index_col=0)
     pst.parameter_data.loc[:,"parval1"] = dv.loc[dv.index[0],pst.par_names]
@@ -444,7 +444,7 @@ if __name__ == "__main__":
     shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-mou.exe"),os.path.join("..","bin","pestpp-mou.exe"))
 
     #prep_model()
-    #run_and_plot_results(os.path.join("mou_tests", "henry_temp"))
+    #run_and_plot_results(os.path.join("henry", "henry_temp"))
     #test_add_artrch("henry_template",write_tpl=False)
     #test_process_unc("henry_temp")
     #setup_pst()

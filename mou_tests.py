@@ -379,6 +379,7 @@ def setup_problem(name,additive_chance=False, risk_obj=False):
 
     cov = pyemu.Cov.from_parameter_data(pst)
     pe = pyemu.ParameterEnsemble.from_gaussian_draw(pst,cov,100)
+    pe.enforce()
     pe.to_csv(os.path.join(test_d,"prior.csv"))
     return test_d
 
@@ -425,7 +426,7 @@ def run_problem(test_case="zdt1",pop_size=100,noptmax=100):
     return master_d
 
 
-def plot_results(master_d):
+def plot_results(master_d, sequence=False):
     plt_dir = os.path.join("mou_tests","test_result_plots")
     if not os.path.exists(plt_dir):
         os.mkdir(plt_dir)
@@ -457,64 +458,80 @@ def plot_results(master_d):
     # print(mins,maxs)
 
     #colors = ["0.5",'m','b','c','g','y','r']
-    
-    fig,ax = plt.subplots(1,1,figsize=(6,6))
     #df = df.loc[df.generation<80,:]
     gens = df.generation.unique()
     gens.sort()
     print(gens)
-
+    if sequence is False:
+        gens = [gens[-2]]
     cmap = plt.get_cmap("jet",lut=len(gens))
     #for i,df in enumerate(odfs_all):
     #for i,gen in enumerate(gens):
     #    ax.scatter(df_arc.loc[df_arc.generation==gen,cols[0]],df_arc.loc[df_arc.generation==gen,cols[1]],marker=".",
     #        c=cmap(i/len(gens)),s=50,alpha=0.25)
-    if "_risk_" in df_arc.columns:
-        rcmap = plt.get_cmap("jet")
-        rvals = df_arc._risk_.unique()
-        #df = df_arc.loc[df_arc._risk_>0.9,:]
-        df = df_arc.copy()
-        print(df._risk_.values)
-        df = df.loc[df.generation == gens[-1],:]
-        cb = ax.scatter(df.loc[:, cols[0]],
-                   df.loc[:, cols[1]],
-                   marker="+", c=df._risk_.values, s=100, label="final non dom solutions",
-                   cmap="jet")
-        plt.colorbar(cb)
-    else:
-        if df_arc.shape[0] > 0:
-            ax.scatter(df_arc.loc[df_arc.generation==gens[-1],cols[0]],
-                df_arc.loc[df_arc.generation==gens[-1],cols[1]],
-                marker="+",c='k',s=100,label="final non dom solutions")
+    for igen,gen in enumerate(gens):
+        fig, ax = plt.subplots(1, 1, figsize=(6, 6))
+        if "_risk_" in df_arc.columns:
+            rcmap = plt.get_cmap("jet")
+            rvals = df_arc._risk_.unique()
+            #df = df_arc.loc[df_arc._risk_>0.9,:]
+            df = df_arc.copy()
+
+            df = df.loc[df.generation == gen,:]
+            print(df.shape)
+            cb = ax.scatter(df.loc[:, cols[0]],
+                       df.loc[:, cols[1]],
+                       marker="+", c=df._risk_.values, s=100, label="final non dom solutions",
+                       cmap="jet")
+
+            cb = plt.colorbar(cb)
+            cb.set_label("risk")
+            ax.set_title("{0}, {1} generation shown, {2} members in archive". \
+                         format(case, gen, df.shape[0]))
         else:
-            ax.scatter(df.loc[df.generation == gens[-1], cols[0]],
-                       df.loc[df.generation == gens[-1], cols[1]],
-                       marker="+", c='k', s=100, label="final non dom solutions")
+            if df_arc.shape[0] > 0:
+                ax.scatter(df_arc.loc[df_arc.generation==gen,cols[0]],
+                    df_arc.loc[df_arc.generation==gen,cols[1]],
+                    marker="+",c='k',s=100,label="final non dom solutions")
+            else:
+                ax.scatter(df.loc[df.generation == gen, cols[0]],
+                           df.loc[df.generation == gen, cols[1]],
+                           marker="+", c='k', s=100, label="final non dom solutions")
+            ax.set_title("{0}, {1} generation shown, {2} members in archive". \
+                         format(case, gen, df_arc.shape[0]))
 
-    possibles = globals().copy()
-    possibles.update(locals())
-    method = possibles.get(case)
+        possibles = globals().copy()
+        possibles.update(locals())
+        method = possibles.get(case)
 
-    
-    if "zdt" in master_d.lower():
-        x0 = np.linspace(0,1,1000)
-        o1,o2 = [],[]
-        for xx0 in x0:
-            x = np.zeros(30)
-            x[0] = xx0
-            ret_vals = method(x)
-            o1.append(ret_vals[0][0])
-            o2.append(ret_vals[0][1])
+        if "zdt" in master_d.lower():
+            x0 = np.linspace(0,1,1000)
+            o1,o2 = [],[]
+            for xx0 in x0:
+                x = np.zeros(30)
+                x[0] = xx0
+                ret_vals = method(x)
+                o1.append(ret_vals[0][0])
+                o2.append(ret_vals[0][1])
 
-        ax.plot(o1,o2,"k",label="truth")
-    ax.set_title("{0}, {1} generations shown, {2} members in archive, {3} total members".\
-        format(case,len(gens),df_arc.shape[0],df.shape[0]))
-    ax.legend()
-    #ax.set_xlim(-0.1,1.1)
-    #ax.set_ylim(-0.1,7.0)
-    plt.tight_layout()
-    plt.savefig(os.path.join(plt_dir,os.path.split(master_d)[-1]+".pdf"))
-    plt.close("all")
+            ax.plot(o1,o2,"k",label="truth")
+
+        ax.legend()
+        ax.set_xlim(df_arc.loc[:,cols[0]].min(),df_arc.loc[:,cols[0]].max())
+        ax.set_ylim(df_arc.loc[:,cols[1]].min(),df_arc.loc[:,cols[1]].max())
+        ax.set_xlabel("objective 1 (minimize)")
+        ax.set_ylabel("objective 2 (minimize)")
+
+        plt.tight_layout()
+        if sequence:
+            plt.savefig(os.path.join(plt_dir,os.path.split(master_d)[-1]+"_{0:03d}.png".format(igen)))
+        else:
+            plt.savefig(os.path.join(plt_dir, os.path.split(master_d)[-1] + "_{0:03d}.pdf".format(gen)))
+        plt.close("all")
+    if sequence:
+        prefix = os.path.split(master_d)[-1]+"_%03d.png"
+        pyemu.os_utils.run("ffmpeg -r 60 -f image2 -s 1920x1080 -i {0} -vcodec libx264 -crf 25  -pix_fmt yuv420p test.mp4".format(prefix),
+                           cwd=plt_dir)
 
 
 def run_problem_chance(test_case="zdt1",pop_size=100,noptmax=100,stack_size=50,
@@ -689,7 +706,7 @@ def test_setup_and_three_iters():
         arc_file = os.path.join(m_d,"{0}.pareto.summary.csv".format(case))
         assert os.path.exists(arc_file), arc_file
         arc_df = pd.read_csv(arc_file,index_col=0)
-        assert arc_df.shape[0] > 0, arc_df.shape
+        assert arc_df.shape[0] > 0, case
 
         if case in ["ackley","rosen"]:
             continue
@@ -698,48 +715,48 @@ def test_setup_and_three_iters():
         m_d = run_problem_chance(case, noptmax=noptmax, pop_size=10, chance_points="all", recalc=200,
                                  stack_size=0)
         arc_file = os.path.join(m_d, "{0}.pareto.summary.csv".format(case))
-        assert os.path.exists(arc_file)
+        assert os.path.exists(arc_file),arc_file
         arc_df = pd.read_csv(arc_file, index_col=0)
-        assert arc_df.shape[0] > 0, arc_df.shape
+        assert arc_df.shape[0] > 0, case
 
         # stack with all point and full reuse
         m_d = run_problem_chance(case,noptmax=noptmax,pop_size=10,chance_points="all",recalc=200,
                                  stack_size=10)
         arc_file = os.path.join(m_d,"{0}.pareto.summary.csv".format(case))
-        assert os.path.exists(arc_file)
+        assert os.path.exists(arc_file),arc_file
         arc_df = pd.read_csv(arc_file,index_col=0)
-        assert arc_df.shape[0] > 0, arc_df.shape
+        assert arc_df.shape[0] > 0, case
 
         # stack with single point and full reuse
         m_d = run_problem_chance(case,noptmax=noptmax,pop_size=10,chance_points="single",recalc=200)
         arc_file = os.path.join(m_d,"{0}.pareto.summary.csv".format(case))
-        assert os.path.exists(arc_file)
+        assert os.path.exists(arc_file), arc_file
         arc_df = pd.read_csv(arc_file,index_col=0)
-        assert arc_df.shape[0] > 0, arc_df.shape
+        assert arc_df.shape[0] > 0, case
 
         # stack with single point, full reuse and risk obj
         m_d = run_problem_chance(case,noptmax=noptmax,pop_size=10,chance_points="single",recalc=200, risk_obj=True)
         arc_file = os.path.join(m_d,"{0}.pareto.summary.csv".format(case))
-        assert os.path.exists(arc_file)
+        assert os.path.exists(arc_file), arc_file
         arc_df = pd.read_csv(arc_file,index_col=0)
-        assert arc_df.shape[0] > 0, arc_df.shape
+        assert arc_df.shape[0] > 0, case
 
         # stack with single point, recalc every iter
         m_d = run_problem_chance(case,noptmax=noptmax,pop_size=10,chance_points="single",recalc=1,
                                  stack_size=10)
         arc_file = os.path.join(m_d,"{0}.pareto.summary.csv".format(case))
-        assert os.path.exists(arc_file)
+        assert os.path.exists(arc_file), arc_file
         arc_df = pd.read_csv(arc_file,index_col=0)
-        assert arc_df .shape[0] > 0, arc_df.shape
+        assert arc_df .shape[0] > 0, case
 
         if "zdt" not in case:
             continue
         # a restart test with fixed dec vars
         m_d = run_problem_chance_external_fixed(case)
         arc_file = os.path.join(m_d, "{0}.pareto.summary.csv".format(case))
-        assert os.path.exists(arc_file)
+        assert os.path.exists(arc_file), arc_file
         arc_df = pd.read_csv(arc_file, index_col=0)
-        assert arc_df.shape[0] > 0, arc_df.shape
+        assert arc_df.shape[0] > 0, case
 
 
 def risk_compare_plot():
@@ -879,21 +896,17 @@ def test_risk_obj():
 
 def invest_risk_obj():
     t_d = setup_problem("zdt1",True,True)
-    df = pd.read_csv(os.path.join(t_d,"prior.csv"),index_col=0)
-    print(df.columns)
-    df.to_csv(os.path.join(t_d,"prior.csv"))
     pst = pyemu.Pst(os.path.join(t_d,"zdt1.pst"))
-    pst.pestpp_options["mou_dv_population_file"] = "prior.csv"
     pst.pestpp_options["opt_chance_points"] = "single"
     pst.pestpp_options["opt_recalc_chance_every"] = 1000
-    pst.pestpp_options["opt_stack_size"] = 10
-    pst.pestpp_options["opt_par_stack"] = "prior.csv"
+    pst.pestpp_options["opt_stack_size"] = 50
     pst.pestpp_options["mou_generator"] = "de"
-    pst.control_data.noptmax = 100
+    pst.control_data.noptmax = 300
     pst.write(os.path.join(t_d,"zdt1.pst"))
     m1 = os.path.join("mou_tests","zdt1_test_master_riskobj_full")
     pyemu.os_utils.start_workers(t_d,exe_path,"zdt1.pst",35,worker_root="mou_tests",
                                  master_dir=m1,verbose=True)
+    plot_results(os.path.join("mou_tests", "zdt1_test_master_riskobj_full"))
 
 
 if __name__ == "__main__":
@@ -917,15 +930,15 @@ if __name__ == "__main__":
     #setup_problem("srn",additive_chance=True)
     #master_d = run_problem_chance("srn",noptmax=5,chance_points="all",pop_size=10,stack_size=10,recalc=3)
     #plot_results(os.path.join("mou_tests","zdt1_invest"))
-    #plot_results(os.path.join("mou_tests", "zdt1_test_master_riskobj"))
-
+    plot_results(os.path.join("mou_tests", "zdt1_test_master_riskobj_full"),sequence=True)
+    #invest_risk_obj()
     #master_d = os.path.join("mou_tests","zdt6_master")
     #plot_results(master_d)
     #for case in ["zdt1","zdt2","zdt3","zdt4","zdt6","sch","srn","constr"]:
     #  master_d = run_problem_chance(case,noptmax=100)
     #  plot_results(master_d)
 
-    #test_setup_and_three_iters()
+    test_setup_and_three_iters()
     #setup_problem("water",additive_chance=True, risk_obj=True)
     #setup_problem("zdt1",30, additive_chance=True)
     #test_sorting_fake_problem()
@@ -934,7 +947,7 @@ if __name__ == "__main__":
     #run_problem_chance_external_fixed("zdt1")
     #run_problem("zdt1")
     #run_problem_chance()
-    test_risk_obj()
+    #invest_risk_obj()
     #plot_results(os.path.join("mou_tests","zdt1_test_master"))
     #plot_results(os.path.join("mou_tests", "zdt1_test_master_riskobj"))
     #invest()
