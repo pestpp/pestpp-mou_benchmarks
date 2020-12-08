@@ -894,6 +894,22 @@ def test_risk_obj():
         print(d.max().max())
 
 
+def test_restart():
+    t_d = setup_problem("zdt1", True, True)
+    pst = pyemu.Pst(os.path.join(t_d, "zdt1.pst"))
+    pst.pestpp_options["opt_chance_points"] = "all"
+    pst.pestpp_options["opt_recalc_chance_every"] = 1000
+    pst.pestpp_options["opt_stack_size"] = 10
+    pst.pestpp_options["mou_population_size"] = 10
+    pst.pestpp_options["opt_par_stack"] = "prior.csv"
+    pst.pestpp_options["mou_generator"] = "de"
+    pst.control_data.noptmax = -1
+    pst.write(os.path.join(t_d, "zdt1.pst"))
+    m1 = os.path.join("mou_tests", "zdt1_test_master_restart")
+    pyemu.os_utils.start_workers(t_d, exe_path, "zdt1.pst", 35, worker_root="mou_tests",
+                                 master_dir=m1, verbose=True)
+
+
 def invest_risk_obj():
     t_d = setup_problem("zdt1",True,True)
     pst = pyemu.Pst(os.path.join(t_d,"zdt1.pst"))
@@ -917,9 +933,7 @@ if __name__ == "__main__":
     # setup_zdt_problem("zdt3",30)
     # setup_zdt_problem("zdt4",10)
     # setup_zdt_problem("zdt6",10)
-    #shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-mou.exe"),os.path.join("..","bin","pestpp-mou.exe"))
-    #test_risk_obj()
-    #start_workers("zdt1")
+    shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-mou.exe"),os.path.join("..","bin","pestpp-mou.exe"))
 
     #shutil.copy2(os.path.join("..","bin","win","pestpp-mou.exe"),os.path.join("..","bin","pestpp-mou.exe"))
     
@@ -930,7 +944,7 @@ if __name__ == "__main__":
     #setup_problem("srn",additive_chance=True)
     #master_d = run_problem_chance("srn",noptmax=5,chance_points="all",pop_size=10,stack_size=10,recalc=3)
     #plot_results(os.path.join("mou_tests","zdt1_invest"))
-    plot_results(os.path.join("mou_tests", "zdt1_test_master_riskobj_full"),sequence=True)
+    #plot_results(os.path.join("mou_tests", "zdt1_test_master_riskobj_full"),sequence=True)
     #invest_risk_obj()
     #master_d = os.path.join("mou_tests","zdt6_master")
     #plot_results(master_d)
@@ -938,7 +952,8 @@ if __name__ == "__main__":
     #  master_d = run_problem_chance(case,noptmax=100)
     #  plot_results(master_d)
 
-    test_setup_and_three_iters()
+    #test_setup_and_three_iters()
+    test_restart()
     #setup_problem("water",additive_chance=True, risk_obj=True)
     #setup_problem("zdt1",30, additive_chance=True)
     #test_sorting_fake_problem()
