@@ -894,10 +894,10 @@ def test_risk_obj():
         print(d.max().max())
 
 
-def test_restart():
+def test_restart_single():
     t_d = setup_problem("zdt1", True, True)
     pst = pyemu.Pst(os.path.join(t_d, "zdt1.pst"))
-    pst.pestpp_options["opt_chance_points"] = "all"
+    pst.pestpp_options["opt_chance_points"] = "single"
     pst.pestpp_options["opt_recalc_chance_every"] = 1000
     pst.pestpp_options["opt_stack_size"] = 10
     pst.pestpp_options["mou_population_size"] = 10
@@ -905,10 +905,63 @@ def test_restart():
     pst.pestpp_options["mou_generator"] = "de"
     pst.control_data.noptmax = -1
     pst.write(os.path.join(t_d, "zdt1.pst"))
-    m1 = os.path.join("mou_tests", "zdt1_test_master_restart")
+    m1 = os.path.join("mou_tests", "zdt1_test_master_restart1")
     pyemu.os_utils.start_workers(t_d, exe_path, "zdt1.pst", 35, worker_root="mou_tests",
                                  master_dir=m1, verbose=True)
 
+    shutil.copy2(os.path.join(m1,'zdt1.0.par_stack.csv'),os.path.join(t_d,"par_stack.csv"))
+    shutil.copy2(os.path.join(m1, 'zdt1.0.obs_stack.csv'), os.path.join(t_d, "obs_stack.csv"))
+
+
+    pst.pestpp_options["opt_par_stack"] = "par_stack.csv"
+    pst.pestpp_options["opt_obs_stack"] = "obs_stack.csv"
+    pst.control_data.noptmax = 3
+    pst.pestpp_options["opt_recalc_chance_every"] = 2
+    pst.write(os.path.join(t_d, "zdt1.pst"))
+    m2 = os.path.join("mou_tests", "zdt1_test_master_restart2")
+    pyemu.os_utils.start_workers(t_d, exe_path, "zdt1.pst", 35, worker_root="mou_tests",
+                                 master_dir=m2, verbose=True)
+
+    chance_file = "zdt1.0.obs_pop.chance.csv"
+    d1 = pd.read_csv(os.path.join(m1,chance_file),index_col=0)
+    d2 = pd.read_csv(os.path.join(m2, chance_file), index_col=0)
+    d = (d1-d2).apply(np.abs)
+    print(d.max().max())
+    assert d.max().max() < 0.01
+
+def test_restart_all():
+    t_d = setup_problem("zdt1", True, True)
+    pst = pyemu.Pst(os.path.join(t_d, "zdt1.pst"))
+    pst.pestpp_options["opt_chance_points"] = "all"
+    pst.pestpp_options["opt_recalc_chance_every"] = 1000
+    pst.pestpp_options["opt_stack_size"] = 5
+    pst.pestpp_options["mou_population_size"] = 10
+    pst.pestpp_options["opt_par_stack"] = "prior.csv"
+    pst.pestpp_options["mou_generator"] = "de"
+    pst.control_data.noptmax = -1
+    pst.write(os.path.join(t_d, "zdt1.pst"))
+    m1 = os.path.join("mou_tests", "zdt1_test_master_restart1")
+    pyemu.os_utils.start_workers(t_d, exe_path, "zdt1.pst", 35, worker_root="mou_tests",
+                                 master_dir=m1, verbose=True)
+
+    shutil.copy2(os.path.join(m1, 'zdt1.0.nested.par_stack.csv'), os.path.join(t_d, "par_stack.csv"))
+    shutil.copy2(os.path.join(m1, 'zdt1.0.nested.obs_stack.csv'), os.path.join(t_d, "obs_stack.csv"))
+
+    pst.pestpp_options["opt_par_stack"] = "par_stack.csv"
+    pst.pestpp_options["opt_obs_stack"] = "obs_stack.csv"
+    pst.control_data.noptmax = 3
+    pst.pestpp_options["opt_recalc_chance_every"] = 2
+    pst.write(os.path.join(t_d, "zdt1.pst"))
+    m2 = os.path.join("mou_tests", "zdt1_test_master_restart2")
+    pyemu.os_utils.start_workers(t_d, exe_path, "zdt1.pst", 35, worker_root="mou_tests",
+                                 master_dir=m2, verbose=True)
+
+    chance_file = "zdt1.0.obs_pop.chance.csv"
+    d1 = pd.read_csv(os.path.join(m1, chance_file), index_col=0)
+    d2 = pd.read_csv(os.path.join(m2, chance_file), index_col=0)
+    d = (d1 - d2).apply(np.abs)
+    print(d.max().max())
+    assert d.max().max() < 0.01
 
 def invest_risk_obj():
     t_d = setup_problem("zdt1",True,True)
@@ -953,7 +1006,7 @@ if __name__ == "__main__":
     #  plot_results(master_d)
 
     #test_setup_and_three_iters()
-    test_restart()
+    test_restart_all()
     #setup_problem("water",additive_chance=True, risk_obj=True)
     #setup_problem("zdt1",30, additive_chance=True)
     #test_sorting_fake_problem()
