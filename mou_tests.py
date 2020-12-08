@@ -1006,7 +1006,8 @@ if __name__ == "__main__":
     #  plot_results(master_d)
 
     #test_setup_and_three_iters()
-    test_restart_all()
+    test_restart_single()
+    #test_restart_all()
     #setup_problem("water",additive_chance=True, risk_obj=True)
     #setup_problem("zdt1",30, additive_chance=True)
     #test_sorting_fake_problem()
