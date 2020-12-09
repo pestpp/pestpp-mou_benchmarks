@@ -712,7 +712,7 @@ def test_setup_and_three_iters():
             continue
 
         #fosm
-        m_d = run_problem_chance(case, noptmax=noptmax, pop_size=10, chance_points="all", recalc=200,
+        m_d = run_problem_chance(case, noptmax=noptmax, pop_size=10, chance_points="single", recalc=200,
                                  stack_size=0)
         arc_file = os.path.join(m_d, "{0}.pareto.summary.csv".format(case))
         assert os.path.exists(arc_file),arc_file
