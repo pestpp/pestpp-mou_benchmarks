@@ -342,9 +342,9 @@ def start_workers_for_debug(with_master=True):
             shutil.rmtree(m_d)
         shutil.copytree(t_d,m_d)
         pst = pyemu.Pst(os.path.join(m_d,"henry.pst"))
-        pst.control_data.noptmax = 100
+        pst.control_data.noptmax = 200
         pst.pestpp_options["opt_par_stack"] = "prior.jcb"
-        pst.pestpp_options["opt_stack_size"] = 20
+        pst.pestpp_options["opt_stack_size"] = 30
         pst.pestpp_options["opt_recalc_chance_every"] = 1000
         pst.pestpp_options["mou_population_size"] = 100
         pst.pestpp_options["opt_chance_points"] = "all"
@@ -443,11 +443,11 @@ if __name__ == "__main__":
     #shutil.copy2(os.path.join("..", "bin", "win", "pestpp-mou.exe"), os.path.join("..", "bin", "pestpp-mou.exe"))
     shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-mou.exe"),os.path.join("..","bin","pestpp-mou.exe"))
 
-    #prep_model()
-    #run_and_plot_results(os.path.join("henry", "henry_temp"))
+    prep_model()
+    run_and_plot_results(os.path.join("henry", "henry_temp"))
     #test_add_artrch("henry_template",write_tpl=False)
     #test_process_unc("henry_temp")
-    #setup_pst()
+    setup_pst()
     #run_and_plot_results(os.path.join("mou_tests", "henry_template"))
     start_workers_for_debug(True)
     #plot_pr_real()

@@ -708,7 +708,7 @@ def test_setup_and_three_iters():
         arc_df = pd.read_csv(arc_file,index_col=0)
         assert arc_df.shape[0] > 0, case
 
-        if case in ["ackley","rosen"]:
+        if case in ["ackley","rosen","water"]:
             continue
 
         #fosm
