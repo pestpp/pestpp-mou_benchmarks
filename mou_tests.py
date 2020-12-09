@@ -708,7 +708,7 @@ def test_setup_and_three_iters():
         arc_df = pd.read_csv(arc_file,index_col=0)
         assert arc_df.shape[0] > 0, case
 
-        if case in ["ackley","rosen","water"]:
+        if "zdt" not in case:
             continue
 
         #fosm
@@ -749,8 +749,7 @@ def test_setup_and_three_iters():
         arc_df = pd.read_csv(arc_file,index_col=0)
         assert arc_df .shape[0] > 0, case
 
-        if "zdt" not in case:
-            continue
+
         # a restart test with fixed dec vars
         m_d = run_problem_chance_external_fixed(case)
         arc_file = os.path.join(m_d, "{0}.pareto.summary.csv".format(case))
