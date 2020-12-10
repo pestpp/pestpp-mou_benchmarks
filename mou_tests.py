@@ -85,12 +85,12 @@ def srn(x):
 
 def rosen(x):
     f1 = np.power(1 - x[0],2) + (100 * np.power(x[1] - np.power(x[0],2),2))
-    return (f1),[]
+    return (f1,-999),[]
 
 def ackley(x):
     t1 = -20. * np.exp(-0.2 * np.sqrt(0.5 * np.power(x[0],2) + np.power(x[1],2)))
     t2 = -1. * np.exp(0.5 * (np.cos(2. * np.pi * x[0]) + np.cos(2.0 * np.pi * x[1]))) + np.e + 20.0
-    return (t1 + t2),[]
+    return (t1 + t2,-999),[]
 
 def helper(func):
     pdf = pd.read_csv("dv.dat",delim_whitespace=True,index_col=0, header=None, names=["parnme","parval1"])
