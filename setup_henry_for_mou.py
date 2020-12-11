@@ -441,14 +441,14 @@ def invest():
 
 if __name__ == "__main__":
     #shutil.copy2(os.path.join("..", "bin", "win", "pestpp-mou.exe"), os.path.join("..", "bin", "pestpp-mou.exe"))
-    shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-mou.exe"),os.path.join("..","bin","pestpp-mou.exe"))
+    #shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-mou.exe"),os.path.join("..","bin","pestpp-mou.exe"))
 
     #prep_model()
     #run_and_plot_results(os.path.join("henry", "henry_temp"))
     #test_add_artrch("henry_template",write_tpl=False)
     #test_process_unc("henry_temp")
     #setup_pst()
-    #run_and_plot_results(os.path.join("mou_tests", "henry_template"))
+    #run_and_plot_results(os.path.join("henry", "henry_template"))
     start_workers_for_debug(False)
     #plot_pr_real()
     #plot_results(os.path.join("mou_tests","henry_master"))

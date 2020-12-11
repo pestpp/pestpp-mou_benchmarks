@@ -977,6 +977,37 @@ def invest_risk_obj():
     plot_results(os.path.join("mou_tests", "zdt1_test_master_riskobj_full"))
 
 
+def fail_test():
+    t_d = setup_problem("zdt1", additive_chance=True,risk_obj=False)
+    pst = pyemu.Pst(os.path.join(t_d, "zdt1.pst"))
+    pst.pestpp_options["opt_chance_points"] = "single"
+    pst.pestpp_options["opt_recalc_chance_every"] = 1000
+    pst.pestpp_options["opt_stack_size"] = 10
+    pst.pestpp_options["mou_generator"] = "de"
+    pst.pestpp_options["mou_population_size"] = 10
+    pst.pestpp_options["ies_debug_fail_subset"] = True
+    pst.pestpp_options["opt_risk"] = 0.95
+    pst.control_data.noptmax = 1
+    pst.write(os.path.join(t_d, "zdt1.pst"))
+    m1 = os.path.join("mou_tests", "zdt1_test_master_fail_1")
+    pyemu.os_utils.start_workers(t_d, exe_path, "zdt1.pst", 35, worker_root="mou_tests",
+                                 master_dir=m1, verbose=True)
+
+    t_d = setup_problem("zdt1", additive_chance=True, risk_obj=False)
+    pst = pyemu.Pst(os.path.join(t_d, "zdt1.pst"))
+    pst.pestpp_options["opt_chance_points"] = "all"
+    pst.pestpp_options["opt_recalc_chance_every"] = 1000
+    pst.pestpp_options["opt_stack_size"] = 10
+    pst.pestpp_options["mou_generator"] = "de"
+    pst.pestpp_options["mou_population_size"] = 10
+    pst.pestpp_options["ies_debug_fail_remainder"] = True
+    pst.pestpp_options["opt_risk"] = 0.95
+    pst.control_data.noptmax = 1
+    pst.write(os.path.join(t_d, "zdt1.pst"))
+    m1 = os.path.join("mou_tests", "zdt1_test_master_fail_1")
+    pyemu.os_utils.start_workers(t_d, exe_path, "zdt1.pst", 35, worker_root="mou_tests",
+                                 master_dir=m1, verbose=True)
+
 if __name__ == "__main__":
         
     #zdt1_test()
@@ -1004,7 +1035,7 @@ if __name__ == "__main__":
     #  master_d = run_problem_chance(case,noptmax=100)
     #  plot_results(master_d)
 
-    test_setup_and_three_iters()
+    #test_setup_and_three_iters()
     #test_restart_single()
     #test_restart_all()
     #setup_problem("water",additive_chance=True, risk_obj=True)
@@ -1013,8 +1044,9 @@ if __name__ == "__main__":
     #start_workers()
     #setup_problem("zdt1")
     #run_problem_chance_external_fixed("zdt1")
-    #run_problem_chance("zdt1",pop_size=10,noptmax=3,stack_size=10,
-    #                   risk_obj=True,recalc=100,chance_points="all")
+
+
+    fail_test()
     #run_problem_chance()
     #invest_risk_obj()
     #plot_results(os.path.join("mou_tests","zdt1_test_master"))
