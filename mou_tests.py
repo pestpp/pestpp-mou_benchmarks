@@ -611,7 +611,7 @@ def test_sorting_fake_problem():
     pyemu.os_utils.run("{0} test.pst".format(exe_path),cwd=test_d)
 
 
-def start_workers(case="srn"):
+def start_workers(case="zdt1"):
     pyemu.os_utils.start_workers(os.path.join("mou_tests","{0}_template".format(case)),
                                  exe_path, "{0}.pst".format(case),
                                   num_workers=25, worker_root="mou_tests",
@@ -978,6 +978,36 @@ def invest_risk_obj():
 
 
 def fail_test():
+    t_d = setup_problem("zdt1", additive_chance=True, risk_obj=False)
+    pst = pyemu.Pst(os.path.join(t_d, "zdt1.pst"))
+    pst.pestpp_options["opt_chance_points"] = "all"
+    pst.pestpp_options["opt_recalc_chance_every"] = 5
+    pst.pestpp_options["opt_stack_size"] = 10
+    pst.pestpp_options["mou_generator"] = "de"
+    pst.pestpp_options["mou_population_size"] = 50
+    pst.pestpp_options["ies_debug_fail_remainder"] = True
+    pst.pestpp_options["opt_risk"] = 0.95
+    pst.control_data.noptmax = 10
+    pst.write(os.path.join(t_d, "zdt1.pst"))
+    m1 = os.path.join("mou_tests", "zdt1_test_master_fail_1")
+    pyemu.os_utils.start_workers(t_d, exe_path, "zdt1.pst", 35, worker_root="mou_tests",
+                                 master_dir=m1, verbose=True)
+
+    t_d = setup_problem("zdt1", additive_chance=True, risk_obj=False)
+    pst = pyemu.Pst(os.path.join(t_d, "zdt1.pst"))
+    pst.pestpp_options["opt_chance_points"] = "all"
+    pst.pestpp_options["opt_recalc_chance_every"] = 5
+    pst.pestpp_options["opt_stack_size"] = 10
+    pst.pestpp_options["mou_generator"] = "de"
+    pst.pestpp_options["mou_population_size"] = 50
+    pst.pestpp_options["ies_debug_fail_subset"] = True
+    pst.pestpp_options["opt_risk"] = 0.95
+    pst.control_data.noptmax = 10
+    pst.write(os.path.join(t_d, "zdt1.pst"))
+    m1 = os.path.join("mou_tests", "zdt1_test_master_fail_1")
+    pyemu.os_utils.start_workers(t_d, exe_path, "zdt1.pst", 35, worker_root="mou_tests",
+                                 master_dir=m1, verbose=True)
+
     t_d = setup_problem("zdt1", additive_chance=True,risk_obj=False)
     pst = pyemu.Pst(os.path.join(t_d, "zdt1.pst"))
     pst.pestpp_options["opt_chance_points"] = "single"
@@ -987,26 +1017,14 @@ def fail_test():
     pst.pestpp_options["mou_population_size"] = 100
     pst.pestpp_options["ies_debug_fail_subset"] = True
     pst.pestpp_options["opt_risk"] = 0.95
-    pst.control_data.noptmax = 100
+    pst.control_data.noptmax = 10
     pst.write(os.path.join(t_d, "zdt1.pst"))
     m1 = os.path.join("mou_tests", "zdt1_test_master_fail_1")
     pyemu.os_utils.start_workers(t_d, exe_path, "zdt1.pst", 35, worker_root="mou_tests",
                                  master_dir=m1, verbose=True)
 
-    t_d = setup_problem("zdt1", additive_chance=True, risk_obj=False)
-    pst = pyemu.Pst(os.path.join(t_d, "zdt1.pst"))
-    pst.pestpp_options["opt_chance_points"] = "all"
-    pst.pestpp_options["opt_recalc_chance_every"] = 1000
-    pst.pestpp_options["opt_stack_size"] = 10
-    pst.pestpp_options["mou_generator"] = "de"
-    pst.pestpp_options["mou_population_size"] = 50
-    pst.pestpp_options["ies_debug_fail_remainder"] = True
-    pst.pestpp_options["opt_risk"] = 0.95
-    pst.control_data.noptmax = 100
-    pst.write(os.path.join(t_d, "zdt1.pst"))
-    m1 = os.path.join("mou_tests", "zdt1_test_master_fail_1")
-    pyemu.os_utils.start_workers(t_d, exe_path, "zdt1.pst", 35, worker_root="mou_tests",
-                                 master_dir=m1, verbose=True)
+
+
 
 if __name__ == "__main__":
         

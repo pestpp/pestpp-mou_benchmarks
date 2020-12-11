@@ -352,7 +352,7 @@ def start_workers_for_debug(with_master=True):
 
         pst.write(os.path.join(m_d,"henry.pst"))
     pyemu.os_utils.start_workers(t_d, exe_path, "henry.pst",
-                                  num_workers=15, worker_root="henry",
+                                  num_workers=12, worker_root="henry",
                                   port=4004)
 
 def plot_results(m_d):
@@ -443,12 +443,12 @@ if __name__ == "__main__":
     #shutil.copy2(os.path.join("..", "bin", "win", "pestpp-mou.exe"), os.path.join("..", "bin", "pestpp-mou.exe"))
     shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-mou.exe"),os.path.join("..","bin","pestpp-mou.exe"))
 
-    #prep_model()
-    #run_and_plot_results(os.path.join("henry", "henry_temp"))
+    prep_model()
+    run_and_plot_results(os.path.join("henry", "henry_temp"))
     #test_add_artrch("henry_template",write_tpl=False)
     #test_process_unc("henry_temp")
-    #setup_pst()
-    #run_and_plot_results(os.path.join("henry", "henry_template"))
+    setup_pst()
+    run_and_plot_results(os.path.join("henry", "henry_template"))
     start_workers_for_debug(True)
     #plot_pr_real()
     #plot_results(os.path.join("mou_tests","henry_master"))
