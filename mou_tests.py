@@ -534,7 +534,7 @@ def plot_results(master_d, sequence=False):
                            cwd=plt_dir)
 
 
-def run_problem_chance(test_case="zdt1",pop_size=100,noptmax=100,stack_size=50,
+def run_problem_chance(test_case="zdt1",pop_size=100,noptmax=10,stack_size=30,
                        chance_points="single",recalc=100,risk_obj=False,
                        risk=0.95):
     
@@ -728,14 +728,16 @@ def test_setup_and_three_iters():
         assert arc_df.shape[0] > 0, case
 
         # stack with single point and full reuse
-        m_d = run_problem_chance(case,noptmax=noptmax,pop_size=10,chance_points="single",recalc=200)
+        m_d = run_problem_chance(case,noptmax=noptmax,pop_size=10,chance_points="single",recalc=200,
+                                 stack_size=10)
         arc_file = os.path.join(m_d,"{0}.pareto.summary.csv".format(case))
         assert os.path.exists(arc_file), arc_file
         arc_df = pd.read_csv(arc_file,index_col=0)
         assert arc_df.shape[0] > 0, case
 
         # stack with single point, full reuse and risk obj
-        m_d = run_problem_chance(case,noptmax=noptmax,pop_size=10,chance_points="single",recalc=200, risk_obj=True)
+        m_d = run_problem_chance(case,noptmax=noptmax,pop_size=10,chance_points="single",recalc=200, 
+                                 risk_obj=True, stack_size=10)
         arc_file = os.path.join(m_d,"{0}.pareto.summary.csv".format(case))
         assert os.path.exists(arc_file), arc_file
         arc_df = pd.read_csv(arc_file,index_col=0)
@@ -984,10 +986,10 @@ def fail_test():
     pst.pestpp_options["opt_recalc_chance_every"] = 5
     pst.pestpp_options["opt_stack_size"] = 10
     pst.pestpp_options["mou_generator"] = "de"
-    pst.pestpp_options["mou_population_size"] = 50
+    pst.pestpp_options["mou_population_size"] = 30
     pst.pestpp_options["ies_debug_fail_remainder"] = True
     pst.pestpp_options["opt_risk"] = 0.95
-    pst.control_data.noptmax = 10
+    pst.control_data.noptmax = 8
     pst.write(os.path.join(t_d, "zdt1.pst"))
     m1 = os.path.join("mou_tests", "zdt1_test_master_fail_1")
     pyemu.os_utils.start_workers(t_d, exe_path, "zdt1.pst", 35, worker_root="mou_tests",
@@ -999,10 +1001,10 @@ def fail_test():
     pst.pestpp_options["opt_recalc_chance_every"] = 5
     pst.pestpp_options["opt_stack_size"] = 10
     pst.pestpp_options["mou_generator"] = "de"
-    pst.pestpp_options["mou_population_size"] = 50
+    pst.pestpp_options["mou_population_size"] = 30
     pst.pestpp_options["ies_debug_fail_subset"] = True
     pst.pestpp_options["opt_risk"] = 0.95
-    pst.control_data.noptmax = 10
+    pst.control_data.noptmax = 8
     pst.write(os.path.join(t_d, "zdt1.pst"))
     m1 = os.path.join("mou_tests", "zdt1_test_master_fail_1")
     pyemu.os_utils.start_workers(t_d, exe_path, "zdt1.pst", 35, worker_root="mou_tests",
@@ -1014,10 +1016,10 @@ def fail_test():
     pst.pestpp_options["opt_recalc_chance_every"] = 1000
     pst.pestpp_options["opt_stack_size"] = 10
     pst.pestpp_options["mou_generator"] = "de"
-    pst.pestpp_options["mou_population_size"] = 100
+    pst.pestpp_options["mou_population_size"] = 30
     pst.pestpp_options["ies_debug_fail_subset"] = True
     pst.pestpp_options["opt_risk"] = 0.95
-    pst.control_data.noptmax = 10
+    pst.control_data.noptmax = 8
     pst.write(os.path.join(t_d, "zdt1.pst"))
     m1 = os.path.join("mou_tests", "zdt1_test_master_fail_1")
     pyemu.os_utils.start_workers(t_d, exe_path, "zdt1.pst", 35, worker_root="mou_tests",
