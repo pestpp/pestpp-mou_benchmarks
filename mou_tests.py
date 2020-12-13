@@ -7,7 +7,7 @@ import pandas as pd
 import platform
 import pyemu
 
-import opt_test_suite_helper
+import opt_test_suite_helper as mou_suite_heler
 
 bin_path = os.path.join("test_bin")
 if "linux" in platform.platform().lower():
