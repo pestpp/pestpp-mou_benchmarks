@@ -236,7 +236,7 @@ def fail_test():
     pyemu.os_utils.start_workers(t_d, exe_path, "zdt1.pst", 35, worker_root="mou_tests",
                                  master_dir=m1, verbose=True)
 
-    t_d = setup_problem("zdt1", additive_chance=True, risk_obj=False)
+    t_d = mou_suite_helper.setup_problem("zdt1", additive_chance=True, risk_obj=False)
     pst = pyemu.Pst(os.path.join(t_d, "zdt1.pst"))
     pst.pestpp_options["opt_chance_points"] = "all"
     pst.pestpp_options["opt_recalc_chance_every"] = 5
