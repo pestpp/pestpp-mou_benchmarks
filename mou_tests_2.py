@@ -236,6 +236,24 @@ def fail_test():
     pyemu.os_utils.start_workers(t_d, exe_path, "zdt1.pst", 35, worker_root="mou_tests",
                                  master_dir=m1, verbose=True)
 
+    dp_file = os.path.join(m1,"zdt1.0.nested.par_stack.csv")
+    dp = pd.read_csv(dp_file,index_col=0)
+    op_file = os.path.join(m1,"zdt1.0.nested.obs_stack.csv")
+    op = pd.read_csv(dp_file,index_col=0)
+    print(dp.shape,op.shape)
+    assert dp.shape[0] == op.shape[0]
+    
+    shutil.copy2(dp_file,os.path.join(t_d,"par_stack.csv"))
+    shutil.copy2(op_file,os.path.join(t_d,"obs_stack.csv"))
+    pst.pestpp_options["opt_par_stack"] = "par_stack.csv"
+    pst.pestpp_options["opt_obs_stack"] = "obs_stack.csv"
+    pst.control_data.noptmax = 2
+    pst.write(os.path.join(t_d, "zdt1.pst"))
+    m1 = os.path.join("mou_tests", "zdt1_test_master_fail_1")
+    pyemu.os_utils.start_workers(t_d, exe_path, "zdt1.pst", 35, worker_root="mou_tests",
+                                 master_dir=m1, verbose=True)
+
+
     t_d = mou_suite_helper.setup_problem("zdt1", additive_chance=True, risk_obj=False)
     pst = pyemu.Pst(os.path.join(t_d, "zdt1.pst"))
     pst.pestpp_options["opt_chance_points"] = "all"
@@ -246,6 +264,24 @@ def fail_test():
     pst.pestpp_options["ies_debug_fail_subset"] = True
     pst.pestpp_options["opt_risk"] = 0.95
     pst.control_data.noptmax = 8
+    pst.write(os.path.join(t_d, "zdt1.pst"))
+    m1 = os.path.join("mou_tests", "zdt1_test_master_fail_1")
+    pyemu.os_utils.start_workers(t_d, exe_path, "zdt1.pst", 35, worker_root="mou_tests",
+                                 master_dir=m1, verbose=True)
+
+
+    dp_file = os.path.join(m1,"zdt1.0.nested.par_stack.csv")
+    dp = pd.read_csv(dp_file,index_col=0)
+    op_file = os.path.join(m1,"zdt1.0.nested.obs_stack.csv")
+    op = pd.read_csv(dp_file,index_col=0)
+    print(dp.shape,op.shape)
+    assert dp.shape[0] == op.shape[0]
+    
+    shutil.copy2(dp_file,os.path.join(t_d,"par_stack.csv"))
+    shutil.copy2(op_file,os.path.join(t_d,"obs_stack.csv"))
+    pst.pestpp_options["opt_par_stack"] = "par_stack.csv"
+    pst.pestpp_options["opt_obs_stack"] = "obs_stack.csv"
+    pst.control_data.noptmax = 2
     pst.write(os.path.join(t_d, "zdt1.pst"))
     m1 = os.path.join("mou_tests", "zdt1_test_master_fail_1")
     pyemu.os_utils.start_workers(t_d, exe_path, "zdt1.pst", 35, worker_root="mou_tests",

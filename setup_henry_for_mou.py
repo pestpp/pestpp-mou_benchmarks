@@ -18,8 +18,11 @@ elif "darwin" in platform.platform().lower():
 else:
     bin_path = os.path.join(bin_path,"win")
 
-bin_path = os.path.abspath("test_bin")
+#TODO:update mf6 bins for transport
+bin_path = os.path.abspath(bin_path)
 os.environ["PATH"] += os.pathsep + bin_path
+mf_exe = os.path.join(bin_path,"mf6")
+print(os.environ["PATH"])
 
 
 bin_path = os.path.join("..","..","..","bin")
@@ -38,7 +41,7 @@ test_root = "henry"
 org_d = os.path.join("henry","ex-gwt-henry-b")
 
 def run_and_plot_results(cwd):
-    pyemu.os_utils.run("mf6",cwd=cwd)
+    pyemu.os_utils.run("mf6",cwd=cwd,verbose=True)
     plt_dir = "plots"
     if not os.path.exists(plt_dir):
         os.mkdir(plt_dir)
@@ -443,12 +446,12 @@ if __name__ == "__main__":
     #shutil.copy2(os.path.join("..", "bin", "win", "pestpp-mou.exe"), os.path.join("..", "bin", "pestpp-mou.exe"))
     shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-mou.exe"),os.path.join("..","bin","pestpp-mou.exe"))
 
-    prep_model()
-    run_and_plot_results(os.path.join("henry", "henry_temp"))
+    #prep_model()
+    #run_and_plot_results(os.path.join("henry", "henry_temp"))
     #test_add_artrch("henry_template",write_tpl=False)
     #test_process_unc("henry_temp")
-    setup_pst()
-    run_and_plot_results(os.path.join("henry", "henry_template"))
+    #setup_pst()
+    #run_and_plot_results(os.path.join("henry", "henry_template"))
     start_workers_for_debug(True)
     #plot_pr_real()
     #plot_results(os.path.join("mou_tests","henry_master"))
