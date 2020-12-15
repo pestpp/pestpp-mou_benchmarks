@@ -219,7 +219,46 @@ def invest_risk_obj():
                                  master_dir=m1,verbose=True)
     plot_results(os.path.join("mou_tests", "zdt1_test_master_riskobj_full"))
 
+def chance_consistency_test():
+    t_d = mou_suite_helper.setup_problem("constr", additive_chance=True, risk_obj=False)
+    pst = pyemu.Pst(os.path.join(t_d, "constr.pst"))
+    pst.pestpp_options["opt_chance_points"] = "all"
+    pst.pestpp_options["opt_recalc_chance_every"] = 5
+    pst.pestpp_options["opt_stack_size"] = 10
+    pst.pestpp_options["mou_generator"] = "de"
+    pst.pestpp_options["mou_population_size"] = 10
+    pst.pestpp_options["opt_risk"] = 0.95
+    pst.control_data.noptmax = -1
+    pst.write(os.path.join(t_d, "constr.pst"))
+    m1 = os.path.join("mou_tests", "constr_test_master_fail_3")
+    pyemu.os_utils.start_workers(t_d, exe_path, "constr.pst", 35, worker_root="mou_tests",
+                                 master_dir=m1, verbose=True)
 
+
+    
+    tag = "nearest-to-mean single point"
+    with open(os.path.join(m1,"constr.rec"),'r') as f:
+        while True:
+            line = f.readline()
+            if line == "":
+                raise Exception()
+            if tag in line:
+                mname = line.strip().split()[2]
+                for _ in range(4):
+                    f.readline()
+                o1 = float(f.readline().strip().split()[-1])
+                o2 = float(f.readline().strip().split()[-1])
+                break
+        
+
+    print(mname,o1,o2)
+    df = pd.read_csv(os.path.join(m1,"constr.0.obs_pop.chance.csv"),index_col=0)
+    d1 = np.abs(df.loc[mname,:].iloc[0] - o1)
+    d2 = np.abs(df.loc[mname,:].iloc[1] - o2)
+    print(mname,o1,d1,o2,d2)
+    assert d1 < 1.e-6
+    assert d2 < 1.e-6
+    
 def fail_test():
     t_d = mou_suite_helper.setup_problem("zdt1", additive_chance=True, risk_obj=False)
     pst = pyemu.Pst(os.path.join(t_d, "zdt1.pst"))
@@ -342,8 +381,10 @@ if __name__ == "__main__":
     #setup_problem("zdt1")
     #run_problem_chance_external_fixed("zdt1")
 
+    chance_consistency_test()
 
-    fail_test()
+    #fail_test()
+    #test_restart_all()
     #run_problem_chance()
     #invest_risk_obj()
     #plot_results(os.path.join("mou_tests","zdt1_test_master"))
