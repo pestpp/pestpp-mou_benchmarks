@@ -37,7 +37,7 @@ test_root = "mou_tests"
 
 
 def test_setup_and_three_iters():
-    cases = ["water","constr","zdt1","zdt2","zdt3","zdt4","zdt6","sch","srn","ackley","rosen"]
+    cases = ["water","constr","zdt1","zdt2","zdt3","zdt4","zdt6","sch","srn","ackley","rosen","tkn"]
     noptmax = 3
     for case in cases:
         print("\n\n\n\n\n-----------------------------------------")

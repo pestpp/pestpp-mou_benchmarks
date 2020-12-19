@@ -344,6 +344,22 @@ def fail_test():
 
 
 
+def invest():
+    cases = ["water","zdt1","fon","kur","sch","srn","tkn","constr","zdt2","zdt3","zdt4","zdt6"]
+    noptmax = 100
+    for case in cases:
+        #t_d = mou_suite_helper.setup_problem("fon")
+        mou_suite_helper.run_problem(case,noptmax=noptmax)
+        # mou_suite_helper.run_problem_chance(case, noptmax=noptmax,risk_obj=True,chance_points="all",
+        #                                     recalc=10000)
+        mou_suite_helper.run_problem_chance(case, noptmax=noptmax, risk_obj=True, chance_points="single",
+                                            recalc=10000)
+        mou_suite_helper.run_problem_chance(case, noptmax=noptmax, risk_obj=False, chance_points="all",
+                                            recalc=10000)
+        mou_suite_helper.run_problem_chance(case, noptmax=noptmax, risk_obj=False, chance_points="single",
+                                            recalc=10000)
+
+
 if __name__ == "__main__":
         
     #zdt1_test()
@@ -352,9 +368,9 @@ if __name__ == "__main__":
     # setup_zdt_problem("zdt3",30)
     # setup_zdt_problem("zdt4",10)
     # setup_zdt_problem("zdt6",10)
-    shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-mou.exe"),os.path.join("..","bin","pestpp-mou.exe"))
+    #shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-mou.exe"),os.path.join("..","bin","pestpp-mou.exe"))
 
-    #shutil.copy2(os.path.join("..","bin","win","pestpp-mou.exe"),os.path.join("..","bin","pestpp-mou.exe"))
+    shutil.copy2(os.path.join("..","bin","win","pestpp-mou.exe"),os.path.join("..","bin","pestpp-mou.exe"))
     
     #for case in ["srn","constr","zdt4","zdt3","zdt2","zdt1"]:
     #   master_d = run_problem(case,noptmax=100)
@@ -381,7 +397,9 @@ if __name__ == "__main__":
     #setup_problem("zdt1")
     #run_problem_chance_external_fixed("zdt1")
 
-    chance_consistency_test()
+    #chance_consistency_test()
+
+
 
     #fail_test()
     #test_restart_all()
@@ -389,7 +407,7 @@ if __name__ == "__main__":
     #invest_risk_obj()
     #plot_results(os.path.join("mou_tests","zdt1_test_master"))
     #plot_results(os.path.join("mou_tests", "zdt1_test_master_riskobj"))
-    #invest()
+    invest()
     # run_problem_chance("zdt1",chance_points="all", noptmax=300,
     #                    recalc=1000,risk_obj=True)
     #

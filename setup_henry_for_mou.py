@@ -452,7 +452,7 @@ if __name__ == "__main__":
     #test_process_unc("henry_temp")
     #setup_pst()
     #run_and_plot_results(os.path.join("henry", "henry_template"))
-    start_workers_for_debug(True)
+    start_workers_for_debug(False)
     #plot_pr_real()
     #plot_results(os.path.join("mou_tests","henry_master"))
     #invest()

@@ -32,6 +32,23 @@ port = 4021
 test_root = "mou_tests"
 
 
+def fon(x):
+    f1 = 1.0 - np.exp(-1.0 * np.sum(np.power(x - (1.0 / np.sqrt(3.0)), 2)))
+    f2 = 1.0 - np.exp(-1.0 * np.sum(np.power(x + (1.0 / np.sqrt(3.0)), 2)))
+    return (np.array([f1]),np.array([f2])),[]
+
+def kur(x):
+    xsq = np.power(x,2)
+    xsq_sum = xsp[:-1] + xsp[1:]
+    f1 = np.sum(-10. * np.exp(-0.2 * np.sqrt(xsq_sum)))
+    f2 = np.sum(np.power(np.abs(x),0.8) + (5.0 * np.sin(np.power(x,3))))
+    return (np.array([f1]), np.array([f2])), []
+
+def tkn(x):
+    g1 = -np.power(x[0],2) - np.power(x[1],2) + 1.0 + 0.1 * np.cos(16. * np.arctan(x[0]/x[1]))
+    g2 = np.power((x[0] - 0.5),2) + np.power((x[1]-0.5),2)
+    return (x[0],x[1]),[g1,g2]
+
 def water(x):
     f1 = (107680.37 * (x[1] + x[2])) + 61704.67
     f2 = 3000.0 * x[0]
@@ -127,10 +144,15 @@ def setup_problem(name,additive_chance=False, risk_obj=False):
         num_dv = 2
     elif name.lower() == "sch":
         num_dv = 1
-
     elif name.lower() == "water":
         num_dv = 3
     elif name.lower() in ["rosen","ackley"]:
+        num_dv = 2
+    elif name.lower() == "tkn":
+        num_dv = 2
+    elif name.lower() == "fon":
+        num_dv = 3
+    elif name.lower() == "pol":
         num_dv = 2
 
     # write a generic template file for the dec vars
@@ -146,7 +168,7 @@ def setup_problem(name,additive_chance=False, risk_obj=False):
         f.write("ptf ~\n")
         f.write("obj1_add_par ~   obj1_add_par   ~\n")
         f.write("obj2_add_par ~   obj2_add_par   ~\n")
-        if name.lower() in ["srn","constr"]:
+        if name.lower() in ["srn","constr","tkn"]:
             f.write("constr1_add_par ~   constr1_add_par   ~\n")
             f.write("constr2_add_par ~   constr2_add_par   ~\n")
         elif name.lower() == "water":
@@ -156,7 +178,7 @@ def setup_problem(name,additive_chance=False, risk_obj=False):
     with open(os.path.join(test_d,additive_chance_tpl_file.replace(".tpl","")),'w') as f:
         f.write("obj1_add_par 0.0\n")
         f.write("obj2_add_par 0.0\n")
-        if name.lower() in ["srn","constr"]:
+        if name.lower() in ["srn","constr","tkn"]:
             f.write("constr1_add_par 0.0\n")
             f.write("constr2_add_par 0.0\n")
         elif name.lower() == "water":
@@ -185,7 +207,7 @@ def setup_problem(name,additive_chance=False, risk_obj=False):
             f.write("l1 w !obj_1!\n")
             if name.lower() not in ["rosen","ackley"]:
                 f.write("l1 w !obj_2!\n")
-            if name.lower() == "srn":
+            if name.lower() in ["srn","tkn"]:
                 f.write("l1 w !const_1!\n")
                 f.write("l1 w !const_2!\n")
         
@@ -252,13 +274,31 @@ def setup_problem(name,additive_chance=False, risk_obj=False):
         par.loc[pst.par_names[1:],"parubnd"] = 5.0
         par.loc[pst.par_names[1:],"parlbnd"] = -5.0
 
-    if name.lower() == "srn":
+    elif name.lower() == "srn":
         par.loc[:,"parubnd"] = 20.0
         par.loc[:,"parlbnd"] = -20.0
         par.loc[:,"partrans"] = "none"
         par.loc[:,"parval1"] = 5.0
 
-    if name.lower() == "constr":
+    elif name.lower() == "tkn":
+        par.loc[:,"parubnd"] = np.pi - 1.0e-10
+        par.loc[:,"parlbnd"] = 1.0e-10
+        par.loc[:,"partrans"] = "none"
+        par.loc[:,"parval1"] = 1.0
+
+    elif name.lower() == "fon":
+        par.loc[:,"parubnd"] = 4
+        par.loc[:,"parlbnd"] = -4
+        par.loc[:,"partrans"] = "none"
+        par.loc[:,"parval1"] = 1.0
+
+    elif name.lower() == "pol":
+        par.loc[:,"parubnd"] = np.pi
+        par.loc[:,"parlbnd"] = -np.pi
+        par.loc[:,"partrans"] = "none"
+        par.loc[:,"parval1"] = 1.0
+
+    elif name.lower() == "constr":
         par.loc["dv_0","parlbnd"] = 0.1
         par.loc["dv_0","parubnd"] = 1.0
         par.loc["dv_0","parval1"] = 0.5
@@ -278,13 +318,13 @@ def setup_problem(name,additive_chance=False, risk_obj=False):
         pi.loc["const_2","obgnme"] = "greater_than"
         
       
-    if name.lower() == "sch":
+    elif name.lower() == "sch":
         par.loc[:,"parubnd"] = 1000.0
         par.loc[:,"parlbnd"] = -1000.0
         par.loc[:,"partrans"] = "none"
         par.loc[:,"parval1"] = 0.0
 
-    if name.lower() == "water":
+    elif name.lower() == "water":
         par.loc["dv_0","parlbnd"] = 0.01
         par.loc["dv_0","parubnd"] = 0.45
         par.loc["dv_0","parval1"] = 0.2
@@ -295,7 +335,7 @@ def setup_problem(name,additive_chance=False, risk_obj=False):
         par.loc["dv_2","parubnd"] = 0.1
         par.loc["dv_2","parval1"] = 0.05
 
-    if name.lower() in ["rosen","ackley"]:
+    elif name.lower() in ["rosen","ackley"]:
         par.loc["dv_0","parlbnd"] = -4.
         par.loc["dv_0","parubnd"] = 4
         par.loc["dv_0","parval1"] = -1.
@@ -348,6 +388,9 @@ def setup_problem(name,additive_chance=False, risk_obj=False):
     if name.lower() == "srn":
         obs.loc["const_1","obsval"] = 225
         obs.loc["const_2","obsval"] = -10
+    if name.lower() == "tkn":
+        obs.loc["const_1","obsval"] = 0.0
+        obs.loc["const_2","obsval"] = 0.5
     if name.lower() == "water":
         obs.loc["const_1","obsval"] = 1
         obs.loc["const_2","obsval"] = 1
@@ -549,7 +592,7 @@ def run_problem_chance(test_case="zdt1",pop_size=100,noptmax=10,stack_size=30,
     pst.pestpp_options["opt_recalc_chance_every"] = recalc
     pst.write(os.path.join(test_d,"{0}.pst".format(test_case)))
     #pyemu.os_utils.run("{0} {1}.pst".format(exe_path,test_case),cwd=test_d)
-    master_d = test_d.replace("template","master_chance_{0:04.3f}_{1}".format(risk,risk_obj))
+    master_d = test_d.replace("template","master_chance_{0:04.3f}_{1}_{2}".format(risk,risk_obj,chance_points))
     pyemu.os_utils.start_workers(test_d, exe_path, "{0}.pst".format(test_case), 
                                   num_workers=35, master_dir=master_d,worker_root=test_root,
                                   port=port)
