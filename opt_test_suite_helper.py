@@ -39,7 +39,7 @@ def fon(x):
 
 def kur(x):
     xsq = np.power(x,2)
-    xsq_sum = xsp[:-1] + xsp[1:]
+    xsq_sum = xsq[:-1] + xsq[1:]
     f1 = np.sum(-10. * np.exp(-0.2 * np.sqrt(xsq_sum)))
     f2 = np.sum(np.power(np.abs(x),0.8) + (5.0 * np.sin(np.power(x,3))))
     return (np.array([f1]), np.array([f2])), []
@@ -152,7 +152,7 @@ def setup_problem(name,additive_chance=False, risk_obj=False):
         num_dv = 2
     elif name.lower() == "fon":
         num_dv = 3
-    elif name.lower() == "pol":
+    elif name.lower() == "kur":
         num_dv = 2
 
     # write a generic template file for the dec vars
@@ -292,9 +292,9 @@ def setup_problem(name,additive_chance=False, risk_obj=False):
         par.loc[:,"partrans"] = "none"
         par.loc[:,"parval1"] = 1.0
 
-    elif name.lower() == "pol":
-        par.loc[:,"parubnd"] = np.pi
-        par.loc[:,"parlbnd"] = -np.pi
+    elif name.lower() == "kur":
+        par.loc[:,"parubnd"] = 5
+        par.loc[:,"parlbnd"] = -5
         par.loc[:,"partrans"] = "none"
         par.loc[:,"parval1"] = 1.0
 
@@ -449,17 +449,17 @@ def run_problem_chance_external_fixed(test_case="zdt1"):
                                   port=port)
     return master_d
 
-def run_problem(test_case="zdt1",pop_size=100,noptmax=100):
+def run_problem(test_case="zdt1",pop_size=100,noptmax=100,generator="de"):
     test_d = setup_problem(test_case,additive_chance=False)
     pst = pyemu.Pst(os.path.join(test_d,"{0}.pst".format(test_case)))
     pst.control_data.noptmax = noptmax
     pst.pestpp_options["mou_population_size"] = pop_size
     pst.pestpp_options["panther_echo"] = False
-    pst.pestpp_options["mou_generator"] = "de"
+    pst.pestpp_options["mou_generator"] = generator
     pst.pestpp_options["panther_agent_freeze_on_fail"] = True
     pst.write(os.path.join(test_d,"{0}.pst".format(test_case)))
     #pyemu.os_utils.run("{0} {1}.pst".format(exe_path,test_case),cwd=test_d)
-    master_d = test_d.replace("template","master")
+    master_d = test_d.replace("template","master_{0}".format(generator))
     pyemu.os_utils.start_workers(test_d, exe_path, "{0}.pst".format(test_case), 
                                   num_workers=35, master_dir=master_d,worker_root=test_root,
                                   port=port)
