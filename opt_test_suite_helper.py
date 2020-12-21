@@ -456,7 +456,7 @@ def run_problem(test_case="zdt1",pop_size=100,noptmax=100,generator="de",env="ns
     pst.pestpp_options["mou_population_size"] = pop_size
     pst.pestpp_options["panther_echo"] = False
     pst.pestpp_options["mou_generator"] = generator
-    pst.pestpp_optoins["mou_env"] = env
+    pst.pestpp_options["mou_env"] = env
     pst.pestpp_options["panther_agent_freeze_on_fail"] = True
     pst.write(os.path.join(test_d,"{0}.pst".format(test_case)))
     #pyemu.os_utils.run("{0} {1}.pst".format(exe_path,test_case),cwd=test_d)
