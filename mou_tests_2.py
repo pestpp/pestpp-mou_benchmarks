@@ -371,6 +371,11 @@ def invest_2():
         # mou_suite_helper.run_problem_chance(case, noptmax=noptmax,risk_obj=True,chance_points="all",
         #                                     recalc=10000)
 
+def invest_3():
+    mou_suite_helper.run_problem("zdt1", generator="de", env="spea")
+    mou_suite_helper.run_problem("zdt1", generator="sbx", env="spea")
+    mou_suite_helper.run_problem("zdt1", generator="de", env="nsga")
+    mou_suite_helper.run_problem("zdt1",generator="sbx",env="nsga")
 
 if __name__ == "__main__":
         
@@ -381,66 +386,8 @@ if __name__ == "__main__":
     # setup_zdt_problem("zdt4",10)
     # setup_zdt_problem("zdt6",10)
     shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-mou.exe"),os.path.join("..","bin","pestpp-mou.exe"))
-
-    #shutil.copy2(os.path.join("..","bin","win","pestpp-mou.exe"),os.path.join("..","bin","pestpp-mou.exe"))
-    
-    #for case in ["srn","constr","zdt4","zdt3","zdt2","zdt1"]:
-    #   master_d = run_problem(case,noptmax=100)
-    #   plot_results(master_d)
-
-    #setup_problem("srn",additive_chance=True)
-    #master_d = run_problem_chance("srn",noptmax=5,chance_points="all",pop_size=10,stack_size=10,recalc=3)
-    #plot_results(os.path.join("mou_tests","zdt1_invest"))
-    #plot_results(os.path.join("mou_tests", "zdt1_test_master_riskobj_full"),sequence=True)
-    #invest_risk_obj()
-    #master_d = os.path.join("mou_tests","zdt6_master")
-    #plot_results(master_d)
-    #for case in ["zdt1","zdt2","zdt3","zdt4","zdt6","sch","srn","constr"]:
-    #  master_d = run_problem_chance(case,noptmax=100)
-    #  plot_results(master_d)
-
-    #test_setup_and_three_iters()
-    #test_restart_single()
-    #test_restart_all()
-    #setup_problem("water",additive_chance=True, risk_obj=True)
-    #setup_problem("zdt1",30, additive_chance=True)
-    #test_sorting_fake_problem()
-    #start_workers()
-    #setup_problem("zdt1")
-    #run_problem_chance_external_fixed("zdt1")
-
+    #invest_2()
     #chance_consistency_test()
-
-
-
-    #fail_test()
-    #test_restart_all()
-    #run_problem_chance()
-    #invest_risk_obj()
-    #plot_results(os.path.join("mou_tests","zdt1_test_master"))
-    #plot_results(os.path.join("mou_tests", "zdt1_test_master_riskobj"))
-    invest_2()
-    # run_problem_chance("zdt1",chance_points="all", noptmax=300,
-    #                    recalc=1000,risk_obj=True)
-    #
-    # for r in np.linspace(0.011,0.985,20):
-    #     if r == 0.5:
-    #         r = 0.51
-    #     run_problem_chance("zdt1", chance_points="all", noptmax=100,
-    #                        recalc=1000, risk_obj=False,risk=r)
-    # plot_results(os.path.join("mou_tests","zdt1_master"))
-    #risk_compare_plot()
-    #plot_results(os.path.join("mou_tests","zdt1_master_chance"))
-    
-    #run_problem_chance("constr",noptmax=10,risk_obj=True)
-    #plot_results(os.path.join("mou_tests","zdt1_master"))
-    #setup_problem("constr")
-    #run_problem("constr",noptmax=100)
-    #master_d = run_single_obj_sch_prob(risk_obj=True)
-    #master_d = os.path.join("mou_tests","sch_master")
-    #plot_results_single(master_d)
-    #setup_problem("ackley")
-    #run_problem("ackley")
-    #master_d = os.path.join("mou_tests","rosen_master")
-    #plot_results_single(master_d)
+    invest_3()
+    # mou_suite_helper.start_workers("zdt1")
 
