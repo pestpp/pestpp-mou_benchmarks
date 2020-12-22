@@ -372,10 +372,16 @@ def invest_2():
         #                                     recalc=10000)
 
 def invest_3():
-    mou_suite_helper.run_problem("zdt1", generator="de", env="spea")
-    mou_suite_helper.run_problem("zdt1", generator="sbx", env="spea")
-    mou_suite_helper.run_problem("zdt1", generator="de", env="nsga")
-    mou_suite_helper.run_problem("zdt1",generator="sbx",env="nsga")
+    cases = ["zdt1","zdt2", "zdt3", "zdt4", "zdt6","sch", "srn", "tkn", "constr"]
+    for case in cases:
+        mou_suite_helper.run_problem(case, generator="pm", env="spea")
+        mou_suite_helper.run_problem(case, generator="pm", env="nsga")
+        mou_suite_helper.run_problem(case, generator="sbx", env="spea")
+        mou_suite_helper.run_problem(case, generator="sbx", env="nsga")
+        mou_suite_helper.run_problem(case, generator="de", env="spea")
+        mou_suite_helper.run_problem(case, generator="de", env="nsga")
+
+
 
 if __name__ == "__main__":
         

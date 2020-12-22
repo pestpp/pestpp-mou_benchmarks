@@ -456,11 +456,11 @@ def run_problem(test_case="zdt1",pop_size=100,noptmax=100,generator="de",env="ns
     pst.pestpp_options["mou_population_size"] = pop_size
     pst.pestpp_options["panther_echo"] = False
     pst.pestpp_options["mou_generator"] = generator
-    pst.pestpp_options["mou_env"] = env
+    pst.pestpp_options["mou_env_selector"] = env
     pst.pestpp_options["panther_agent_freeze_on_fail"] = True
     pst.write(os.path.join(test_d,"{0}.pst".format(test_case)))
     #pyemu.os_utils.run("{0} {1}.pst".format(exe_path,test_case),cwd=test_d)
-    master_d = test_d.replace("template","master_generator={0}_env={1}_popsize={2},risk=0.5".format(generator,env,pop_size))
+    master_d = test_d.replace("template","master_generator={0}_env={1}_popsize={2}_risk=0.5".format(generator,env,pop_size))
     pyemu.os_utils.start_workers(test_d, exe_path, "{0}.pst".format(test_case), 
                                   num_workers=35, master_dir=master_d,worker_root=test_root,
                                   port=port)
@@ -590,7 +590,7 @@ def run_problem_chance(test_case="zdt1",pop_size=100,noptmax=10,stack_size=30,
     pst.pestpp_options["opt_chance_points"] = chance_points
     pst.pestpp_options["panther_echo"] = False
     pst.pestpp_options["mou_generator"] = generator
-    pst.pestpp_options["mou_env"] = env
+    pst.pestpp_options["mou_env_selector"] = env
     pst.pestpp_options["opt_recalc_chance_every"] = recalc
     pst.write(os.path.join(test_d,"{0}.pst".format(test_case)))
     master_d = test_d.replace("template","master_risk={0:04.3f}_riskobj={1}_chancepoints={2}_generator={3}_env={4}".\
@@ -783,5 +783,5 @@ if __name__ == "__main__":
     # setup_zdt_problem("zdt4",10)
     # setup_zdt_problem("zdt6",10)
     shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-mou.exe"),os.path.join("..","bin","pestpp-mou.exe"))
-    start_workers("constr")
+    start_workers("zdt1")
     
