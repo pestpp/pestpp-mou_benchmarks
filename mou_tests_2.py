@@ -372,16 +372,22 @@ def invest_2():
         #                                     recalc=10000)
 
 def invest_3():
-    cases = ["zdt1","zdt2", "zdt3", "zdt4", "zdt6","sch", "srn", "tkn", "constr"]
+    # cases = ["zdt2", "zdt3", "zdt4", "zdt6", "sch", "srn", "tkn", "constr"]
+    # for case in cases:
+    #     mou_suite_helper.run_problem(case, generator="sbx", env="spea")
+    #     mou_suite_helper.run_problem(case, generator="sbx", env="nsga")
+    #     mou_suite_helper.run_problem(case, generator="de,sbx,pm", env="nsga")
+    #     mou_suite_helper.run_problem(case, generator="de,sbx,pm", env="spea")
+    cases = ["zdt1", "zdt3", "srn", "tkn", "constr"]
     for case in cases:
+        mou_suite_helper.run_problem(case, generator="de", env="spea")
+        mou_suite_helper.run_problem(case, generator="de", env="nsga")
         mou_suite_helper.run_problem(case, generator="pm", env="spea")
         mou_suite_helper.run_problem(case, generator="pm", env="nsga")
         mou_suite_helper.run_problem(case, generator="sbx", env="spea")
         mou_suite_helper.run_problem(case, generator="sbx", env="nsga")
-        mou_suite_helper.run_problem(case, generator="de", env="spea")
-        mou_suite_helper.run_problem(case, generator="de", env="nsga")
-
-
+        mou_suite_helper.run_problem(case, generator="de,sbx,pm", env="nsga")
+        mou_suite_helper.run_problem(case, generator="de,sbx,pm", env="spea")
 
 if __name__ == "__main__":
         
@@ -391,7 +397,10 @@ if __name__ == "__main__":
     # setup_zdt_problem("zdt3",30)
     # setup_zdt_problem("zdt4",10)
     # setup_zdt_problem("zdt6",10)
-    shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-mou.exe"),os.path.join("..","bin","pestpp-mou.exe"))
+    #shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-mou.exe"),os.path.join("..","bin","pestpp-mou.exe"))
+    shutil.copy2(os.path.join("..", "bin", "win", "pestpp-mou.exe"),
+                 os.path.join("..", "bin", "pestpp-mou.exe"))
+
     #invest_2()
     #chance_consistency_test()
     invest_3()

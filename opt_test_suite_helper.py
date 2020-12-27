@@ -129,7 +129,7 @@ def helper(func):
         for i,constr in enumerate(constrs):
             f.write("constr_{0} {1}\n".format(i+1,float(constr)))
 
-def setup_problem(name,additive_chance=False, risk_obj=False):
+def setup_problem(name,additive_chance=False, risk_obj=False, self_adaptive=False):
     test_d = os.path.join(test_root,"{0}_template".format(name))
     if os.path.exists(test_d):
         shutil.rmtree(test_d)
@@ -189,6 +189,14 @@ def setup_problem(name,additive_chance=False, risk_obj=False):
         with open(risk_tpl_file, 'w') as f:
             f.write("ptf ~\n")
             f.write("_risk_ ~   _risk_   ~\n")
+
+    if self_adaptive:
+        adaptive_tpl_file = os.path.join(test_d,"adaptive.dat.tpl")
+        with open(adaptive_tpl_file, 'w') as f:
+            f.write("ptf ~\n")
+            f.write("_de_f_ ~   _de_f_   ~\n")
+            f.write("_cr_ ~   _cr_   ~\n")
+            f.write("_mr_ ~   _mr_   ~\n")
 
     with open(os.path.join(test_d,tpl_file.replace(".tpl","")),'w') as f:
         for i in range(num_dv):
@@ -377,6 +385,22 @@ def setup_problem(name,additive_chance=False, risk_obj=False):
         par.loc[rdf.parnme, "parchglim"] = "relative"
         par.loc[rdf.parnme, "pargp"] = "decvars"
         pst.add_pi_equation(["_risk_"],"_risk_",obs_group="greater_than")
+
+    if self_adaptive:
+        addf = pst.add_parameters(adaptive_tpl_file,pst_path=".")
+        par = pst.parameter_data
+        par.loc[addf.parnme,"partrans"] = "none"
+        par.loc[addf.parnme, "parchglim"] = "relative"
+        par.loc[addf.parnme, "pargp"] = "decvars"
+        par.loc["_de_f_", "parubnd"] = 1.0
+        par.loc["_de_f_", "parval1"] = 0.8
+        par.loc["_de_f_", "parlbnd"] = 0.5
+        par.loc["_cr_", "parubnd"] = 1.0
+        par.loc["_cr_", "parval1"] = 0.9
+        par.loc["_cr_", "parlbnd"] = 0.8
+        par.loc["_mr_", "parubnd"] = (1.0/par.shape[0]) * 1.25
+        par.loc["_mr_", "parval1"] = (1.0/par.shape[0])
+        par.loc["_mr_", "parlbnd"] = 0.01
 
 
 
@@ -783,5 +807,5 @@ if __name__ == "__main__":
     # setup_zdt_problem("zdt4",10)
     # setup_zdt_problem("zdt6",10)
     shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-mou.exe"),os.path.join("..","bin","pestpp-mou.exe"))
-    start_workers("zdt1")
+    start_workers("zdt2")
     
