@@ -473,8 +473,8 @@ def run_problem_chance_external_fixed(test_case="zdt1"):
                                   port=port)
     return master_d
 
-def run_problem(test_case="zdt1",pop_size=100,noptmax=100,generator="de",env="nsga"):
-    test_d = setup_problem(test_case,additive_chance=False)
+def run_problem(test_case="zdt1",pop_size=100,noptmax=100,generator="de",env="nsga", self_adaptive=False):
+    test_d = setup_problem(test_case,additive_chance=False,risk_obj=False,self_adaptive=self_adaptive)
     pst = pyemu.Pst(os.path.join(test_d,"{0}.pst".format(test_case)))
     pst.control_data.noptmax = noptmax
     pst.pestpp_options["mou_population_size"] = pop_size
@@ -484,7 +484,8 @@ def run_problem(test_case="zdt1",pop_size=100,noptmax=100,generator="de",env="ns
     pst.pestpp_options["panther_agent_freeze_on_fail"] = True
     pst.write(os.path.join(test_d,"{0}.pst".format(test_case)))
     #pyemu.os_utils.run("{0} {1}.pst".format(exe_path,test_case),cwd=test_d)
-    master_d = test_d.replace("template","master_generator={0}_env={1}_popsize={2}_risk=0.5".format(generator,env,pop_size))
+    master_d = test_d.replace("template","master_generator={0}_env={1}_popsize={2}_risk=0.5_riskobj=False_adaptive={3}".
+                              format(generator,env,pop_size,self_adaptive))
     pyemu.os_utils.start_workers(test_d, exe_path, "{0}.pst".format(test_case), 
                                   num_workers=35, master_dir=master_d,worker_root=test_root,
                                   port=port)
@@ -603,9 +604,9 @@ def plot_results(master_d, sequence=False):
 
 def run_problem_chance(test_case="zdt1",pop_size=100,noptmax=10,stack_size=30,
                        chance_points="single",recalc=100,risk_obj=False,
-                       risk=0.95,generator="de",env="nsga"):
+                       risk=0.95,generator="de",env="nsga",self_adaptive=False):
     
-    test_d = setup_problem(test_case,additive_chance=True, risk_obj=risk_obj)
+    test_d = setup_problem(test_case,additive_chance=True, risk_obj=risk_obj, self_adaptive=self_adaptive)
     pst = pyemu.Pst(os.path.join(test_d,"{0}.pst".format(test_case)))
     pst.control_data.noptmax = noptmax
     pst.pestpp_options["mou_population_size"] = pop_size   
@@ -617,8 +618,8 @@ def run_problem_chance(test_case="zdt1",pop_size=100,noptmax=10,stack_size=30,
     pst.pestpp_options["mou_env_selector"] = env
     pst.pestpp_options["opt_recalc_chance_every"] = recalc
     pst.write(os.path.join(test_d,"{0}.pst".format(test_case)))
-    master_d = test_d.replace("template","master_risk={0:04.3f}_riskobj={1}_chancepoints={2}_generator={3}_env={4}".\
-                              format(risk,risk_obj,chance_points,generator,env))
+    master_d = test_d.replace("template","master_generator={3}_env={4}_risk={0:04.3f}_riskobj={1}_chancepoints={2}_adaptive={5}".\
+                              format(risk,risk_obj,chance_points,generator,env,self_adaptive))
     pyemu.os_utils.start_workers(test_d, exe_path, "{0}.pst".format(test_case), 
                                   num_workers=35, master_dir=master_d,worker_root=test_root,
                                   port=port)
@@ -808,4 +809,5 @@ if __name__ == "__main__":
     # setup_zdt_problem("zdt6",10)
     shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-mou.exe"),os.path.join("..","bin","pestpp-mou.exe"))
     start_workers("zdt2")
+    run_problem_chance()
     
