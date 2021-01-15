@@ -397,15 +397,13 @@ def invest_3():
         # mou_suite_helper.run_problem(case, generator="de,sbx,pm", env="nsga")
         # mou_suite_helper.run_problem(case, generator="de,sbx,pm", env="spea")
 
-
-
 def all_infeas_test():
     t_d = mou_suite_helper.setup_problem("tkn")
     pst = pyemu.Pst(os.path.join(t_d,"tkn.pst"))
     obs = pst.observation_data
     print(obs)
     obs.loc["const_1","obsval"] = -1e10
-    pst.pestpp_options["mou_population_size"] = 5
+    pst.pestpp_options["mou_population_size"] = 15
     pst.pestpp_options["mou_generator"] = "de"
     pst.pestpp_options["mou_env_selector"] = "spea"
     pst.control_data.noptmax = 2
