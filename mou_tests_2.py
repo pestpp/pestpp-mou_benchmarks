@@ -378,16 +378,61 @@ def invest_3():
     #     mou_suite_helper.run_problem(case, generator="sbx", env="nsga")
     #     mou_suite_helper.run_problem(case, generator="de,sbx,pm", env="nsga")
     #     mou_suite_helper.run_problem(case, generator="de,sbx,pm", env="spea")
-    cases = ["zdt1", "zdt3", "srn", "tkn", "constr"]
+    cases = ["tkn", "constr","zdt1", "zdt3"]
     for case in cases:
-        mou_suite_helper.run_problem(case, generator="de", env="spea")
-        mou_suite_helper.run_problem(case, generator="de", env="nsga")
-        mou_suite_helper.run_problem(case, generator="pm", env="spea")
-        mou_suite_helper.run_problem(case, generator="pm", env="nsga")
-        mou_suite_helper.run_problem(case, generator="sbx", env="spea")
-        mou_suite_helper.run_problem(case, generator="sbx", env="nsga")
-        mou_suite_helper.run_problem(case, generator="de,sbx,pm", env="nsga")
-        mou_suite_helper.run_problem(case, generator="de,sbx,pm", env="spea")
+        mou_suite_helper.run_problem(case, generator="de", env="spea",self_adaptive=True)
+        mou_suite_helper.run_problem(case, generator="de", env="nsga",self_adaptive=True)
+        # mou_suite_helper.run_problem(case, generator="pm", env="spea",self_adaptive=True)
+        # mou_suite_helper.run_problem(case, generator="pm", env="nsga",self_adaptive=True)
+        # mou_suite_helper.run_problem(case, generator="sbx", env="spea",self_adaptive=True)
+        # mou_suite_helper.run_problem(case, generator="sbx", env="nsga",self_adaptive=True)
+        # mou_suite_helper.run_problem(case, generator="de,sbx,pm", env="nsga",self_adaptive=True)
+        # mou_suite_helper.run_problem(case, generator="de,sbx,pm", env="spea",self_adaptive=True)
+        # mou_suite_helper.run_problem(case, generator="de", env="spea")
+        # mou_suite_helper.run_problem(case, generator="de", env="nsga")
+        # mou_suite_helper.run_problem(case, generator="pm", env="spea")
+        # mou_suite_helper.run_problem(case, generator="pm", env="nsga")
+        # mou_suite_helper.run_problem(case, generator="sbx", env="spea")
+        # mou_suite_helper.run_problem(case, generator="sbx", env="nsga")
+        # mou_suite_helper.run_problem(case, generator="de,sbx,pm", env="nsga")
+        # mou_suite_helper.run_problem(case, generator="de,sbx,pm", env="spea")
+
+
+
+def all_infeas_test():
+    t_d = mou_suite_helper.setup_problem("tkn")
+    pst = pyemu.Pst(os.path.join(t_d,"tkn.pst"))
+    obs = pst.observation_data
+    print(obs)
+    obs.loc["const_1","obsval"] = -1e10
+    pst.pestpp_options["mou_population_size"] = 5
+    pst.pestpp_options["mou_generator"] = "de"
+    pst.pestpp_options["mou_env_selector"] = "spea"
+    pst.control_data.noptmax = 2
+    pst.write(os.path.join(t_d,"tkn.pst"))
+    pyemu.os_utils.run("{0} tkn.pst".format(exe_path),cwd=t_d)
+    out_file = os.path.join(t_d,"tkn.{0}.obs_pop.csv".format(pst.control_data.noptmax))
+    assert os.path.exists(out_file)
+    df = pd.read_csv(out_file)
+    assert df.shape[0] == pst.pestpp_options["mou_population_size"]
+
+    pst.pestpp_options["mou_generator"] = "sbx"
+    pst.pestpp_options["mou_env_selector"] = "spea"
+    pst.write(os.path.join(t_d,"tkn.pst"))
+    pyemu.os_utils.run("{0} tkn.pst".format(exe_path),cwd=t_d)
+    out_file = os.path.join(t_d,"tkn.{0}.obs_pop.csv".format(pst.control_data.noptmax))
+    assert os.path.exists(out_file)
+    df = pd.read_csv(out_file)
+    assert df.shape[0] == pst.pestpp_options["mou_population_size"]
+
+    pst.pestpp_options["mou_generator"] = "de"
+    pst.pestpp_options["mou_env_selector"] = "nsga"
+    pst.write(os.path.join(t_d,"tkn.pst"))
+    pyemu.os_utils.run("{0} tkn.pst".format(exe_path),cwd=t_d)
+    out_file = os.path.join(t_d,"tkn.{0}.obs_pop.csv".format(pst.control_data.noptmax))
+    assert os.path.exists(out_file)
+    df = pd.read_csv(out_file)
+    assert df.shape[0] == pst.pestpp_options["mou_population_size"]
 
 if __name__ == "__main__":
         
@@ -397,12 +442,13 @@ if __name__ == "__main__":
     # setup_zdt_problem("zdt3",30)
     # setup_zdt_problem("zdt4",10)
     # setup_zdt_problem("zdt6",10)
-    #shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-mou.exe"),os.path.join("..","bin","pestpp-mou.exe"))
-    shutil.copy2(os.path.join("..", "bin", "win", "pestpp-mou.exe"),
-                 os.path.join("..", "bin", "pestpp-mou.exe"))
+    shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-mou.exe"),os.path.join("..","bin","pestpp-mou.exe"))
+    #shutil.copy2(os.path.join("..", "bin", "win", "pestpp-mou.exe"),
+    #             os.path.join("..", "bin", "pestpp-mou.exe"))
 
     #invest_2()
     #chance_consistency_test()
-    invest_3()
+    #invest_3()
     # mou_suite_helper.start_workers("zdt1")
+    all_infeas_test()
 

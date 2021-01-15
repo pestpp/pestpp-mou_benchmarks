@@ -631,7 +631,7 @@ def run_problem_chance(test_case="zdt1",pop_size=100,noptmax=10,stack_size=30,
 def start_workers(case="zdt1"):
     pyemu.os_utils.start_workers(os.path.join("mou_tests","{0}_template".format(case)),
                                  exe_path, "{0}.pst".format(case),
-                                  num_workers=25, worker_root="mou_tests",
+                                  num_workers=35, worker_root="mou_tests",
                                   port=4004)
 
 def run_single_obj_sch_prob(risk_obj):
@@ -808,6 +808,4 @@ if __name__ == "__main__":
     # setup_zdt_problem("zdt4",10)
     # setup_zdt_problem("zdt6",10)
     shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-mou.exe"),os.path.join("..","bin","pestpp-mou.exe"))
-    start_workers("zdt2")
-    run_problem_chance()
-    
+    start_workers("zdt1")
