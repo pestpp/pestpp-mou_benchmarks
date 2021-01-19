@@ -107,7 +107,7 @@ def test_risk_obj():
     pst.write(os.path.join(t_d,"zdt1.pst"))
     m1 = os.path.join("mou_tests","zdt1_test_master_riskobj")
     pyemu.os_utils.start_workers(t_d,exe_path,"zdt1.pst",35,worker_root="mou_tests",
-                                 master_dir=m1,verbose=True)
+                                 master_dir=m1,verbose=True,port=port)
 
     t_d = mou_suite_helper.setup_problem("zdt1", True, False)
     df.pop("_risk_")
@@ -126,7 +126,8 @@ def test_risk_obj():
     pyemu.os_utils.start_workers(t_d, exe_path, "zdt1.pst", 35,
                                  worker_root="mou_tests",
                                  master_dir=m2,
-                                 verbose=True)
+                                 verbose=True,
+                                 port=port)
 
     test_files = ["zdt1.0.obs_pop.csv","zdt1.0.obs_stack.csv","zdt1.0.obs_pop.chance.csv"]
     for test_file in test_files:
@@ -149,7 +150,7 @@ def test_restart_single():
     pst.write(os.path.join(t_d, "zdt1.pst"))
     m1 = os.path.join("mou_tests", "zdt1_test_master_restart1")
     pyemu.os_utils.start_workers(t_d, exe_path, "zdt1.pst", 35, worker_root="mou_tests",
-                                 master_dir=m1, verbose=True)
+                                 master_dir=m1, verbose=True,port=port)
 
     shutil.copy2(os.path.join(m1,'zdt1.0.par_stack.csv'),os.path.join(t_d,"par_stack.csv"))
     shutil.copy2(os.path.join(m1, 'zdt1.0.obs_stack.csv'), os.path.join(t_d, "obs_stack.csv"))
@@ -162,7 +163,7 @@ def test_restart_single():
     pst.write(os.path.join(t_d, "zdt1.pst"))
     m2 = os.path.join("mou_tests", "zdt1_test_master_restart2")
     pyemu.os_utils.start_workers(t_d, exe_path, "zdt1.pst", 35, worker_root="mou_tests",
-                                 master_dir=m2, verbose=True)
+                                 master_dir=m2, verbose=True,port=port)
 
     chance_file = "zdt1.0.obs_pop.chance.csv"
     d1 = pd.read_csv(os.path.join(m1,chance_file),index_col=0)
@@ -184,7 +185,7 @@ def test_restart_all():
     pst.write(os.path.join(t_d, "zdt1.pst"))
     m1 = os.path.join("mou_tests", "zdt1_test_master_restart1")
     pyemu.os_utils.start_workers(t_d, exe_path, "zdt1.pst", 35, worker_root="mou_tests",
-                                 master_dir=m1, verbose=True)
+                                 master_dir=m1, verbose=True,port=port)
 
     shutil.copy2(os.path.join(m1, 'zdt1.0.nested.par_stack.csv'), os.path.join(t_d, "par_stack.csv"))
     shutil.copy2(os.path.join(m1, 'zdt1.0.nested.obs_stack.csv'), os.path.join(t_d, "obs_stack.csv"))
@@ -196,7 +197,7 @@ def test_restart_all():
     pst.write(os.path.join(t_d, "zdt1.pst"))
     m2 = os.path.join("mou_tests", "zdt1_test_master_restart2")
     pyemu.os_utils.start_workers(t_d, exe_path, "zdt1.pst", 35, worker_root="mou_tests",
-                                 master_dir=m2, verbose=True)
+                                 master_dir=m2, verbose=True,port=port)
 
     chance_file = "zdt1.0.obs_pop.chance.csv"
     d1 = pd.read_csv(os.path.join(m1, chance_file), index_col=0)
@@ -216,7 +217,7 @@ def invest_risk_obj():
     pst.write(os.path.join(t_d,"zdt1.pst"))
     m1 = os.path.join("mou_tests","zdt1_test_master_riskobj_full")
     pyemu.os_utils.start_workers(t_d,exe_path,"zdt1.pst",35,worker_root="mou_tests",
-                                 master_dir=m1,verbose=True)
+                                 master_dir=m1,verbose=True,port=port)
     plot_results(os.path.join("mou_tests", "zdt1_test_master_riskobj_full"))
 
 def chance_consistency_test():
@@ -232,7 +233,7 @@ def chance_consistency_test():
     pst.write(os.path.join(t_d, "constr.pst"))
     m1 = os.path.join("mou_tests", "constr_test_master_fail_3")
     pyemu.os_utils.start_workers(t_d, exe_path, "constr.pst", 35, worker_root="mou_tests",
-                                 master_dir=m1, verbose=True)
+                                 master_dir=m1, verbose=True,port=port)
 
 
     
@@ -243,7 +244,7 @@ def chance_consistency_test():
             if line == "":
                 raise Exception()
             if tag in line:
-                mname = line.strip().split()[2]
+                mname = line.strip().split()[2].lower()
                 for _ in range(4):
                     f.readline()
                 o1 = float(f.readline().strip().split()[-1])
@@ -273,7 +274,7 @@ def fail_test():
     pst.write(os.path.join(t_d, "zdt1.pst"))
     m1 = os.path.join("mou_tests", "zdt1_test_master_fail_1")
     pyemu.os_utils.start_workers(t_d, exe_path, "zdt1.pst", 35, worker_root="mou_tests",
-                                 master_dir=m1, verbose=True)
+                                 master_dir=m1, verbose=True,port=port)
 
     dp_file = os.path.join(m1,"zdt1.0.nested.par_stack.csv")
     dp = pd.read_csv(dp_file,index_col=0)
@@ -290,7 +291,7 @@ def fail_test():
     pst.write(os.path.join(t_d, "zdt1.pst"))
     m1 = os.path.join("mou_tests", "zdt1_test_master_fail_1")
     pyemu.os_utils.start_workers(t_d, exe_path, "zdt1.pst", 35, worker_root="mou_tests",
-                                 master_dir=m1, verbose=True)
+                                 master_dir=m1, verbose=True,port=port)
 
 
     t_d = mou_suite_helper.setup_problem("zdt1", additive_chance=True, risk_obj=False)
@@ -324,7 +325,7 @@ def fail_test():
     pst.write(os.path.join(t_d, "zdt1.pst"))
     m1 = os.path.join("mou_tests", "zdt1_test_master_fail_1")
     pyemu.os_utils.start_workers(t_d, exe_path, "zdt1.pst", 35, worker_root="mou_tests",
-                                 master_dir=m1, verbose=True)
+                                 master_dir=m1, verbose=True,port=port)
 
     t_d = mou_suite_helper.setup_problem("zdt1", additive_chance=True,risk_obj=False)
     pst = pyemu.Pst(os.path.join(t_d, "zdt1.pst"))
@@ -339,7 +340,7 @@ def fail_test():
     pst.write(os.path.join(t_d, "zdt1.pst"))
     m1 = os.path.join("mou_tests", "zdt1_test_master_fail_1")
     pyemu.os_utils.start_workers(t_d, exe_path, "zdt1.pst", 35, worker_root="mou_tests",
-                                 master_dir=m1, verbose=True)
+                                 master_dir=m1, verbose=True,port=port)
 
 
 
@@ -477,10 +478,10 @@ if __name__ == "__main__":
     #             os.path.join("..", "bin", "pestpp-mou.exe"))
 
     #invest_2()
-    #chance_consistency_test()
+    chance_consistency_test()
     #invest_3()
     # mou_suite_helper.start_workers("zdt1")
     #all_infeas_test()
     #invest_4()
-    restart_dv_test()
+    #restart_dv_test()
 
