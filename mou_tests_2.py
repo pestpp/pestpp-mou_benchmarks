@@ -432,6 +432,38 @@ def all_infeas_test():
     df = pd.read_csv(out_file)
     assert df.shape[0] == pst.pestpp_options["mou_population_size"]
 
+def invest_4():
+    #mou_suite_helper.run_problem(test_case="zdt1", pop_size=100, noptmax=100, generator="de", env="nsga", self_adaptive=False)
+    #mou_suite_helper.run_problem(test_case="zdt1", pop_size=100, noptmax=100, generator="de", env="nsga",
+    #                             self_adaptive=True)
+    mou_suite_helper.plot_results(os.path.join("mou_tests","zdt1_master_generator=de_env=nsga_popsize=100_risk=0.5_riskobj=False_adaptive=False"))
+    mou_suite_helper.plot_results(os.path.join("mou_tests",
+                                               "zdt1_master_generator=de_env=nsga_popsize=100_risk=0.5_riskobj=False_adaptive=True"))
+
+
+def restart_dv_test():
+
+    t_d = mou_suite_helper.setup_problem("tkn")
+    pst = pyemu.Pst(os.path.join(t_d, "tkn.pst"))
+    obs = pst.observation_data
+    print(obs)
+    obs.loc["const_1", "obsval"] = -1e10
+    pst.pestpp_options["mou_population_size"] = 15
+    pst.pestpp_options["mou_generator"] = "de"
+    pst.pestpp_options["mou_env_selector"] = "spea"
+    pst.control_data.noptmax = 2
+    pst.write(os.path.join(t_d, "tkn.pst"))
+    pyemu.os_utils.run("{0} tkn.pst".format(exe_path), cwd=t_d)
+    shutil.copy2(os.path.join(t_d,"tkn.{0}.dv_pop.csv".format(pst.control_data.noptmax)),os.path.join(t_d,"restart.csv"))
+    pst.pestpp_options["mou_dv_population_file"] = "restart.csv"
+    pst.control_data.noptmax = 1
+    pst.write(os.path.join(t_d, "tkn.pst"))
+    pyemu.os_utils.run("{0} tkn.pst".format(exe_path), cwd=t_d)
+    df = pd.read_csv(os.path.join(t_d,"tkn.{0}.dv_pop.csv".format(pst.control_data.noptmax)))
+    gen_num = df.real_name.apply(lambda x: int(x.split("=")[1].split('_')[0]))
+    print(gen_num.max())
+    assert gen_num.max() == 3
+
 if __name__ == "__main__":
         
     #zdt1_test()
@@ -448,5 +480,7 @@ if __name__ == "__main__":
     #chance_consistency_test()
     #invest_3()
     # mou_suite_helper.start_workers("zdt1")
-    all_infeas_test()
+    #all_infeas_test()
+    #invest_4()
+    restart_dv_test()
 

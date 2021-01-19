@@ -28,7 +28,7 @@ exe_path = os.path.join(bin_path, "pestpp-mou" + exe)
 
 noptmax = 4
 num_reals = 20
-port = 4021
+port = 4022
 test_root = "mou_tests"
 
 
