@@ -410,7 +410,7 @@ def all_infeas_test():
     pst.control_data.noptmax = 2
     pst.write(os.path.join(t_d,"tkn.pst"))
     pyemu.os_utils.run("{0} tkn.pst".format(exe_path),cwd=t_d)
-    out_file = os.path.join(t_d,"tkn.{0}.obs_pop.csv".format(pst.control_data.noptmax))
+    out_file = os.path.join(t_d,"tkn.obs_pop.csv".format(pst.control_data.noptmax))
     assert os.path.exists(out_file)
     df = pd.read_csv(out_file)
     assert df.shape[0] == pst.pestpp_options["mou_population_size"]
@@ -419,7 +419,7 @@ def all_infeas_test():
     pst.pestpp_options["mou_env_selector"] = "spea"
     pst.write(os.path.join(t_d,"tkn.pst"))
     pyemu.os_utils.run("{0} tkn.pst".format(exe_path),cwd=t_d)
-    out_file = os.path.join(t_d,"tkn.{0}.obs_pop.csv".format(pst.control_data.noptmax))
+    out_file = os.path.join(t_d,"tkn.obs_pop.csv".format(pst.control_data.noptmax))
     assert os.path.exists(out_file)
     df = pd.read_csv(out_file)
     assert df.shape[0] == pst.pestpp_options["mou_population_size"]
@@ -428,7 +428,7 @@ def all_infeas_test():
     pst.pestpp_options["mou_env_selector"] = "nsga"
     pst.write(os.path.join(t_d,"tkn.pst"))
     pyemu.os_utils.run("{0} tkn.pst".format(exe_path),cwd=t_d)
-    out_file = os.path.join(t_d,"tkn.{0}.obs_pop.csv".format(pst.control_data.noptmax))
+    out_file = os.path.join(t_d,"tkn.obs_pop.csv".format(pst.control_data.noptmax))
     assert os.path.exists(out_file)
     df = pd.read_csv(out_file)
     assert df.shape[0] == pst.pestpp_options["mou_population_size"]
@@ -472,10 +472,10 @@ if __name__ == "__main__":
     #             os.path.join("..", "bin", "pestpp-mou.exe"))
 
     #invest_2()
-    chance_consistency_test()
+    #chance_consistency_test()
     #invest_3()
     # mou_suite_helper.start_workers("zdt1")
-    #all_infeas_test()
+    all_infeas_test()
     #invest_4()
     #restart_dv_test()
 
