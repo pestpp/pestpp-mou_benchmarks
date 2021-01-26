@@ -455,24 +455,18 @@ def restart_dv_test():
     pst.control_data.noptmax = 2
     pst.write(os.path.join(t_d, "tkn.pst"))
     pyemu.os_utils.run("{0} tkn.pst".format(exe_path), cwd=t_d)
-    shutil.copy2(os.path.join(t_d,"tkn.{0}.dv_pop.csv".format(pst.control_data.noptmax)),os.path.join(t_d,"restart.csv"))
+    shutil.copy2(os.path.join(t_d,"tkn.dv_pop.csv".format(pst.control_data.noptmax)),os.path.join(t_d,"restart.csv"))
     pst.pestpp_options["mou_dv_population_file"] = "restart.csv"
     pst.control_data.noptmax = 1
     pst.write(os.path.join(t_d, "tkn.pst"))
     pyemu.os_utils.run("{0} tkn.pst".format(exe_path), cwd=t_d)
-    df = pd.read_csv(os.path.join(t_d,"tkn.{0}.dv_pop.csv".format(pst.control_data.noptmax)))
+    df = pd.read_csv(os.path.join(t_d,"tkn.dv_pop.csv".format(pst.control_data.noptmax)))
     gen_num = df.real_name.apply(lambda x: int(x.split("=")[1].split('_')[0]))
     print(gen_num.max())
     assert gen_num.max() == 3
 
 if __name__ == "__main__":
         
-    #zdt1_test()
-    # setup_zdt_problem("zdt1",30)
-    # setup_zdt_problem("zdt2",30)
-    # setup_zdt_problem("zdt3",30)
-    # setup_zdt_problem("zdt4",10)
-    # setup_zdt_problem("zdt6",10)
     shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-mou.exe"),os.path.join("..","bin","pestpp-mou.exe"))
     #shutil.copy2(os.path.join("..", "bin", "win", "pestpp-mou.exe"),
     #             os.path.join("..", "bin", "pestpp-mou.exe"))
