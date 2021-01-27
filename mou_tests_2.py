@@ -410,7 +410,7 @@ def all_infeas_test():
     pst.control_data.noptmax = 2
     pst.write(os.path.join(t_d,"tkn.pst"))
     pyemu.os_utils.run("{0} tkn.pst".format(exe_path),cwd=t_d)
-    out_file = os.path.join(t_d,"tkn.{0}.obs_pop.csv".format(pst.control_data.noptmax))
+    out_file = os.path.join(t_d,"tkn.obs_pop.csv".format(pst.control_data.noptmax))
     assert os.path.exists(out_file)
     df = pd.read_csv(out_file)
     assert df.shape[0] == pst.pestpp_options["mou_population_size"]
@@ -419,7 +419,7 @@ def all_infeas_test():
     pst.pestpp_options["mou_env_selector"] = "spea"
     pst.write(os.path.join(t_d,"tkn.pst"))
     pyemu.os_utils.run("{0} tkn.pst".format(exe_path),cwd=t_d)
-    out_file = os.path.join(t_d,"tkn.{0}.obs_pop.csv".format(pst.control_data.noptmax))
+    out_file = os.path.join(t_d,"tkn.obs_pop.csv".format(pst.control_data.noptmax))
     assert os.path.exists(out_file)
     df = pd.read_csv(out_file)
     assert df.shape[0] == pst.pestpp_options["mou_population_size"]
@@ -428,7 +428,7 @@ def all_infeas_test():
     pst.pestpp_options["mou_env_selector"] = "nsga"
     pst.write(os.path.join(t_d,"tkn.pst"))
     pyemu.os_utils.run("{0} tkn.pst".format(exe_path),cwd=t_d)
-    out_file = os.path.join(t_d,"tkn.{0}.obs_pop.csv".format(pst.control_data.noptmax))
+    out_file = os.path.join(t_d,"tkn.obs_pop.csv".format(pst.control_data.noptmax))
     assert os.path.exists(out_file)
     df = pd.read_csv(out_file)
     assert df.shape[0] == pst.pestpp_options["mou_population_size"]
@@ -465,6 +465,40 @@ def restart_dv_test():
     print(gen_num.max())
     assert gen_num.max() == 3
 
+def chance_all_binary_test():
+
+    t_d = mou_suite_helper.setup_problem("constr", additive_chance=True, risk_obj=False)
+    pst = pyemu.Pst(os.path.join(t_d, "constr.pst"))
+    pst.pestpp_options["opt_chance_points"] = "all"
+    pst.pestpp_options["opt_recalc_chance_every"] = 5
+    pst.pestpp_options["opt_stack_size"] = 4
+    pst.pestpp_options["mou_generator"] = "de"
+    pst.pestpp_options["mou_population_size"] = 5
+    pst.pestpp_options["opt_risk"] = 0.95
+    pst.pestpp_options["save_binary"] = True
+    par = pst.parameter_data
+    par.loc["dv_1","partrans"] = "fixed"
+    par.loc["obj1_add_par","partrans"] = "fixed"
+    pst.control_data.noptmax = 1
+    pst.write(os.path.join(t_d, "constr.pst"))
+    m1 = os.path.join("mou_tests", "constr_test_master_chance_binary")
+    pyemu.os_utils.start_workers(t_d, exe_path, "constr.pst", 35, worker_root="mou_tests",
+                                 master_dir=m1, verbose=True,port=port)
+    pe = pyemu.ParameterEnsemble.from_binary(pst=pst,filename=os.path.join(m1,"constr.0.nested.par_stack.jcb"))
+    oe = pyemu.ObservationEnsemble.from_binary(pst=pst, filename=os.path.join(m1, "constr.0.nested.obs_stack.jcb"))
+
+    shutil.copy(os.path.join(m1,"constr.0.nested.par_stack.jcb"),os.path.join(t_d,"par_stack.jcb"))
+    shutil.copy(os.path.join(m1, "constr.0.nested.obs_stack.jcb"), os.path.join(t_d, "obs_stack.jcb"))
+    shutil.copy(os.path.join(m1, "constr.0.dv_pop.jcb"), os.path.join(t_d, "dv_pop.jcb"))
+    pst.pestpp_options["opt_par_stack"] = "par_stack.jcb"
+    pst.write(os.path.join(t_d, "constr.pst"))
+    m2 = os.path.join("mou_tests", "constr_test_master_chance_binary_restart")
+    pyemu.os_utils.start_workers(t_d, exe_path, "constr.pst", 35, worker_root="mou_tests",
+                                 master_dir=m2, verbose=True, port=port)
+    pe = pyemu.ParameterEnsemble.from_binary(pst=pst, filename=os.path.join(m2, "constr.0.nested.par_stack.jcb"))
+    oe = pyemu.ObservationEnsemble.from_binary(pst=pst, filename=os.path.join(m2, "constr.0.nested.obs_stack.jcb"))
+
+
 if __name__ == "__main__":
         
     shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-mou.exe"),os.path.join("..","bin","pestpp-mou.exe"))
@@ -472,10 +506,11 @@ if __name__ == "__main__":
     #             os.path.join("..", "bin", "pestpp-mou.exe"))
 
     #invest_2()
-    chance_consistency_test()
+    #chance_consistency_test()
     #invest_3()
     # mou_suite_helper.start_workers("zdt1")
     #all_infeas_test()
     #invest_4()
     #restart_dv_test()
+    chance_all_binary_test()
 
