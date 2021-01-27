@@ -509,7 +509,7 @@ if __name__ == "__main__":
     #chance_consistency_test()
     #invest_3()
     # mou_suite_helper.start_workers("zdt1")
-    #all_infeas_test()
+    all_infeas_test()
     #invest_4()
     #restart_dv_test()
     chance_all_binary_test()
