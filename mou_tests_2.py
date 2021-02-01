@@ -486,6 +486,10 @@ def chance_all_binary_test():
                                  master_dir=m1, verbose=True,port=port)
     pe = pyemu.ParameterEnsemble.from_binary(pst=pst,filename=os.path.join(m1,"constr.0.nested.par_stack.jcb"))
     oe = pyemu.ObservationEnsemble.from_binary(pst=pst, filename=os.path.join(m1, "constr.0.nested.obs_stack.jcb"))
+    dva = pyemu.ParameterEnsemble.from_binary(pst=pst,filename=os.path.join(m1,"constr.archive.dv_pop.jcb"))
+    dv = pyemu.ParameterEnsemble.from_binary(pst=pst, filename=os.path.join(m1, "constr.dv_pop.jcb"))
+    opa = pyemu.ObservationEnsemble.from_binary(pst=pst, filename=os.path.join(m1, "constr.archive.obs_pop.jcb"))
+    op = pyemu.ObservationEnsemble.from_binary(pst=pst, filename=os.path.join(m1, "constr.obs_pop.jcb"))
 
     shutil.copy(os.path.join(m1,"constr.0.nested.par_stack.jcb"),os.path.join(t_d,"par_stack.jcb"))
     shutil.copy(os.path.join(m1, "constr.0.nested.obs_stack.jcb"), os.path.join(t_d, "obs_stack.jcb"))
@@ -497,7 +501,86 @@ def chance_all_binary_test():
                                  master_dir=m2, verbose=True, port=port)
     pe = pyemu.ParameterEnsemble.from_binary(pst=pst, filename=os.path.join(m2, "constr.0.nested.par_stack.jcb"))
     oe = pyemu.ObservationEnsemble.from_binary(pst=pst, filename=os.path.join(m2, "constr.0.nested.obs_stack.jcb"))
+    dva = pyemu.ParameterEnsemble.from_binary(pst=pst,filename=os.path.join(m2,"constr.archive.dv_pop.jcb"))
+    dv = pyemu.ParameterEnsemble.from_binary(pst=pst, filename=os.path.join(m2, "constr.dv_pop.jcb"))
+    opa = pyemu.ObservationEnsemble.from_binary(pst=pst, filename=os.path.join(m2, "constr.archive.obs_pop.jcb"))
+    op = pyemu.ObservationEnsemble.from_binary(pst=pst, filename=os.path.join(m2, "constr.obs_pop.jcb"))
 
+def invest_5():
+    t_d = mou_suite_helper.setup_problem("constr", additive_chance=False, risk_obj=False)
+    pst = pyemu.Pst(os.path.join(t_d, "constr.pst"))
+    pst.pestpp_options["opt_chance_points"] = "all"
+    pst.pestpp_options["opt_recalc_chance_every"] = 100000
+    pst.pestpp_options["opt_stack_size"] = 100
+    pst.pestpp_options["mou_generator"] = "de"
+    pst.pestpp_options["mou_population_size"] = 100
+    pst.pestpp_options["opt_risk"] = 0.95
+    pst.pestpp_options["save_binary"] = True
+    pst.control_data.noptmax = 300
+    pst.write(os.path.join(t_d, "constr.pst"))
+    m1 = os.path.join("mou_tests", "constr_test_master_deter")
+    pyemu.os_utils.start_workers(t_d, exe_path, "constr.pst", 35, worker_root="mou_tests",
+                                 master_dir=m1, verbose=True, port=port)
+
+    t_d = mou_suite_helper.setup_problem("constr", additive_chance=True, risk_obj=False)
+    pst = pyemu.Pst(os.path.join(t_d, "constr.pst"))
+    pst.pestpp_options["opt_chance_points"] = "all"
+    pst.pestpp_options["opt_recalc_chance_every"] = 100000
+    pst.pestpp_options["opt_stack_size"] = 100
+    pst.pestpp_options["mou_generator"] = "de"
+    pst.pestpp_options["mou_population_size"] = 100
+    pst.pestpp_options["opt_risk"] = 0.95
+    pst.pestpp_options["save_binary"] = True
+    pst.control_data.noptmax = 300
+    pst.write(os.path.join(t_d, "constr.pst"))
+    m2 = os.path.join("mou_tests", "constr_test_master_95")
+    pyemu.os_utils.start_workers(t_d, exe_path, "constr.pst", 35, worker_root="mou_tests",
+                                 master_dir=m2, verbose=True, port=port)
+
+    t_d = mou_suite_helper.setup_problem("constr", additive_chance=True, risk_obj=False)
+    pst = pyemu.Pst(os.path.join(t_d, "constr.pst"))
+    pst.pestpp_options["opt_chance_points"] = "all"
+    pst.pestpp_options["opt_recalc_chance_every"] = 100000
+    pst.pestpp_options["opt_stack_size"] = 100
+    pst.pestpp_options["mou_generator"] = "de"
+    pst.pestpp_options["mou_population_size"] = 100
+    pst.pestpp_options["opt_risk"] = 0.05
+    pst.pestpp_options["save_binary"] = True
+    pst.control_data.noptmax = 300
+    pst.write(os.path.join(t_d, "constr.pst"))
+    m3 = os.path.join("mou_tests", "constr_test_master_05")
+    pyemu.os_utils.start_workers(t_d, exe_path, "constr.pst", 35, worker_root="mou_tests",
+                                 master_dir=m3, verbose=True, port=port)
+
+    t_d = mou_suite_helper.setup_problem("constr", additive_chance=True, risk_obj=True)
+    pst = pyemu.Pst(os.path.join(t_d, "constr.pst"))
+    pst.pestpp_options["opt_chance_points"] = "all"
+    pst.pestpp_options["opt_recalc_chance_every"] = 100000
+    pst.pestpp_options["opt_stack_size"] = 100
+    pst.pestpp_options["mou_generator"] = "de"
+    pst.pestpp_options["mou_population_size"] = 100
+    pst.pestpp_options["opt_risk"] = 0.05
+    pst.pestpp_options["save_binary"] = True
+    pst.control_data.noptmax = 300
+    pst.write(os.path.join(t_d, "constr.pst"))
+    m4 = os.path.join("mou_tests", "constr_test_master_riskobj_match")
+    pyemu.os_utils.start_workers(t_d, exe_path, "constr.pst", 35, worker_root="mou_tests",
+                                 master_dir=m4, verbose=True, port=port)
+
+    t_d = mou_suite_helper.setup_problem("constr", additive_chance=True, risk_obj=True)
+    pst = pyemu.Pst(os.path.join(t_d, "constr.pst"))
+    pst.pestpp_options["opt_chance_points"] = "all"
+    pst.pestpp_options["opt_recalc_chance_every"] = 100000
+    pst.pestpp_options["opt_stack_size"] = 100
+    pst.pestpp_options["mou_generator"] = "de"
+    pst.pestpp_options["mou_population_size"] = 100
+    pst.pestpp_options["opt_risk"] = 0.05
+    pst.pestpp_options["save_binary"] = True
+    pst.control_data.noptmax = 900
+    pst.write(os.path.join(t_d, "constr.pst"))
+    m5 = os.path.join("mou_tests", "constr_test_master_riskobj_more")
+    pyemu.os_utils.start_workers(t_d, exe_path, "constr.pst", 35, worker_root="mou_tests",
+                                 master_dir=m5, verbose=True, port=port)
 
 if __name__ == "__main__":
         
@@ -509,8 +592,9 @@ if __name__ == "__main__":
     #chance_consistency_test()
     #invest_3()
     # mou_suite_helper.start_workers("zdt1")
-    all_infeas_test()
+    #all_infeas_test()
     #invest_4()
     #restart_dv_test()
     chance_all_binary_test()
+    #invest_5()
 
