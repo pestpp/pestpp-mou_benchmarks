@@ -532,7 +532,7 @@ def risk_demo():
     pst.pestpp_options["mou_population_size"] = 100
     pst.pestpp_options["opt_risk"] = 0.5
     pst.pestpp_options["save_binary"] = True
-    pst.pestpp_options[["obj_1","obj_2"],"weight"] = 0.5
+    pst.observation_data.loc[["obj_1","obj_2"],"weight"] = 0.5
     pst.pestpp_options["opt_std_weights"] = True
     pst.control_data.noptmax = 300
     pst.write(os.path.join(t_d, case+".pst"))
@@ -728,7 +728,7 @@ if __name__ == "__main__":
     shutil.copy2(os.path.join("..", "bin", "win", "pestpp-mou.exe"),
                  os.path.join("..", "bin", "pestpp-mou.exe"))
 
-    risk_obj_test()
+    #risk_obj_test()
     #invest_2()
     #chance_consistency_test()
     #invest_3()
