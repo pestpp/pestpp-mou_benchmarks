@@ -522,28 +522,31 @@ def chance_all_binary_test():
     op = pyemu.ObservationEnsemble.from_binary(pst=pst, filename=os.path.join(m2, "constr.obs_pop.jcb"))
 
 def risk_demo():
-    case = "srn"
+    case = "zdt1"
     t_d = mou_suite_helper.setup_problem(case, additive_chance=False, risk_obj=False)
     pst = pyemu.Pst(os.path.join(t_d, case+".pst"))
-    pst.pestpp_options["opt_chance_points"] = "all"
+    #pst.pestpp_options["opt_chance_points"] = "all"
     pst.pestpp_options["opt_recalc_chance_every"] = 100000
-    pst.pestpp_options["opt_stack_size"] = 100
+    #pst.pestpp_options["opt_stack_size"] = 100
     pst.pestpp_options["mou_generator"] = "de"
     pst.pestpp_options["mou_population_size"] = 100
     pst.pestpp_options["opt_risk"] = 0.5
     pst.pestpp_options["save_binary"] = True
+    pst.pestpp_options[["obj_1","obj_2"],"weight"] = 0.5
+    pst.pestpp_options["opt_std_weights"] = True
     pst.control_data.noptmax = 300
-    pst.write(os.path.join(t_d, case+"pst"))
+    pst.write(os.path.join(t_d, case+".pst"))
     m1 = os.path.join("mou_tests", case+"_test_master_deter")
-    pyemu.os_utils.start_workers(t_d, exe_path, case+".pst", 35, worker_root="mou_tests",
+    pyemu.os_utils.start_workers(t_d, exe_path, case+".pst", 50, worker_root="mou_tests",
                                  master_dir=m1, verbose=True, port=port)
-
 
     t_d = mou_suite_helper.setup_problem(case, additive_chance=True, risk_obj=False)
     pst = pyemu.Pst(os.path.join(t_d, case+".pst"))
-    pst.pestpp_options["opt_chance_points"] = "all"
-    pst.pestpp_options["opt_recalc_chance_every"] = 100000
-    pst.pestpp_options["opt_stack_size"] = 100
+    #pst.pestpp_options["opt_chance_points"] = "all"
+    #pst.pestpp_options["opt_recalc_chance_every"] = 100000
+    #pst.pestpp_options["opt_stack_size"] = 100
+    pst.pestpp_options[["obj_1", "obj_2"], "weight"] = 0.5
+    pst.pestpp_options["opt_std_weights"] = True
     pst.pestpp_options["mou_generator"] = "de"
     pst.pestpp_options["mou_population_size"] = 100
     pst.pestpp_options["opt_risk"] = 0.95
@@ -551,14 +554,16 @@ def risk_demo():
     pst.control_data.noptmax = 300
     pst.write(os.path.join(t_d, case+".pst"))
     m2 = os.path.join("mou_tests", case+"_test_master_95")
-    pyemu.os_utils.start_workers(t_d, exe_path, case+".pst", 35, worker_root="mou_tests",
+    pyemu.os_utils.start_workers(t_d, exe_path, case+".pst", 50, worker_root="mou_tests",
                                  master_dir=m2, verbose=True, port=port)
 
     t_d = mou_suite_helper.setup_problem(case, additive_chance=True, risk_obj=False)
     pst = pyemu.Pst(os.path.join(t_d, case+".pst"))
-    pst.pestpp_options["opt_chance_points"] = "all"
-    pst.pestpp_options["opt_recalc_chance_every"] = 100000
-    pst.pestpp_options["opt_stack_size"] = 100
+    #pst.pestpp_options["opt_chance_points"] = "all"
+    #pst.pestpp_options["opt_recalc_chance_every"] = 100000
+    #pst.pestpp_options["opt_stack_size"] = 100
+    pst.pestpp_options[["obj_1", "obj_2"], "weight"] = 0.5
+    pst.pestpp_options["opt_std_weights"] = True
     pst.pestpp_options["mou_generator"] = "de"
     pst.pestpp_options["mou_population_size"] = 100
     pst.pestpp_options["opt_risk"] = 0.05
@@ -566,14 +571,16 @@ def risk_demo():
     pst.control_data.noptmax = 300
     pst.write(os.path.join(t_d, case+".pst"))
     m3 = os.path.join("mou_tests", case+"_test_master_05")
-    pyemu.os_utils.start_workers(t_d, exe_path, case+".pst", 35, worker_root="mou_tests",
+    pyemu.os_utils.start_workers(t_d, exe_path, case+".pst", 50, worker_root="mou_tests",
                                  master_dir=m3, verbose=True, port=port)
 
     t_d = mou_suite_helper.setup_problem(case, additive_chance=True, risk_obj=True)
     pst = pyemu.Pst(os.path.join(t_d, case+".pst"))
-    pst.pestpp_options["opt_chance_points"] = "all"
-    pst.pestpp_options["opt_recalc_chance_every"] = 100000
-    pst.pestpp_options["opt_stack_size"] = 100
+    #pst.pestpp_options["opt_chance_points"] = "all"
+    #pst.pestpp_options["opt_recalc_chance_every"] = 100000
+    #pst.pestpp_options["opt_stack_size"] = 100
+    pst.pestpp_options[["obj_1", "obj_2"], "weight"] = 0.5
+    pst.pestpp_options["opt_std_weights"] = True
     pst.pestpp_options["mou_generator"] = "de"
     pst.pestpp_options["mou_population_size"] = 100
     pst.pestpp_options["opt_risk"] = 0.05
@@ -581,14 +588,16 @@ def risk_demo():
     pst.control_data.noptmax = 300
     pst.write(os.path.join(t_d, case+".pst"))
     m4 = os.path.join("mou_tests", case+"_test_master_riskobj_match")
-    pyemu.os_utils.start_workers(t_d, exe_path, case+".pst", 35, worker_root="mou_tests",
+    pyemu.os_utils.start_workers(t_d, exe_path, case+".pst", 50, worker_root="mou_tests",
                                  master_dir=m4, verbose=True, port=port)
 
     t_d = mou_suite_helper.setup_problem(case, additive_chance=True, risk_obj=True)
     pst = pyemu.Pst(os.path.join(t_d, case+".pst"))
-    pst.pestpp_options["opt_chance_points"] = "all"
-    pst.pestpp_options["opt_recalc_chance_every"] = 100000
-    pst.pestpp_options["opt_stack_size"] = 100
+    #pst.pestpp_options["opt_chance_points"] = "all"
+    #pst.pestpp_options["opt_recalc_chance_every"] = 100000
+    #pst.pestpp_options["opt_stack_size"] = 100
+    pst.pestpp_options[["obj_1", "obj_2"], "weight"] = 0.5
+    pst.pestpp_options["opt_std_weights"] = True
     pst.pestpp_options["mou_generator"] = "de"
     pst.pestpp_options["mou_population_size"] = 100
     pst.pestpp_options["opt_risk"] = 0.05
@@ -596,33 +605,35 @@ def risk_demo():
     pst.control_data.noptmax = 900
     pst.write(os.path.join(t_d, case+".pst"))
     m5 = os.path.join("mou_tests", case+"_test_master_riskobj_more")
-    pyemu.os_utils.start_workers(t_d, exe_path, case+".pst", 35, worker_root="mou_tests",
+    pyemu.os_utils.start_workers(t_d, exe_path, case+".pst", 50, worker_root="mou_tests",
                                  master_dir=m5, verbose=True, port=port)
 
 def plot_risk_demo():
-    case = "srn"
+    case = "zdt1"
     import matplotlib.pyplot as plt
     m_deter = os.path.join("mou_tests",case+"_test_master_deter")
     m_ravr = os.path.join("mou_tests",case+"_test_master_95")
     m_rtol = os.path.join("mou_tests", case+"_test_master_05")
-    m_robj = os.path.join("mou_tests",case+"_test_master_riskobj_match")
+    #m_robj = os.path.join("mou_tests",case+"_test_master_riskobj_match")
     m_robjm = os.path.join("mou_tests", case+"_test_master_riskobj_more")
 
     fig, ax = plt.subplots(1,1,figsize=(10,10))
-    for d,c in zip([m_deter,m_ravr,m_rtol,m_robj,m_robjm],['g','b','r',None,None]):
+    for d,c in zip([m_deter,m_ravr,m_rtol,m_robjm],['g','b','r',None,None]):
 
         pst = pyemu.Pst(os.path.join(d,case+".pst"))
         df = pd.read_csv(os.path.join(d,case+".pareto.archive.summary.csv"))
         mxgen = df.generation.max()
+        print(d,mxgen)
         df = df.loc[df.generation==mxgen,:]
         print(d,mxgen)
         if "riskobj" in d:
-            pass
+            #print(df.head().loc[:,['obj_1',"obj_2",'_risk_']])
+            #ax.scatter(df.obj_1.values[:2],df.obj_2.values[:2],marker="+",c=df._risk_[:2],cmap='jet')
+            rdf = df#.loc[df._risk_ < 0.05,:]
+            ax.scatter(rdf.obj_1,rdf.obj_2,marker="o",c=1 - rdf._risk_.values,cmap='jet')
         else:
-            ax.scatter(df.obj_1.values,df.obj_2.values,color=c)
-
+            ax.scatter(df.obj_1.values,df.obj_2.values,marker='.',color=c)
     plt.show()
-
 
 def risk_obj_test():
     t_d = mou_suite_helper.setup_problem("constr", additive_chance=True, risk_obj=True)
@@ -713,9 +724,9 @@ def risk_obj_test():
 
 if __name__ == "__main__":
         
-    shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-mou.exe"),os.path.join("..","bin","pestpp-mou.exe"))
-    #shutil.copy2(os.path.join("..", "bin", "win", "pestpp-mou.exe"),
-    #             os.path.join("..", "bin", "pestpp-mou.exe"))
+    #ssshutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-mou.exe"),os.path.join("..","bin","pestpp-mou.exe"))
+    shutil.copy2(os.path.join("..", "bin", "win", "pestpp-mou.exe"),
+                 os.path.join("..", "bin", "pestpp-mou.exe"))
 
     risk_obj_test()
     #invest_2()
@@ -729,3 +740,5 @@ if __name__ == "__main__":
     #invest_5()
     #constr_risk_demo()
     #plot_constr_risk_demo()
+    risk_demo()
+    plot_risk_demo()

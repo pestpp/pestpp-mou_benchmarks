@@ -368,6 +368,14 @@ def setup_problem(name,additive_chance=False, risk_obj=False, self_adaptive=Fals
 
     if additive_chance:
         par.loc[adf.parnme, "partrans"] = "none"
+        if name == "srn":
+            par.loc[adf.parnme, "parubnd"] = 5.0
+            par.loc[adf.parnme, "parlbnd"] = -5.0
+            par.loc[adf.parnme, "parchglim"] = "relative"
+            par.loc[adf.parnme, "pargp"] = "obj_add"
+            # much less uncertainty in the second obj
+            par.loc[adf.parnme[1], "parubnd"] = 2.5
+            par.loc[adf.parnme[1], "parlbnd"] = -2.5
     else:
         par.loc[adf.parnme, "partrans"] = "fixed"
 
