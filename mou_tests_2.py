@@ -506,6 +506,21 @@ def chance_all_binary_test():
     opa = pyemu.ObservationEnsemble.from_binary(pst=pst, filename=os.path.join(m2, "constr.archive.obs_pop.jcb"))
     op = pyemu.ObservationEnsemble.from_binary(pst=pst, filename=os.path.join(m2, "constr.obs_pop.jcb"))
 
+    shutil.copy(os.path.join(m1, "constr.0.nested.par_stack.jcb"), os.path.join(t_d, "par_stack.jcb"))
+    shutil.copy(os.path.join(m1, "constr.0.nested.obs_stack.jcb"), os.path.join(t_d, "obs_stack.jcb"))
+    shutil.copy(os.path.join(m1, "constr.0.dv_pop.jcb"), os.path.join(t_d, "dv_pop.jcb"))
+    pst.pestpp_options["opt_par_stack"] = "par_stack.jcb"
+    pst.write(os.path.join(t_d, "constr.pst"))
+    m2 = os.path.join("mou_tests", "constr_test_master_chance_binary_restart")
+    pyemu.os_utils.start_workers(t_d, exe_path, "constr.pst", 35, worker_root="mou_tests",
+                                 master_dir=m2, verbose=True, port=port)
+    pe = pyemu.ParameterEnsemble.from_binary(pst=pst, filename=os.path.join(m2, "constr.0.nested.par_stack.jcb"))
+    oe = pyemu.ObservationEnsemble.from_binary(pst=pst, filename=os.path.join(m2, "constr.0.nested.obs_stack.jcb"))
+    dva = pyemu.ParameterEnsemble.from_binary(pst=pst, filename=os.path.join(m2, "constr.archive.dv_pop.jcb"))
+    dv = pyemu.ParameterEnsemble.from_binary(pst=pst, filename=os.path.join(m2, "constr.dv_pop.jcb"))
+    opa = pyemu.ObservationEnsemble.from_binary(pst=pst, filename=os.path.join(m2, "constr.archive.obs_pop.jcb"))
+    op = pyemu.ObservationEnsemble.from_binary(pst=pst, filename=os.path.join(m2, "constr.obs_pop.jcb"))
+
 def risk_demo():
     case = "srn"
     t_d = mou_suite_helper.setup_problem(case, additive_chance=False, risk_obj=False)
@@ -605,8 +620,95 @@ def plot_risk_demo():
             pass
         else:
             ax.scatter(df.obj_1.values,df.obj_2.values,color=c)
-        
+
     plt.show()
+
+
+def risk_obj_test():
+    t_d = mou_suite_helper.setup_problem("constr", additive_chance=True, risk_obj=True)
+
+    pst = pyemu.Pst(os.path.join(t_d, "constr.pst"))
+    pst.pestpp_options["opt_std_weights"] = True
+    pst.pestpp_options["opt_recalc_chance_every"] = 5
+    pst.pestpp_options["mou_generator"] = "de"
+    pst.pestpp_options["mou_population_size"] = 5
+    pst.pestpp_options["opt_risk"] = 0.05
+    pst.pestpp_options["mou_risk_objective"] = True
+    pst.observation_data.loc["obj_1","weight"] = 0.5
+    pst.observation_data.loc["obj_2", "weight"] = 0.5
+    pst.control_data.noptmax = -1
+    pst.write(os.path.join(t_d, "constr.pst"))
+    m1 = os.path.join("mou_tests", "constr_riskobj_test_master")
+    pyemu.os_utils.start_workers(t_d, exe_path, "constr.pst", 5, worker_root="mou_tests",
+                                 master_dir=m1, verbose=True, port=port)
+    return
+    pst = pyemu.Pst(os.path.join(t_d, "constr.pst"))
+    pst.pestpp_options["opt_chance_points"] = "all"
+    pst.pestpp_options["opt_recalc_chance_every"] = 5
+    pst.pestpp_options["opt_stack_size"] = 5
+    pst.pestpp_options["mou_generator"] = "de"
+    pst.pestpp_options["mou_population_size"] = 5
+    pst.pestpp_options["opt_risk"] = 0.05
+    pst.pestpp_options["mou_risk_objective"] = True
+    pst.control_data.noptmax = -1
+    pst.write(os.path.join(t_d, "constr.pst"))
+    m1 = os.path.join("mou_tests", "constr_riskobj_test_master")
+    pyemu.os_utils.start_workers(t_d, exe_path, "constr.pst", 5, worker_root="mou_tests",
+                                 master_dir=m1, verbose=True,port=port)
+
+    dv = pd.read_csv(os.path.join(m1,"constr.0.dv_pop.csv"),index_col=0)
+    dv.loc[:,"_risk_"] = pst.pestpp_options["opt_risk"]
+    dv.to_csv(os.path.join(t_d,"dv.csv"))
+    pst.pestpp_options["mou_dv_population_file"] = "dv.csv"
+    pst.write(os.path.join(t_d, "constr.pst"))
+    m1 = os.path.join("mou_tests", "constr_riskobj_test_master")
+    pyemu.os_utils.start_workers(t_d, exe_path, "constr.pst", 5, worker_root="mou_tests",
+                                 master_dir=m1, verbose=True, port=port)
+    pst.pestpp_options["mou_risk_objective"] = False
+    pst.write(os.path.join(t_d, "constr.pst"))
+    m2 = os.path.join("mou_tests", "constr_riskobj_test_master2")
+    pyemu.os_utils.start_workers(t_d, exe_path, "constr.pst", 5, worker_root="mou_tests",
+                                 master_dir=m2, verbose=True, port=port)
+
+    op1 = pd.read_csv(os.path.join(m1, "constr.0.obs_pop.csv"), index_col=0)
+    op2 = pd.read_csv(os.path.join(m2, "constr.0.obs_pop.csv"), index_col=0)
+    d = (op1 - op2).apply(np.abs)
+    print(d.max())
+    assert d.max().max() < 1.0e-10,d.max().max()
+    op1 = pd.read_csv(os.path.join(m1, "constr.0.obs_pop.chance.csv"), index_col=0)
+    op2 = pd.read_csv(os.path.join(m2, "constr.0.obs_pop.chance.csv"), index_col=0)
+    d = (op1 - op2).apply(np.abs)
+    print(d.max())
+    assert d.max().max() < 1.0e-10, d.max().max()
+
+    shutil.copy2(os.path.join(m2,"constr.0.nested.par_stack.csv"),os.path.join(t_d,"par_stack.csv"))
+    shutil.copy2(os.path.join(m2, "constr.0.nested.obs_stack.csv"), os.path.join(t_d, "obs_stack.csv"))
+    pst.pestpp_options["opt_par_stack"] = "par_stack.csv"
+    pst.pestpp_options["opt_obs_stack"] = "obs_stack.csv"
+    dv = pyemu.ParameterEnsemble.from_uniform_draw(pst,5)
+    dv.loc[:,"_risk_"] = pst.pestpp_options["opt_risk"]
+    pst.pestpp_options["mou_risk_objective"] = True
+    dv.to_csv(os.path.join(t_d, "dv.csv"))
+    pst.write(os.path.join(t_d, "constr.pst"))
+    m1 = os.path.join("mou_tests", "constr_riskobj_test_master")
+    pyemu.os_utils.start_workers(t_d, exe_path, "constr.pst", 5, worker_root="mou_tests",
+                                 master_dir=m1, verbose=True, port=port)
+    pst.pestpp_options["mou_risk_objective"] = False
+    pst.write(os.path.join(t_d, "constr.pst"))
+    m2 = os.path.join("mou_tests", "constr_riskobj_test_master2")
+    pyemu.os_utils.start_workers(t_d, exe_path, "constr.pst", 5, worker_root="mou_tests",
+                                 master_dir=m2, verbose=True, port=port)
+
+    op1 = pd.read_csv(os.path.join(m1, "constr.0.obs_pop.csv"), index_col=0)
+    op2 = pd.read_csv(os.path.join(m2, "constr.0.obs_pop.csv"), index_col=0)
+    d = (op1 - op2).apply(np.abs)
+    print(d.max())
+    assert d.max().max() < 1.0e-10, d.max().max()
+    op1 = pd.read_csv(os.path.join(m1, "constr.0.obs_pop.chance.csv"), index_col=0)
+    op2 = pd.read_csv(os.path.join(m2, "constr.0.obs_pop.chance.csv"), index_col=0)
+    d = (op1 - op2).apply(np.abs)
+    print(d.max())
+    assert d.max().max() < 1.0e-10, d.max().max()
 
 
 if __name__ == "__main__":
@@ -615,6 +717,7 @@ if __name__ == "__main__":
     #shutil.copy2(os.path.join("..", "bin", "win", "pestpp-mou.exe"),
     #             os.path.join("..", "bin", "pestpp-mou.exe"))
 
+    risk_obj_test()
     #invest_2()
     #chance_consistency_test()
     #invest_3()
@@ -625,4 +728,4 @@ if __name__ == "__main__":
     #chance_all_binary_test()
     #invest_5()
     #constr_risk_demo()
-    plot_constr_risk_demo()
+    #plot_constr_risk_demo()
