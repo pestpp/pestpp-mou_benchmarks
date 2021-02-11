@@ -652,7 +652,7 @@ def risk_obj_test():
     m1 = os.path.join("mou_tests", "constr_riskobj_test_master")
     pyemu.os_utils.start_workers(t_d, exe_path, "constr.pst", 5, worker_root="mou_tests",
                                  master_dir=m1, verbose=True, port=port)
-    return
+    
     pst = pyemu.Pst(os.path.join(t_d, "constr.pst"))
     pst.pestpp_options["opt_chance_points"] = "all"
     pst.pestpp_options["opt_recalc_chance_every"] = 5
