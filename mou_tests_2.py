@@ -521,7 +521,7 @@ def chance_all_binary_test():
     opa = pyemu.ObservationEnsemble.from_binary(pst=pst, filename=os.path.join(m2, "constr.archive.obs_pop.jcb"))
     op = pyemu.ObservationEnsemble.from_binary(pst=pst, filename=os.path.join(m2, "constr.obs_pop.jcb"))
 
-def risk_demo():
+def risk_demo(noptmax=100):
     case = "rosenc"
     obj_names = ["obj_1"]
     t_d = mou_suite_helper.setup_problem(case, additive_chance=False, risk_obj=False)
@@ -535,7 +535,7 @@ def risk_demo():
     pst.pestpp_options["save_binary"] = True
     pst.observation_data.loc[obj_names,"weight"] = 0.5
     pst.pestpp_options["opt_std_weights"] = True
-    pst.control_data.noptmax = 300
+    pst.control_data.noptmax = noptmax
     pst.write(os.path.join(t_d, case+".pst"))
     m1 = os.path.join("mou_tests", case+"_test_master_deter")
     pyemu.os_utils.start_workers(t_d, exe_path, case+".pst", 50, worker_root="mou_tests",
@@ -552,7 +552,7 @@ def risk_demo():
     pst.pestpp_options["mou_population_size"] = 100
     pst.pestpp_options["opt_risk"] = 0.95
     pst.pestpp_options["save_binary"] = True
-    pst.control_data.noptmax = 300
+    pst.control_data.noptmax = noptmax
     pst.write(os.path.join(t_d, case+".pst"))
     m2 = os.path.join("mou_tests", case+"_test_master_95")
     pyemu.os_utils.start_workers(t_d, exe_path, case+".pst", 50, worker_root="mou_tests",
@@ -569,7 +569,7 @@ def risk_demo():
     pst.pestpp_options["mou_population_size"] = 100
     pst.pestpp_options["opt_risk"] = 0.05
     pst.pestpp_options["save_binary"] = True
-    pst.control_data.noptmax = 300
+    pst.control_data.noptmax = noptmax
     pst.write(os.path.join(t_d, case+".pst"))
     m3 = os.path.join("mou_tests", case+"_test_master_05")
     pyemu.os_utils.start_workers(t_d, exe_path, case+".pst", 50, worker_root="mou_tests",
@@ -586,7 +586,7 @@ def risk_demo():
     pst.pestpp_options["mou_population_size"] = 100
     pst.pestpp_options["opt_risk"] = 0.05
     pst.pestpp_options["save_binary"] = True
-    pst.control_data.noptmax = 300
+    pst.control_data.noptmax = noptmax
     pst.write(os.path.join(t_d, case+".pst"))
     m4 = os.path.join("mou_tests", case+"_test_master_riskobj_match")
     pyemu.os_utils.start_workers(t_d, exe_path, case+".pst", 50, worker_root="mou_tests",
@@ -603,7 +603,7 @@ def risk_demo():
     pst.pestpp_options["mou_population_size"] = 100
     pst.pestpp_options["opt_risk"] = 0.05
     pst.pestpp_options["save_binary"] = True
-    pst.control_data.noptmax = 900
+    pst.control_data.noptmax = noptmax * 3
     pst.write(os.path.join(t_d, case+".pst"))
     m5 = os.path.join("mou_tests", case+"_test_master_riskobj_more")
     pyemu.os_utils.start_workers(t_d, exe_path, case+".pst", 50, worker_root="mou_tests",
@@ -759,9 +759,9 @@ def risk_obj_test():
 
 if __name__ == "__main__":
         
-    #ssshutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-mou.exe"),os.path.join("..","bin","pestpp-mou.exe"))
-    shutil.copy2(os.path.join("..", "bin", "win", "pestpp-mou.exe"),
-                 os.path.join("..", "bin", "pestpp-mou.exe"))
+    shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-mou.exe"),os.path.join("..","bin","pestpp-mou.exe"))
+    #shutil.copy2(os.path.join("..", "bin", "win", "pestpp-mou.exe"),
+    #             os.path.join("..", "bin", "pestpp-mou.exe"))
 
     #risk_obj_test()
     #invest_2()

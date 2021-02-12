@@ -152,7 +152,7 @@ def setup_problem(name,additive_chance=False, risk_obj=False, self_adaptive=Fals
         num_dv = 1
     elif name.lower() == "water":
         num_dv = 3
-    elif name.lower() in ["rosen","ackley"]:
+    elif name.lower() in ["rosen","ackley","rosenc"]:
         num_dv = 2
     elif name.lower() == "tkn":
         num_dv = 2
