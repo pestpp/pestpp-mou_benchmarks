@@ -522,7 +522,8 @@ def chance_all_binary_test():
     op = pyemu.ObservationEnsemble.from_binary(pst=pst, filename=os.path.join(m2, "constr.obs_pop.jcb"))
 
 def risk_demo():
-    case = "zdt1"
+    case = "rosenc"
+    obj_names = ["obj_1"]
     t_d = mou_suite_helper.setup_problem(case, additive_chance=False, risk_obj=False)
     pst = pyemu.Pst(os.path.join(t_d, case+".pst"))
     #pst.pestpp_options["opt_chance_points"] = "all"
@@ -532,7 +533,7 @@ def risk_demo():
     pst.pestpp_options["mou_population_size"] = 100
     pst.pestpp_options["opt_risk"] = 0.5
     pst.pestpp_options["save_binary"] = True
-    pst.observation_data.loc[["obj_1","obj_2"],"weight"] = 0.5
+    pst.observation_data.loc[obj_names,"weight"] = 0.5
     pst.pestpp_options["opt_std_weights"] = True
     pst.control_data.noptmax = 300
     pst.write(os.path.join(t_d, case+".pst"))
@@ -545,7 +546,7 @@ def risk_demo():
     #pst.pestpp_options["opt_chance_points"] = "all"
     #pst.pestpp_options["opt_recalc_chance_every"] = 100000
     #pst.pestpp_options["opt_stack_size"] = 100
-    pst.observation_data.loc[["obj_1","obj_2"],"weight"] = 0.5
+    pst.observation_data.loc[obj_names,"weight"] = 0.5
     pst.pestpp_options["opt_std_weights"] = True
     pst.pestpp_options["mou_generator"] = "de"
     pst.pestpp_options["mou_population_size"] = 100
@@ -562,7 +563,7 @@ def risk_demo():
     #pst.pestpp_options["opt_chance_points"] = "all"
     #pst.pestpp_options["opt_recalc_chance_every"] = 100000
     #pst.pestpp_options["opt_stack_size"] = 100
-    pst.observation_data.loc[["obj_1", "obj_2"], "weight"] = 0.5
+    pst.observation_data.loc[obj_names, "weight"] = 0.5
     pst.pestpp_options["opt_std_weights"] = True
     pst.pestpp_options["mou_generator"] = "de"
     pst.pestpp_options["mou_population_size"] = 100
@@ -579,7 +580,7 @@ def risk_demo():
     #pst.pestpp_options["opt_chance_points"] = "all"
     #pst.pestpp_options["opt_recalc_chance_every"] = 100000
     #pst.pestpp_options["opt_stack_size"] = 100
-    pst.observation_data.loc[["obj_1","obj_2"],"weight"] = 0.5
+    pst.observation_data.loc[obj_names,"weight"] = 0.5
     pst.pestpp_options["opt_std_weights"] = True
     pst.pestpp_options["mou_generator"] = "de"
     pst.pestpp_options["mou_population_size"] = 100
@@ -590,13 +591,13 @@ def risk_demo():
     m4 = os.path.join("mou_tests", case+"_test_master_riskobj_match")
     pyemu.os_utils.start_workers(t_d, exe_path, case+".pst", 50, worker_root="mou_tests",
                                  master_dir=m4, verbose=True, port=port)
-
+    return
     t_d = mou_suite_helper.setup_problem(case, additive_chance=True, risk_obj=True)
     pst = pyemu.Pst(os.path.join(t_d, case+".pst"))
     #pst.pestpp_options["opt_chance_points"] = "all"
     #pst.pestpp_options["opt_recalc_chance_every"] = 100000
     #pst.pestpp_options["opt_stack_size"] = 100
-    pst.observation_data.loc[["obj_1","obj_2"],"weight"] = 0.5
+    pst.observation_data.loc[obj_names,"weight"] = 0.5
     pst.pestpp_options["opt_std_weights"] = True
     pst.pestpp_options["mou_generator"] = "de"
     pst.pestpp_options["mou_population_size"] = 100
@@ -608,8 +609,8 @@ def risk_demo():
     pyemu.os_utils.start_workers(t_d, exe_path, case+".pst", 50, worker_root="mou_tests",
                                  master_dir=m5, verbose=True, port=port)
 
-def plot_risk_demo():
-    case = "zdt1"
+def plot_risk_demo_multi():
+    case = "rosen"
     import matplotlib.pyplot as plt
     m_deter = os.path.join("mou_tests",case+"_test_master_deter")
     m_ravr = os.path.join("mou_tests",case+"_test_master_95")
@@ -623,6 +624,7 @@ def plot_risk_demo():
         pst = pyemu.Pst(os.path.join(d,case+".pst"))
         df = pd.read_csv(os.path.join(d,case+".pareto.archive.summary.csv"))
         mxgen = df.generation.max()
+        mxgen = 10
         print(d,mxgen)
         df = df.loc[df.generation==mxgen,:]
         print(d,mxgen)
@@ -633,6 +635,39 @@ def plot_risk_demo():
             ax.scatter(rdf.obj_1,rdf.obj_2,marker="o",c=1 - rdf._risk_.values,cmap='jet')
         else:
             ax.scatter(df.obj_1.values,df.obj_2.values,marker='.',color=c)
+    plt.show()
+
+
+def plot_risk_demo_rosen():
+    case = "rosen"
+    import matplotlib.pyplot as plt
+    m_deter = os.path.join("mou_tests",case+"_test_master_deter")
+    m_ravr = os.path.join("mou_tests",case+"_test_master_95")
+    m_rtol = os.path.join("mou_tests", case+"_test_master_05")
+    #m_robj = os.path.join("mou_tests",case+"_test_master_riskobj_match")
+    m_robjm = os.path.join("mou_tests", case+"_test_master_riskobj_match")
+    bins = np.linspace(-1,1,20)
+    fig, axes = plt.subplots(2,2,figsize=(10,10))
+    axes = axes.flatten()
+    for d,c,ax in zip([m_deter,m_ravr,m_rtol,m_robjm],['g','b','r',"c","m"],axes):
+
+        pst = pyemu.Pst(os.path.join(d,case+".pst"))
+        df = pd.read_csv(os.path.join(d,case+".pareto.archive.summary.csv"))
+        mxgen = df.generation.max()
+        #mxgen = 10
+        #print(d,mxgen)
+        df = df.loc[df.generation==mxgen,:]
+        print(d,mxgen)
+        if "riskobj" in d:
+            #print(df.head().loc[:,['obj_1',"obj_2",'_risk_']])
+            #ax.scatter(df.obj_1.values[:2],df.obj_2.values[:2],marker="+",c=df._risk_[:2],cmap='jet')
+            rdf = df#.loc[df._risk_ < 0.05,:]
+            axt = plt.twinx(ax)
+            axt.scatter(rdf.obj_1,rdf._risk_,marker="o",c=1 - rdf._risk_.values,cmap='jet')
+
+        ax.hist(df.obj_1.values,bins=bins,facecolor=c,edgecolor="none",alpha=0.5,density=False)
+        ax.set_xlim(-1,1)
+        ax.set_title(d)
     plt.show()
 
 def risk_obj_test():
@@ -741,4 +776,4 @@ if __name__ == "__main__":
     #constr_risk_demo()
     #plot_constr_risk_demo()
     risk_demo()
-    plot_risk_demo()
+    plot_risk_demo_rosen()

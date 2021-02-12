@@ -104,6 +104,12 @@ def rosen(x):
     f1 = np.power(1 - x[0],2) + (100 * np.power(x[1] - np.power(x[0],2),2))
     return (f1,np.array([-999])),[]
 
+def rosenc(x):
+    f1 = np.power(1 - x[0],2) + (100 * np.power(x[1] - np.power(x[0],2),2))
+    const1 = (x[0] - 1)**3 - x[1] + 1
+    const2 = x[0] + x[1] - 2
+    return (f1,np.array([-999])),[const1, const2]
+
 def ackley(x):
     t1 = -20. * np.exp(-0.2 * np.sqrt(0.5 * np.power(x[0],2) + np.power(x[1],2)))
     t2 = -1. * np.exp(0.5 * (np.cos(2. * np.pi * x[0]) + np.cos(2.0 * np.pi * x[1]))) + np.e + 20.0
@@ -168,7 +174,7 @@ def setup_problem(name,additive_chance=False, risk_obj=False, self_adaptive=Fals
         f.write("ptf ~\n")
         f.write("obj1_add_par ~   obj1_add_par   ~\n")
         f.write("obj2_add_par ~   obj2_add_par   ~\n")
-        if name.lower() in ["srn","constr","tkn"]:
+        if name.lower() in ["srn","constr","tkn","rosenc"]:
             f.write("constr1_add_par ~   constr1_add_par   ~\n")
             f.write("constr2_add_par ~   constr2_add_par   ~\n")
         elif name.lower() == "water":
@@ -178,7 +184,7 @@ def setup_problem(name,additive_chance=False, risk_obj=False, self_adaptive=Fals
     with open(os.path.join(test_d,additive_chance_tpl_file.replace(".tpl","")),'w') as f:
         f.write("obj1_add_par 0.0\n")
         f.write("obj2_add_par 0.0\n")
-        if name.lower() in ["srn","constr","tkn"]:
+        if name.lower() in ["srn","constr","tkn","rosenc"]:
             f.write("constr1_add_par 0.0\n")
             f.write("constr2_add_par 0.0\n")
         elif name.lower() == "water":
@@ -213,9 +219,9 @@ def setup_problem(name,additive_chance=False, risk_obj=False, self_adaptive=Fals
                 f.write("l1 w !const_{0}!\n".format(i))
         else:
             f.write("l1 w !obj_1!\n")
-            if name.lower() not in ["rosen","ackley"]:
+            if name.lower() not in ["rosen","ackley","rosenc"]:
                 f.write("l1 w !obj_2!\n")
-            if name.lower() in ["srn","tkn"]:
+            if name.lower() in ["srn","tkn","rosenc"]:
                 f.write("l1 w !const_1!\n")
                 f.write("l1 w !const_2!\n")
         
@@ -343,7 +349,7 @@ def setup_problem(name,additive_chance=False, risk_obj=False, self_adaptive=Fals
         par.loc["dv_2","parubnd"] = 0.1
         par.loc["dv_2","parval1"] = 0.05
 
-    elif name.lower() in ["rosen","ackley"]:
+    elif name.lower() in ["rosen","ackley","rosenc"]:
         par.loc["dv_0","parlbnd"] = -4.
         par.loc["dv_0","parubnd"] = 4
         par.loc["dv_0","parval1"] = -1.
@@ -431,6 +437,10 @@ def setup_problem(name,additive_chance=False, risk_obj=False, self_adaptive=Fals
         obs.loc["const_5","obsval"] = 10000
         obs.loc["const_6","obsval"] = 2000
         obs.loc["const_7","obsval"] = 550
+    if name.lower() == "rosenc":
+        obs.loc["const_1", "obsval"] = 0
+        obs.loc["const_2", "obsval"] = 0
+
            
     pst.pestpp_options["opt_dec_var_groups"] = "decvars"
     pst.pestpp_options["mou_objectives"] = "obj_1,obj_2"
@@ -815,5 +825,6 @@ if __name__ == "__main__":
     # setup_zdt_problem("zdt3",30)
     # setup_zdt_problem("zdt4",10)
     # setup_zdt_problem("zdt6",10)
-    shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-mou.exe"),os.path.join("..","bin","pestpp-mou.exe"))
-    start_workers("zdt1")
+    #shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-mou.exe"),os.path.join("..","bin","pestpp-mou.exe"))
+    #start_workers("zdt1")
+    setup_problem("rosenc")
