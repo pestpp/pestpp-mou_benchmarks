@@ -521,6 +521,8 @@ def chance_all_binary_test():
     opa = pyemu.ObservationEnsemble.from_binary(pst=pst, filename=os.path.join(m2, "constr.archive.obs_pop.jcb"))
     op = pyemu.ObservationEnsemble.from_binary(pst=pst, filename=os.path.join(m2, "constr.obs_pop.jcb"))
 
+
+
 def risk_demo(case="zdt1",noptmax=100):
 
     obj_names = ["obj_1"]
