@@ -627,7 +627,7 @@ def plot_risk_demo_multi(case = "zdt1"):
         pst = pyemu.Pst(os.path.join(d,case+".pst"))
         df = pd.read_csv(os.path.join(d,case+".pareto.archive.summary.csv"))
         mxgen = df.generation.max()
-        mxgen = 10
+        
         print(d,mxgen)
         df = df.loc[df.generation==mxgen,:]
         print(d,mxgen)
@@ -638,6 +638,18 @@ def plot_risk_demo_multi(case = "zdt1"):
             ax.scatter(rdf.obj_1,rdf.obj_2,marker="o",c=1 - rdf._risk_.values,cmap='jet')
         else:
             ax.scatter(df.obj_1.values,df.obj_2.values,marker='.',color=c)
+
+    if case == "zdt1":
+        x0 = np.linspace(0,1,1000)
+        o1,o2 = [],[]
+        for xx0 in x0:
+            x = np.zeros(30)
+            x[0] = xx0
+            ret_vals = mou_suite_helper.zdt1(x)
+            o1.append(ret_vals[0][0])
+            o2.append(ret_vals[0][1])
+
+        ax.plot(o1,o2,"k",label="truth")
     plt.show()
 
 
@@ -778,6 +790,6 @@ if __name__ == "__main__":
     #invest_5()
     #constr_risk_demo()
     #plot_constr_risk_demo()
-    risk_demo()
+    #risk_demo()
     plot_risk_demo_multi()
     #plot_risk_demo_rosen()
