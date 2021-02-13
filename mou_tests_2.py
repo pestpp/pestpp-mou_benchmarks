@@ -591,7 +591,7 @@ def risk_demo(noptmax=100):
     m4 = os.path.join("mou_tests", case+"_test_master_riskobj_match")
     pyemu.os_utils.start_workers(t_d, exe_path, case+".pst", 50, worker_root="mou_tests",
                                  master_dir=m4, verbose=True, port=port)
-    return
+
     t_d = mou_suite_helper.setup_problem(case, additive_chance=True, risk_obj=True)
     pst = pyemu.Pst(os.path.join(t_d, case+".pst"))
     #pst.pestpp_options["opt_chance_points"] = "all"
@@ -615,7 +615,7 @@ def plot_risk_demo_multi():
     m_deter = os.path.join("mou_tests",case+"_test_master_deter")
     m_ravr = os.path.join("mou_tests",case+"_test_master_95")
     m_rtol = os.path.join("mou_tests", case+"_test_master_05")
-    #m_robj = os.path.join("mou_tests",case+"_test_master_riskobj_match")
+    m_robj = os.path.join("mou_tests",case+"_test_master_riskobj_match")
     m_robjm = os.path.join("mou_tests", case+"_test_master_riskobj_more")
 
     fig, ax = plt.subplots(1,1,figsize=(10,10))
@@ -639,14 +639,14 @@ def plot_risk_demo_multi():
 
 
 def plot_risk_demo_rosen():
-    case = "rosen"
+    case = "rosenc"
     import matplotlib.pyplot as plt
     m_deter = os.path.join("mou_tests",case+"_test_master_deter")
     m_ravr = os.path.join("mou_tests",case+"_test_master_95")
     m_rtol = os.path.join("mou_tests", case+"_test_master_05")
     #m_robj = os.path.join("mou_tests",case+"_test_master_riskobj_match")
     m_robjm = os.path.join("mou_tests", case+"_test_master_riskobj_match")
-    bins = np.linspace(-1,1,20)
+    bins = np.linspace(-2,2,30)
     fig, axes = plt.subplots(2,2,figsize=(10,10))
     axes = axes.flatten()
     for d,c,ax in zip([m_deter,m_ravr,m_rtol,m_robjm],['g','b','r',"c","m"],axes):
@@ -666,7 +666,7 @@ def plot_risk_demo_rosen():
             axt.scatter(rdf.obj_1,rdf._risk_,marker="o",c=1 - rdf._risk_.values,cmap='jet')
 
         ax.hist(df.obj_1.values,bins=bins,facecolor=c,edgecolor="none",alpha=0.5,density=False)
-        ax.set_xlim(-1,1)
+        ax.set_xlim(bins.min(),bins.max())
         ax.set_title(d)
     plt.show()
 
