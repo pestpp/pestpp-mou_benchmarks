@@ -535,7 +535,7 @@ def risk_demo(case="zdt1",noptmax=100):
     pst.pestpp_options["mou_population_size"] = 100
     pst.pestpp_options["opt_risk"] = 0.5
     pst.pestpp_options["save_binary"] = True
-    pst.observation_data.loc[obj_names,"weight"] = 0.5
+    pst.observation_data.loc[pst.nnz_obs_names,"weight"] = 0.001
     pst.pestpp_options["opt_std_weights"] = True
     pst.control_data.noptmax = noptmax
     pst.write(os.path.join(t_d, case+".pst"))
@@ -548,7 +548,7 @@ def risk_demo(case="zdt1",noptmax=100):
     #pst.pestpp_options["opt_chance_points"] = "all"
     #pst.pestpp_options["opt_recalc_chance_every"] = 100000
     #pst.pestpp_options["opt_stack_size"] = 100
-    pst.observation_data.loc[obj_names,"weight"] = 0.5
+    pst.observation_data.loc[pst.nnz_obs_names,"weight"] = 0.001
     pst.pestpp_options["opt_std_weights"] = True
     pst.pestpp_options["mou_generator"] = "de"
     pst.pestpp_options["mou_population_size"] = 100
@@ -565,7 +565,7 @@ def risk_demo(case="zdt1",noptmax=100):
     #pst.pestpp_options["opt_chance_points"] = "all"
     #pst.pestpp_options["opt_recalc_chance_every"] = 100000
     #pst.pestpp_options["opt_stack_size"] = 100
-    pst.observation_data.loc[obj_names, "weight"] = 0.5
+    pst.observation_data.loc[pst.nnz_obs_names,"weight"] = 0.001
     pst.pestpp_options["opt_std_weights"] = True
     pst.pestpp_options["mou_generator"] = "de"
     pst.pestpp_options["mou_population_size"] = 100
@@ -582,7 +582,7 @@ def risk_demo(case="zdt1",noptmax=100):
     #pst.pestpp_options["opt_chance_points"] = "all"
     #pst.pestpp_options["opt_recalc_chance_every"] = 100000
     #pst.pestpp_options["opt_stack_size"] = 100
-    pst.observation_data.loc[obj_names,"weight"] = 0.5
+    pst.observation_data.loc[pst.nnz_obs_names,"weight"] = 0.001
     pst.pestpp_options["opt_std_weights"] = True
     pst.pestpp_options["mou_generator"] = "de"
     pst.pestpp_options["mou_population_size"] = 100
@@ -599,7 +599,7 @@ def risk_demo(case="zdt1",noptmax=100):
     #pst.pestpp_options["opt_chance_points"] = "all"
     #pst.pestpp_options["opt_recalc_chance_every"] = 100000
     #pst.pestpp_options["opt_stack_size"] = 100
-    pst.observation_data.loc[obj_names,"weight"] = 0.5
+    pst.observation_data.loc[pst.nnz_obs_names,"weight"] = 0.001
     pst.pestpp_options["opt_std_weights"] = True
     pst.pestpp_options["mou_generator"] = "de"
     pst.pestpp_options["mou_population_size"] = 100
