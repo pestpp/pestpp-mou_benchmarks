@@ -521,9 +521,11 @@ def chance_all_binary_test():
     opa = pyemu.ObservationEnsemble.from_binary(pst=pst, filename=os.path.join(m2, "constr.archive.obs_pop.jcb"))
     op = pyemu.ObservationEnsemble.from_binary(pst=pst, filename=os.path.join(m2, "constr.obs_pop.jcb"))
 
-def risk_demo(noptmax=100):
-    case = "rosenc"
+def risk_demo(case="zdt1",noptmax=100):
+
     obj_names = ["obj_1"]
+    if "zdt" in case:
+        obj_names.append("obj_2")
     t_d = mou_suite_helper.setup_problem(case, additive_chance=False, risk_obj=False)
     pst = pyemu.Pst(os.path.join(t_d, case+".pst"))
     #pst.pestpp_options["opt_chance_points"] = "all"
@@ -591,7 +593,7 @@ def risk_demo(noptmax=100):
     m4 = os.path.join("mou_tests", case+"_test_master_riskobj_match")
     pyemu.os_utils.start_workers(t_d, exe_path, case+".pst", 50, worker_root="mou_tests",
                                  master_dir=m4, verbose=True, port=port)
-    return
+
     t_d = mou_suite_helper.setup_problem(case, additive_chance=True, risk_obj=True)
     pst = pyemu.Pst(os.path.join(t_d, case+".pst"))
     #pst.pestpp_options["opt_chance_points"] = "all"
@@ -609,8 +611,7 @@ def risk_demo(noptmax=100):
     pyemu.os_utils.start_workers(t_d, exe_path, case+".pst", 50, worker_root="mou_tests",
                                  master_dir=m5, verbose=True, port=port)
 
-def plot_risk_demo_multi():
-    case = "rosen"
+def plot_risk_demo_multi(case = "zdt1"):
     import matplotlib.pyplot as plt
     m_deter = os.path.join("mou_tests",case+"_test_master_deter")
     m_ravr = os.path.join("mou_tests",case+"_test_master_95")
@@ -759,9 +760,9 @@ def risk_obj_test():
 
 if __name__ == "__main__":
         
-    shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-mou.exe"),os.path.join("..","bin","pestpp-mou.exe"))
-    #shutil.copy2(os.path.join("..", "bin", "win", "pestpp-mou.exe"),
-    #             os.path.join("..", "bin", "pestpp-mou.exe"))
+    #shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-mou.exe"),os.path.join("..","bin","pestpp-mou.exe"))
+    shutil.copy2(os.path.join("..", "bin", "win", "pestpp-mou.exe"),
+                 os.path.join("..", "bin", "pestpp-mou.exe"))
 
     #risk_obj_test()
     #invest_2()
@@ -776,4 +777,5 @@ if __name__ == "__main__":
     #constr_risk_demo()
     #plot_constr_risk_demo()
     risk_demo()
-    plot_risk_demo_rosen()
+    plot_risk_demo_multi()
+    #plot_risk_demo_rosen()

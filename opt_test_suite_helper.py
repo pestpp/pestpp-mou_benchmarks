@@ -363,14 +363,14 @@ def setup_problem(name,additive_chance=False, risk_obj=False, self_adaptive=Fals
 
     par = pst.parameter_data
 
-    par.loc[adf.parnme,"parubnd"] = 0.5
+    par.loc[adf.parnme,"parubnd"] = 0.005
     par.loc[adf.parnme,"parval1"] = 0.0
-    par.loc[adf.parnme,"parlbnd"] = -0.5
+    par.loc[adf.parnme,"parlbnd"] = -0.005
     par.loc[adf.parnme,"parchglim"] = "relative"
     par.loc[adf.parnme,"pargp"] = "obj_add"
     #much less uncertainty in the second obj
-    par.loc[adf.parnme[1],"parubnd"] = 0.05
-    par.loc[adf.parnme[1],"parlbnd"] = -0.05
+    par.loc[adf.parnme[1],"parubnd"] = 0.005
+    par.loc[adf.parnme[1],"parlbnd"] = -0.005
 
     if additive_chance:
         par.loc[adf.parnme, "partrans"] = "none"
