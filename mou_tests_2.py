@@ -649,7 +649,7 @@ def plot_risk_demo_rosen():
     m_rtol = os.path.join("mou_tests", case+"_test_master_05")
     #m_robj = os.path.join("mou_tests",case+"_test_master_riskobj_match")
     m_robjm = os.path.join("mou_tests", case+"_test_master_riskobj_match")
-    bins = np.linspace(-2,2,30)
+    bins = np.linspace(-5,5,30)
     fig, axes = plt.subplots(2,2,figsize=(10,10))
     axes = axes.flatten()
     for d,c,ax in zip([m_deter,m_ravr,m_rtol,m_robjm],['g','b','r',"c","m"],axes):
@@ -778,6 +778,6 @@ if __name__ == "__main__":
     #invest_5()
     #constr_risk_demo()
     #plot_constr_risk_demo()
-    risk_demo(case="rosenc",std_weight=1.0)
+    risk_demo(case="rosenc",std_weight=1.0,noptmax=500)
     #plot_risk_demo_multi()
-    plot_risk_demo_rosen(case="rosenc")
+    plot_risk_demo_rosen()
