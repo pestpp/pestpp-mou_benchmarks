@@ -442,6 +442,29 @@ def invest():
 
     run_and_plot_results(m_d)
 
+
+def run_mou(use_risk_obj=False,chance_points="single",risk=0.5,stack_size=100,
+            num_workers=12,pop_size=100,tag="",recalc_every=100000,noptmax=100):
+    t_d = os.path.join("henry","henry_template")
+    pst = pyemu.Pst(os.path.join(t_d,"henry.pst"))
+    pst.pestpp_options["opt_par_stack"] = "prior.jcb"
+    pst.pestpp_options["mou_risk_objective"] = use_risk_obj
+    pst.pestpp_options["opt_recalc_chance_every"] = recalc_every
+    pst.pestpp_options["opt_chance_points"] = chance_points
+    pst.pestpp_options["opt_risk"] = risk
+    pst.pestpp_options["mou_population_size"] = pop_size
+    pst.pestpp_options["opt_stack_size"] = stack_size
+    pst.control_data.noptmax = noptmax
+    pst.write(os.path.join(t_d,"henry.pst"))
+
+    m_d = t_d.replace("template","master")
+    if len(tag) > 0:
+        m_d += "_" + tag
+    pyemu.os_utils.start_workers(t_d,"pestpp-mou","henry.pst",
+                                 num_workers=num_workers,master_dir=m_d,
+                                 verbose=True, worker_root="henry")
+
+
 if __name__ == "__main__":
     #shutil.copy2(os.path.join("..", "bin", "win", "pestpp-mou.exe"), os.path.join("..", "bin", "pestpp-mou.exe"))
     shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-mou.exe"),os.path.join("..","bin","pestpp-mou.exe"))
@@ -452,7 +475,12 @@ if __name__ == "__main__":
     #test_process_unc("henry_temp")
     #setup_pst()
     #run_and_plot_results(os.path.join("henry", "henry_template"))
-    start_workers_for_debug(False)
+    run_mou(risk=0.9,tag="90_single_once",num_workers=30)
+    run_mou(risk=0.9,tag="90_all_once",chance_points="all",num_workers=30)
+    run_mou(risk=0.9,tag="90_all_10th",chance_points="all",recalc_every=10,num_workers=30)
+    run_mou(risk_obj=True,risk=0.9,tag="90_all_riskobj",chance_points="all",
+        num_workers=30,noptmax=300)
+    #start_workers_for_debug(False)
     #plot_pr_real()
     #plot_results(os.path.join("mou_tests","henry_master"))
     #invest()

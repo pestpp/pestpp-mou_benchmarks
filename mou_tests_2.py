@@ -653,6 +653,76 @@ def plot_risk_demo_multi(case = "zdt1"):
     plt.show()
 
 
+def plot_risk_demo_multi_3pane(case="zdt1"):
+    import matplotlib.pyplot as plt
+    m_d = os.path.join("mou_tests", case + "_test_master_riskobj_more")
+    pst = pyemu.Pst(os.path.join(m_d, case + ".pst"))
+    obj_names = pst.pestpp_options["mou_objectives"].lower().split(',')
+    df = pd.read_csv(os.path.join(m_d, case + ".pareto.archive.summary.csv"))
+    mxgen = df.generation.max()
+    print(mxgen)
+    df = df.loc[df.generation == mxgen, :]
+    df = df.loc[df.nsga2_front==1,:]
+    
+    #df = pyemu.ObservationEnsemble.from_binary(pst=pst,filename=os.path.join(m_d,case+".archive.obs_pop.jcb"))
+    #pe = pyemu.ParameterEnsemble.from_binary(pst=pst,filename=os.path.join(m_d,case+".archive.dv_pop.jcb"))
+    #print(pe.loc[:,"dv_1"].min())
+    #return
+    #df.loc[:,"_risk_"] = pe.loc[df.index,"_risk_"].values
+    #df = df.loc[df._risk_.apply(lambda x: x > 0.95),:]
+    fig, axes = plt.subplots(3, 3, figsize=(10, 10))
+    for i,o1 in enumerate(obj_names):
+        for j in range(i+1):
+            o2 = obj_names[j]
+            ax = axes[i, j]
+            v1 = df.loc[:, o1].values
+            v2 = df.loc[:, o2].values
+            if i == j:
+                ax.hist(v2,bins=20,facecolor="0.5",edgecolor="none",alpha=0.5)
+                ax.set_xlabel(o1)
+                ax.set_yticks([])
+            else:
+                ax.scatter(v2,v1,marker=".",color="0.5",s=20)
+                ax.set_xlabel(o2)
+                ax.set_ylabel(o1)
+
+            if case == "zdt1" and o1 == "obj_2" and o2 == "obj_1":
+                x0 = np.linspace(0, 1, 1000)
+                ov1, ov2 = [], []
+                for xx0 in x0:
+                    x = np.zeros(30)
+                    x[0] = xx0
+                    ret_vals = mou_suite_helper.zdt1(x)
+                    ov1.append(ret_vals[0][0])
+                    ov2.append(ret_vals[0][1])
+
+                ax.plot(ov1, ov2, "k", label="truth")
+
+        for j in range(i+1,len(obj_names)):
+            o2 = obj_names[j]
+            ax = axes[i, j]
+            v1 = df.loc[:, o1].values
+            v2 = df.loc[:, o2].values
+
+            ax.scatter(v2,v1,marker=".",color="0.5",s=20)
+            ax.set_xlabel(o2)
+            ax.set_ylabel(o1)
+
+
+            if case == "zdt1" and o1 == "obj_1" and o2 == "obj_2":
+                x0 = np.linspace(0, 1, 1000)
+                ov1, ov2 = [], []
+                for xx0 in x0:
+                    x = np.zeros(30)
+                    x[0] = xx0
+                    ret_vals = mou_suite_helper.zdt1(x)
+                    ov1.append(ret_vals[0][0])
+                    ov2.append(ret_vals[0][1])
+
+                ax.plot(ov2, ov1, "k", label="truth")
+    plt.show()
+
+
 def plot_risk_demo_rosen():
     case = "rosenc"
     import matplotlib.pyplot as plt
@@ -661,7 +731,7 @@ def plot_risk_demo_rosen():
     m_rtol = os.path.join("mou_tests", case+"_test_master_05")
     #m_robj = os.path.join("mou_tests",case+"_test_master_riskobj_match")
     m_robjm = os.path.join("mou_tests", case+"_test_master_riskobj_match")
-    bins = np.linspace(-2,2,30)
+    bins = np.linspace(-5,5,30)
     fig, axes = plt.subplots(2,2,figsize=(10,10))
     axes = axes.flatten()
     for d,c,ax in zip([m_deter,m_ravr,m_rtol,m_robjm],['g','b','r',"c","m"],axes):
@@ -790,10 +860,17 @@ if __name__ == "__main__":
     #invest_5()
     #constr_risk_demo()
     #plot_constr_risk_demo()
+
     risk_demo(case='zdt1',noptmax=300,std_weight=0.00001)
     plot_risk_demo_multi(case='zdt1')
+
+    #risk_demo(case="rosenc",std_weight=1.0,noptmax=500)
+    #plot_risk_demo_multi()
+    #plot_risk_demo_rosen()
+    risk_demo(case='zdt1',noptmax=300,std_weight=0.00001)
+    #plot_risk_demo_multi_3pane(case='zdt1')
+
     #plot_risk_demo_rosen()
     #risk_demo(case="rosenc",std_weight=1.0)
-    #plot_risk_demo_multi()
+    plot_risk_demo_multi()
     #plot_risk_demo_rosen(case="rosenc")
-
