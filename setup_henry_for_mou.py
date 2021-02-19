@@ -384,7 +384,7 @@ def plot_results(m_d):
     with PdfPages(os.path.join(os.path.split(m_d)[-1]+".pdf")) as pdf:
         for gen in [gens[-1]]:
             #df_gen = df_arc.loc[df_arc.generation==gen,:].copy()
-            df_gen = pd.read_csv(os.path.join(m_d,"henry.{0}.archive.dv_pop.csv".format(gen)))
+            df_gen = pd.read_csv(os.path.join(m_d,"henry.archive.dv_pop.csv"))
 
             # flip the rate pars
             df_gen.loc[:, rate_pars] *= -1.
@@ -467,7 +467,7 @@ def run_mou(risk_obj=False,chance_points="single",risk=0.5,stack_size=100,
 
 if __name__ == "__main__":
     #shutil.copy2(os.path.join("..", "bin", "win", "pestpp-mou.exe"), os.path.join("..", "bin", "pestpp-mou.exe"))
-    shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-mou.exe"),os.path.join("..","bin","pestpp-mou.exe"))
+    #shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-mou.exe"),os.path.join("..","bin","pestpp-mou.exe"))
 
    	# prep_model()
     # 3run_and_plot_results(os.path.join("henry", "henry_temp"))
@@ -475,7 +475,7 @@ if __name__ == "__main__":
     # #test_process_unc("henry_temp")
     # setup_pst()
     # #run_and_plot_results(os.path.join("henry", "henry_template"))
-    run_mou(risk=0.5,tag="deter",num_workers=40)
+    #run_mou(risk=0.5,tag="deter",num_workers=40)
     # run_mou(risk=0.9,tag="90_single_once",num_workers=30)
     # run_mou(risk=0.9,tag="90_all_once",chance_points="all",num_workers=30)
     # run_mou(risk=0.9,tag="90_all_10th",chance_points="all",recalc_every=10,num_workers=30)
@@ -485,3 +485,4 @@ if __name__ == "__main__":
     #plot_pr_real()
     #plot_results(os.path.join("mou_tests","henry_master"))
     #invest()
+    plot_results(os.path.join("henry","henry_master_deter"))
