@@ -6,6 +6,7 @@ import pandas as pd
 from matplotlib.patches import Rectangle
 from matplotlib.colors import Normalize
 from matplotlib.backends.backend_pdf import PdfPages
+from matplotlib.gridspec import GridSpec
 import matplotlib.pyplot as plt
 import flopy
 import pyemu
@@ -364,12 +365,15 @@ def plot_results(m_d):
     #     shutil.rmtree(plt_d)
     # os.mkdir(plt_d)
     df_arc = pd.read_csv(os.path.join(m_d,"henry.pareto.archive.summary.csv"))
+
     pst = pyemu.Pst(os.path.join(m_d,"henry.pst"))
     obj_names = pst.pestpp_options["mou_objectives"].split(',')
+    if "_risk_" in obj_names and "riskobj" not in m_d:
+        obj_names.remove("_risk_")
 
     par = pst.parameter_data
     par = par.loc[par.pargp=="dv_pars",:].copy()
-    rate_pars = par.loc[par.parnme.apply(lambda x: not x.startswith("ar")),"parnme"]
+    rate_pars = par.loc[par.parnme.apply(lambda x: not x.startswith("ar") and not "risk" in x),"parnme"]
     print(rate_pars)
 
     dmn = 60
@@ -388,28 +392,26 @@ def plot_results(m_d):
 
             # flip the rate pars
             df_gen.loc[:, rate_pars] *= -1.
-            tot = df_gen.loc[:, rate_pars].sum(axis=1)
+            df_gen.loc[:,"pump_rate"] = df_gen.loc[:, rate_pars].sum(axis=1)
 
             # only show solutions with some min amount of pumping
-            df_gen = df_gen.loc[tot > 1.0]
+            df_gen = df_gen.loc[df_gen.pump_rate > 1.0]
             # and only show solutions using concen > some % seawater
-            df_gen = df_gen.loc[df_gen.ar_concen >= 17.5]
-            df_gen = df_gen.loc[df_gen.ar_rate <= 2.0]
-
+            #df_gen = df_gen.loc[df_gen.ar_concen >= 17.5]
+            #df_gen = df_gen.loc[df_gen.ar_rate <= 2.0]
+            #if "riskobj" in m_d:
+            #    df_gen = df_gen.loc[df_gen._risk_>0.9,:]
             if df_gen.shape[0] == 0:
                 continue
-            fig,axes = plt.subplots(4,1,figsize=(15,6))
-            ax = axes[0]
-            for d,w,r,c,r1,r2,r3 in zip(df_gen.ar_dist,df_gen.ar_width,df_gen.ar_rate,
-                               df_gen.ar_concen,df_gen.loc[:,rate_pars[0]],
-                                        df_gen.loc[:,rate_pars[1]],
-                                        df_gen.loc[:,rate_pars[2]]):
-                r = Rectangle((d,0),w,r,facecolor=cmap(c/35.0),edgecolor="none",alpha=0.5)
-                ax.add_patch(r)
+            fig = plt.figure(figsize=(8,11))
+            gs = GridSpec(len(obj_names)+1,len(obj_names),figure=fig)
+            ax = fig.add_subplot(gs[0,:])
+            for d,w,r,c,t in zip(df_gen.ar_dist,df_gen.ar_width,df_gen.ar_rate,
+                               df_gen.ar_concen,df_gen.pump_rate,):
+                rect = Rectangle((d,0),w,r,facecolor=cmap(c/35.0),edgecolor="k",alpha=0.35)
+                ax.add_patch(rect)
                 mpt = d + (w/2.)
-                axes[1].plot([mpt,mpt],[0,r1],color=cmap(c/35.0))
-                axes[2].plot([mpt, mpt], [0, r2], color=cmap(c / 35.0))
-                axes[3].plot([mpt, mpt], [0, r3], color=cmap(c / 35.0))
+                #ax.scatter([mpt],[r],marker="o",s=(100 * (t-df_gen.pump_rate.min())/(df_gen.pump_rate.max()-df_gen.pump_rate.min())),color="k",zorder=10,alpha=0.5)
 
             ax.set_xlim(dmn,dmx)
             ax.set_ylim(0,3.5)
@@ -418,12 +420,27 @@ def plot_results(m_d):
             #cb = plt.colorbar(plt.cm.ScalarMappable(norm=norm,cmap=cmap))
             #cb.set_label("recharge concentration")
             ax.set_title("generation {0}, {1} feasible nondom solutions".format(gen,df_gen.shape[0]))
-            for i,ax in enumerate(axes[1:]):
-                ax.set_ylim(0,2.0)
-                ax.set_xlim(dmn,dmx)
-                ax.set_title("pumping well {0}".format(i+1))
-                ax.set_ylabel("pumping rate")
+            for i,o1 in enumerate(obj_names):
+                for j in range(i+1):
+                    ax = fig.add_subplot(gs[i+1,j])
+                    if i == j:
+                        ax.hist(df_gen.loc[:,o1],facecolor="0.5",edgecolor="none",alpha=0.5)
+                        ax.set_yticks([])
+                        ax.set_xlabel(o1)
+                    else:
+                        if "_risk_" in obj_names:
+                            ax.scatter(df_gen.loc[:, obj_names[j]], df_gen.loc[:, o1], marker=".", c=df_gen._risk_.values)
+                        else:
+                            ax.scatter(df_gen.loc[:,obj_names[j]],df_gen.loc[:,o1],marker=".",color="0.5")
+                        ax.set_xlabel(obj_names[j])
+                        ax.set_ylabel(o1)
+                for j in range(i,len(obj_names)):
 
+                    if i != j:
+                        ax = fig.add_subplot(gs[i + 1, j])
+                        ax.scatter(df_gen.loc[:,obj_names[j]],df_gen.loc[:,o1],marker=".",color="0.5")
+                        ax.set_xlabel(obj_names[j])
+                        ax.set_ylabel(o1)
 
             plt.tight_layout()
             #plt.show()
@@ -486,3 +503,7 @@ if __name__ == "__main__":
     #plot_results(os.path.join("mou_tests","henry_master"))
     #invest()
     plot_results(os.path.join("henry","henry_master_deter"))
+    plot_results(os.path.join("henry", "henry_master_90_single_once"))
+    plot_results(os.path.join("henry", "henry_master_90_all_once"))
+    plot_results(os.path.join("henry", "henry_master_90_all_100th"))
+    plot_results(os.path.join("henry", "henry_master_90_all_riskobj"))
