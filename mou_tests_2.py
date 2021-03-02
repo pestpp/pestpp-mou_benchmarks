@@ -773,7 +773,9 @@ def risk_obj_test():
     pyemu.os_utils.start_workers(t_d, exe_path, "constr.pst", 5, worker_root="mou_tests",
                                  master_dir=m1, verbose=True, port=port)
     
+
     pst = pyemu.Pst(os.path.join(t_d, "constr.pst"))
+    pst.pestpp_options["opt_std_weights"] = False
     pst.pestpp_options["opt_chance_points"] = "all"
     pst.pestpp_options["opt_recalc_chance_every"] = 5
     pst.pestpp_options["opt_stack_size"] = 5
@@ -844,11 +846,11 @@ def risk_obj_test():
 
 if __name__ == "__main__":
         
-    #shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-mou.exe"),os.path.join("..","bin","pestpp-mou.exe"))
-    shutil.copy2(os.path.join("..", "bin", "win", "pestpp-mou.exe"),
-                 os.path.join("..", "bin", "pestpp-mou.exe"))
+    shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-mou.exe"),os.path.join("..","bin","pestpp-mou.exe"))
+    #shutil.copy2(os.path.join("..", "bin", "win", "pestpp-mou.exe"),
+    #             os.path.join("..", "bin", "pestpp-mou.exe"))
 
-    #risk_obj_test()
+    risk_obj_test()
     #invest_2()
     #chance_consistency_test()
     #invest_3()
@@ -863,6 +865,10 @@ if __name__ == "__main__":
 
     risk_demo(case='kur',noptmax=300,std_weight=0.01)
     plot_risk_demo_multi(case='kur')
+
+    #risk_demo(case='zdt1',noptmax=300,std_weight=0.00001)
+    #plot_risk_demo_multi(case='zdt1')
+
 
     #risk_demo(case="rosenc",std_weight=1.0,noptmax=500)
     #plot_risk_demo_multi()
