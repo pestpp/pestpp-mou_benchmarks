@@ -861,16 +861,16 @@ if __name__ == "__main__":
     #constr_risk_demo()
     #plot_constr_risk_demo()
 
-    risk_demo(case='zdt1',noptmax=300,std_weight=0.00001)
-    plot_risk_demo_multi(case='zdt1')
+    risk_demo(case='kur',noptmax=300,std_weight=0.01)
+    plot_risk_demo_multi(case='kur')
 
     #risk_demo(case="rosenc",std_weight=1.0,noptmax=500)
     #plot_risk_demo_multi()
     #plot_risk_demo_rosen()
-    risk_demo(case='zdt1',noptmax=300,std_weight=0.00001)
+    #risk_demo(case='zdt1',noptmax=300,std_weight=0.00001)
     #plot_risk_demo_multi_3pane(case='zdt1')
 
     #plot_risk_demo_rosen()
     #risk_demo(case="rosenc",std_weight=1.0)
-    plot_risk_demo_multi()
+    #plot_risk_demo_multi()
     #plot_risk_demo_rosen(case="rosenc")
