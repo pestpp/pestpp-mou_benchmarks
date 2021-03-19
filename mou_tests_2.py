@@ -844,13 +844,24 @@ def risk_obj_test():
     assert d.max().max() < 1.0e-10, d.max().max()
 
 
+def basic_pso_test():
+    t_d = mou_suite_helper.setup_problem("zdt1", additive_chance=True, risk_obj=True)
+    pst = pyemu.Pst(os.path.join(t_d, "zdt1.pst"))
+    pst.pestpp_options["mou_generator"] = "pso"
+    pst.control_data.noptmax = 100
+    pst.write(os.path.join(t_d, "zdt1.pst"))
+    m_d = os.path.join("mou_tests", "zdt1_pso_master")
+    pyemu.os_utils.start_workers(t_d, exe_path, "zdt1.pst", 20, worker_root="mou_tests",
+                                 master_dir=m_d, verbose=True, port=port)
+
 if __name__ == "__main__":
         
     shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-mou.exe"),os.path.join("..","bin","pestpp-mou.exe"))
+    basic_pso_test()
     #shutil.copy2(os.path.join("..", "bin", "win", "pestpp-mou.exe"),
     #             os.path.join("..", "bin", "pestpp-mou.exe"))
 
-    risk_obj_test()
+    #risk_obj_test()
     #invest_2()
     #chance_consistency_test()
     #invest_3()
@@ -863,8 +874,8 @@ if __name__ == "__main__":
     #constr_risk_demo()
     #plot_constr_risk_demo()
 
-    risk_demo(case='kur',noptmax=300,std_weight=0.01)
-    plot_risk_demo_multi(case='kur')
+    #risk_demo(case='kur',noptmax=300,std_weight=0.01)
+    #plot_risk_demo_multi(case='kur')
 
     #risk_demo(case='zdt1',noptmax=300,std_weight=0.00001)
     #plot_risk_demo_multi(case='zdt1')

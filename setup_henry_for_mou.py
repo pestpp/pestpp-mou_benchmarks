@@ -138,7 +138,7 @@ def setup_pst():
     #print(dely.shape)
     mg = flopy.discretization.StructuredGrid(dely,delx)
 
-    v_k = pyemu.geostats.ExpVario(1.0,0.1)
+    v_k = pyemu.geostats.ExpVario(1.0,0.1,bearing=90,anisotropy=100)
     gs_k = pyemu.geostats.GeoStruct(variograms=v_k)
 
     pf = pyemu.utils.PstFrom(old_dir,new_dir,spatial_reference=mg,
@@ -221,10 +221,10 @@ def setup_pst():
 
     wel_par = par.loc[par.pargp=="wel",:]
     wpar = wel_par.loc[wel_par.parval1>0,"parnme"]
-    par.loc[wpar, "partrans"] = "none"
-    par.loc[wpar,"pargp"] = "wel_rch"
-    par.loc[wpar, "parubnd"] = 0.11
-    par.loc[wpar, "parlbnd"] = 0.05
+    par.loc[wpar, "partrans"] = "fixed"
+    # par.loc[wpar,"pargp"] = "wel_rch"
+    # par.loc[wpar, "parubnd"] = 0.11
+    # par.loc[wpar, "parlbnd"] = 0.05
     wpar = wel_par.loc[wel_par.parval1<0,"parnme"]
     par.loc[wpar, "partrans"] = "none"
     par.loc[wpar, "pargp"] = "dv_pars"
@@ -234,6 +234,7 @@ def setup_pst():
 
     stage_par = par.loc[par.pargp == "stage", "parnme"]
     par.loc[stage_par, "partrans"] = "fixed"
+    
 
     pf.pst.control_data.noptmax = 0
     pf.pst.add_pi_equation(["ar_width"],obs_group="less_than",pilbl="ar_width")
@@ -485,13 +486,12 @@ def run_mou(risk_obj=False,chance_points="single",risk=0.5,stack_size=100,
 if __name__ == "__main__":
     #shutil.copy2(os.path.join("..", "bin", "win", "pestpp-mou.exe"), os.path.join("..", "bin", "pestpp-mou.exe"))
     #shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-mou.exe"),os.path.join("..","bin","pestpp-mou.exe"))
-
-   	# prep_model()
-    # 3run_and_plot_results(os.path.join("henry", "henry_temp"))
+    #prep_model()
+    #run_and_plot_results(os.path.join("henry", "henry_temp"))
     # #test_add_artrch("henry_template",write_tpl=False)
     # #test_process_unc("henry_temp")
-    # setup_pst()
-    # #run_and_plot_results(os.path.join("henry", "henry_template"))
+    setup_pst()
+    run_and_plot_results(os.path.join("henry", "henry_template"))
     #run_mou(risk=0.5,tag="deter",num_workers=40,noptmax=500)
     #run_mou(risk=0.95,tag="95_single_once",num_workers=40,noptmax=500)
     #run_mou(risk=0.95,tag="95_all_once",chance_points="all",num_workers=40,noptmax=500)
@@ -501,8 +501,8 @@ if __name__ == "__main__":
     # run_mou(risk=0.9,tag="90_single_once",num_workers=30)
     # run_mou(risk=0.9,tag="90_all_once",chance_points="all",num_workers=30)
     # run_mou(risk=0.9,tag="90_all_10th",chance_points="all",recalc_every=10,num_workers=30)
-    run_mou(risk_obj=True,risk=0.95,tag="95_all_riskobj",chance_points="all",
-            num_workers=30,noptmax=900)
+    #run_mou(risk_obj=True,risk=0.95,tag="95_all_riskobj",chance_points="all",
+    #        num_workers=30,noptmax=900)
     #start_workers_for_debug(False)
     #plot_pr_real()
     #plot_results(os.path.join("mou_tests","henry_master"))
@@ -511,4 +511,4 @@ if __name__ == "__main__":
     #plot_results(os.path.join("henry", "henry_master_95_single_once"))
     #plot_results(os.path.join("henry", "henry_master_95_all_once"))
     #plot_results(os.path.join("henry", "henry_master_95_all_100th"))
-    plot_results(os.path.join("henry", "henry_master_95_all_riskobj"))
+    #plot_results(os.path.join("henry", "henry_master_95_all_riskobj"))
