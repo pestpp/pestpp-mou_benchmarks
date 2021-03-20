@@ -206,6 +206,39 @@ def test_restart_all():
     print(d.max().max())
     assert d.max().max() < 0.01
 
+    t_d = mou_suite_helper.setup_problem("zdt1", True, True)
+    pst = pyemu.Pst(os.path.join(t_d, "zdt1.pst"))
+    pst.pestpp_options["opt_chance_points"] = "all"
+    pst.pestpp_options["opt_recalc_chance_every"] = 1000
+    pst.pestpp_options["opt_stack_size"] = 5
+    pst.pestpp_options["mou_population_size"] = 10
+    pst.pestpp_options["opt_par_stack"] = "prior.csv"
+    pst.pestpp_options["mou_generator"] = "pso"
+    pst.control_data.noptmax = -1
+    pst.write(os.path.join(t_d, "zdt1.pst"))
+    m1 = os.path.join("mou_tests", "zdt1_test_master_restart1")
+    pyemu.os_utils.start_workers(t_d, exe_path, "zdt1.pst", 35, worker_root="mou_tests",
+                                 master_dir=m1, verbose=True,port=port)
+
+    shutil.copy2(os.path.join(m1, 'zdt1.0.nested.par_stack.csv'), os.path.join(t_d, "par_stack.csv"))
+    shutil.copy2(os.path.join(m1, 'zdt1.0.nested.obs_stack.csv'), os.path.join(t_d, "obs_stack.csv"))
+
+    pst.pestpp_options["opt_par_stack"] = "par_stack.csv"
+    pst.pestpp_options["opt_obs_stack"] = "obs_stack.csv"
+    pst.control_data.noptmax = 3
+    pst.pestpp_options["opt_recalc_chance_every"] = 2
+    pst.write(os.path.join(t_d, "zdt1.pst"))
+    m2 = os.path.join("mou_tests", "zdt1_test_master_restart2")
+    pyemu.os_utils.start_workers(t_d, exe_path, "zdt1.pst", 35, worker_root="mou_tests",
+                                 master_dir=m2, verbose=True,port=port)
+
+    chance_file = "zdt1.0.obs_pop.chance.csv"
+    d1 = pd.read_csv(os.path.join(m1, chance_file), index_col=0)
+    d2 = pd.read_csv(os.path.join(m2, chance_file), index_col=0)
+    d = (d1 - d2).apply(np.abs)
+    print(d.max().max())
+    assert d.max().max() < 0.01
+
 def invest_risk_obj():
     t_d = mou_suite_helper.setup_problem("zdt1",True,True)
     pst = pyemu.Pst(os.path.join(t_d,"zdt1.pst"))
@@ -343,6 +376,88 @@ def fail_test():
                                  master_dir=m1, verbose=True,port=port)
 
 
+def pso_fail_test():
+    t_d = mou_suite_helper.setup_problem("zdt1", additive_chance=True, risk_obj=False)
+    pst = pyemu.Pst(os.path.join(t_d, "zdt1.pst"))
+    pst.pestpp_options["opt_chance_points"] = "all"
+    pst.pestpp_options["opt_recalc_chance_every"] = 5
+    pst.pestpp_options["opt_stack_size"] = 10
+    pst.pestpp_options["mou_generator"] = "pso"
+    pst.pestpp_options["mou_population_size"] = 30
+    pst.pestpp_options["ies_debug_fail_remainder"] = True
+    pst.pestpp_options["opt_risk"] = 0.95
+    pst.control_data.noptmax = 8
+    pst.write(os.path.join(t_d, "zdt1.pst"))
+    m1 = os.path.join("mou_tests", "zdt1_test_master_fail_1")
+    pyemu.os_utils.start_workers(t_d, exe_path, "zdt1.pst", 35, worker_root="mou_tests",
+                                 master_dir=m1, verbose=True,port=port)
+
+    dp_file = os.path.join(m1,"zdt1.0.nested.par_stack.csv")
+    dp = pd.read_csv(dp_file,index_col=0)
+    op_file = os.path.join(m1,"zdt1.0.nested.obs_stack.csv")
+    op = pd.read_csv(dp_file,index_col=0)
+    print(dp.shape,op.shape)
+    assert dp.shape[0] == op.shape[0]
+    
+    shutil.copy2(dp_file,os.path.join(t_d,"par_stack.csv"))
+    shutil.copy2(op_file,os.path.join(t_d,"obs_stack.csv"))
+    pst.pestpp_options["opt_par_stack"] = "par_stack.csv"
+    pst.pestpp_options["opt_obs_stack"] = "obs_stack.csv"
+    pst.control_data.noptmax = 2
+    pst.write(os.path.join(t_d, "zdt1.pst"))
+    m1 = os.path.join("mou_tests", "zdt1_test_master_fail_1")
+    pyemu.os_utils.start_workers(t_d, exe_path, "zdt1.pst", 35, worker_root="mou_tests",
+                                 master_dir=m1, verbose=True,port=port)
+
+
+    t_d = mou_suite_helper.setup_problem("zdt1", additive_chance=True, risk_obj=False)
+    pst = pyemu.Pst(os.path.join(t_d, "zdt1.pst"))
+    pst.pestpp_options["opt_chance_points"] = "all"
+    pst.pestpp_options["opt_recalc_chance_every"] = 5
+    pst.pestpp_options["opt_stack_size"] = 10
+    pst.pestpp_options["mou_generator"] = "pso"
+    pst.pestpp_options["mou_population_size"] = 30
+    pst.pestpp_options["ies_debug_fail_subset"] = True
+    pst.pestpp_options["opt_risk"] = 0.95
+    pst.control_data.noptmax = 8
+    pst.write(os.path.join(t_d, "zdt1.pst"))
+    m1 = os.path.join("mou_tests", "zdt1_test_master_fail_1")
+    pyemu.os_utils.start_workers(t_d, exe_path, "zdt1.pst", 35, worker_root="mou_tests",
+                                 master_dir=m1, verbose=True)
+
+
+    dp_file = os.path.join(m1,"zdt1.0.nested.par_stack.csv")
+    dp = pd.read_csv(dp_file,index_col=0)
+    op_file = os.path.join(m1,"zdt1.0.nested.obs_stack.csv")
+    op = pd.read_csv(dp_file,index_col=0)
+    print(dp.shape,op.shape)
+    assert dp.shape[0] == op.shape[0]
+    
+    shutil.copy2(dp_file,os.path.join(t_d,"par_stack.csv"))
+    shutil.copy2(op_file,os.path.join(t_d,"obs_stack.csv"))
+    pst.pestpp_options["opt_par_stack"] = "par_stack.csv"
+    pst.pestpp_options["opt_obs_stack"] = "obs_stack.csv"
+    pst.control_data.noptmax = 2
+    pst.write(os.path.join(t_d, "zdt1.pst"))
+    m1 = os.path.join("mou_tests", "zdt1_test_master_fail_1")
+    pyemu.os_utils.start_workers(t_d, exe_path, "zdt1.pst", 35, worker_root="mou_tests",
+                                 master_dir=m1, verbose=True,port=port)
+
+    t_d = mou_suite_helper.setup_problem("zdt1", additive_chance=True,risk_obj=False)
+    pst = pyemu.Pst(os.path.join(t_d, "zdt1.pst"))
+    pst.pestpp_options["opt_chance_points"] = "single"
+    pst.pestpp_options["opt_recalc_chance_every"] = 1000
+    pst.pestpp_options["opt_stack_size"] = 10
+    pst.pestpp_options["mou_generator"] = "pso"
+    pst.pestpp_options["mou_population_size"] = 30
+    pst.pestpp_options["ies_debug_fail_subset"] = True
+    pst.pestpp_options["opt_risk"] = 0.95
+    pst.control_data.noptmax = 8
+    pst.write(os.path.join(t_d, "zdt1.pst"))
+    m1 = os.path.join("mou_tests", "zdt1_test_master_fail_1")
+    pyemu.os_utils.start_workers(t_d, exe_path, "zdt1.pst", 35, worker_root="mou_tests",
+                                 master_dir=m1, verbose=True,port=port)
+
 
 
 def invest():
@@ -409,8 +524,12 @@ def all_infeas_test():
     pst.pestpp_options["mou_env_selector"] = "spea"
     pst.control_data.noptmax = 2
     pst.write(os.path.join(t_d,"tkn.pst"))
-    pyemu.os_utils.run("{0} tkn.pst".format(exe_path),cwd=t_d)
-    out_file = os.path.join(t_d,"tkn.obs_pop.csv".format(pst.control_data.noptmax))
+    m1 = os.path.join("mou_tests", "test_master_all_infeas")
+    pyemu.os_utils.start_workers(t_d, exe_path, "tkn.pst", 15, worker_root="mou_tests",
+                                 master_dir=m1, verbose=True,port=port)
+
+
+    out_file = os.path.join(m1,"tkn.obs_pop.csv".format(pst.control_data.noptmax))
     assert os.path.exists(out_file)
     df = pd.read_csv(out_file)
     assert df.shape[0] == pst.pestpp_options["mou_population_size"]
@@ -418,8 +537,12 @@ def all_infeas_test():
     pst.pestpp_options["mou_generator"] = "sbx"
     pst.pestpp_options["mou_env_selector"] = "spea"
     pst.write(os.path.join(t_d,"tkn.pst"))
-    pyemu.os_utils.run("{0} tkn.pst".format(exe_path),cwd=t_d)
-    out_file = os.path.join(t_d,"tkn.obs_pop.csv".format(pst.control_data.noptmax))
+    m1 = os.path.join("mou_tests", "test_master_all_infeas")
+    pyemu.os_utils.start_workers(t_d, exe_path, "tkn.pst", 15, worker_root="mou_tests",
+                                 master_dir=m1, verbose=True,port=port)
+
+
+    out_file = os.path.join(m1,"tkn.obs_pop.csv".format(pst.control_data.noptmax))
     assert os.path.exists(out_file)
     df = pd.read_csv(out_file)
     assert df.shape[0] == pst.pestpp_options["mou_population_size"]
@@ -427,8 +550,25 @@ def all_infeas_test():
     pst.pestpp_options["mou_generator"] = "de"
     pst.pestpp_options["mou_env_selector"] = "nsga"
     pst.write(os.path.join(t_d,"tkn.pst"))
-    pyemu.os_utils.run("{0} tkn.pst".format(exe_path),cwd=t_d)
-    out_file = os.path.join(t_d,"tkn.obs_pop.csv".format(pst.control_data.noptmax))
+    m1 = os.path.join("mou_tests", "test_master_all_infeas")
+    pyemu.os_utils.start_workers(t_d, exe_path, "tkn.pst", 15, worker_root="mou_tests",
+                                 master_dir=m1, verbose=True,port=port)
+
+
+    out_file = os.path.join(m1,"tkn.obs_pop.csv".format(pst.control_data.noptmax))
+    assert os.path.exists(out_file)
+    df = pd.read_csv(out_file)
+    assert df.shape[0] == pst.pestpp_options["mou_population_size"]
+
+    pst.pestpp_options["mou_generator"] = "pso"
+    pst.pestpp_options["mou_env_selector"] = "nsga"
+    pst.write(os.path.join(t_d,"tkn.pst"))
+    m1 = os.path.join("mou_tests", "test_master_all_infeas")
+    pyemu.os_utils.start_workers(t_d, exe_path, "tkn.pst", 15, worker_root="mou_tests",
+                                 master_dir=m1, verbose=True,port=port)
+
+
+    out_file = os.path.join(m1,"tkn.obs_pop.csv".format(pst.control_data.noptmax))
     assert os.path.exists(out_file)
     df = pd.read_csv(out_file)
     assert df.shape[0] == pst.pestpp_options["mou_population_size"]
@@ -845,7 +985,7 @@ def risk_obj_test():
 
 
 def basic_pso_test():
-    t_d = mou_suite_helper.setup_problem("zdt1", additive_chance=True, risk_obj=True)
+    t_d = mou_suite_helper.setup_problem("zdt1", additive_chance=False, risk_obj=False)
     pst = pyemu.Pst(os.path.join(t_d, "zdt1.pst"))
     pst.pestpp_options["mou_generator"] = "pso"
     pst.control_data.noptmax = 100
@@ -857,7 +997,8 @@ def basic_pso_test():
 if __name__ == "__main__":
         
     shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-mou.exe"),os.path.join("..","bin","pestpp-mou.exe"))
-    basic_pso_test()
+    #basic_pso_test()
+
     #shutil.copy2(os.path.join("..", "bin", "win", "pestpp-mou.exe"),
     #             os.path.join("..", "bin", "pestpp-mou.exe"))
 
@@ -891,3 +1032,4 @@ if __name__ == "__main__":
     #risk_demo(case="rosenc",std_weight=1.0)
     #plot_risk_demo_multi()
     #plot_risk_demo_rosen(case="rosenc")
+    all_infeas_test()

@@ -826,5 +826,5 @@ if __name__ == "__main__":
     # setup_zdt_problem("zdt4",10)
     # setup_zdt_problem("zdt6",10)
     #shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-mou.exe"),os.path.join("..","bin","pestpp-mou.exe"))
-    #start_workers("zdt1")
-    setup_problem("rosenc")
+    start_workers("zdt1")
+    #setup_problem("rosenc")
