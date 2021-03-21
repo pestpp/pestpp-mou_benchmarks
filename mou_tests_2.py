@@ -985,12 +985,21 @@ def risk_obj_test():
 
 
 def basic_pso_test():
-    t_d = mou_suite_helper.setup_problem("zdt1", additive_chance=False, risk_obj=False)
+    t_d = mou_suite_helper.setup_problem("zdt1", additive_chance=True, risk_obj=False)
     pst = pyemu.Pst(os.path.join(t_d, "zdt1.pst"))
     pst.pestpp_options["mou_generator"] = "pso"
-    pst.control_data.noptmax = 100
+    pst.pestpp_options["opt_risk"] = 0.95
+    pst.control_data.noptmax = 20
     pst.write(os.path.join(t_d, "zdt1.pst"))
-    m_d = os.path.join("mou_tests", "zdt1_pso_master")
+    m_d = os.path.join("mou_tests", "zdt1_pso_master_risk")
+    pyemu.os_utils.start_workers(t_d, exe_path, "zdt1.pst", 20, worker_root="mou_tests",
+                                 master_dir=m_d, verbose=True, port=port)
+
+    pst.pestpp_options["mou_generator"] = "de"
+    pst.pestpp_options["opt_risk"] = 0.95
+    pst.control_data.noptmax = 20
+    pst.write(os.path.join(t_d, "zdt1.pst"))
+    m_d = os.path.join("mou_tests", "zdt1_de_master_risk")
     pyemu.os_utils.start_workers(t_d, exe_path, "zdt1.pst", 20, worker_root="mou_tests",
                                  master_dir=m_d, verbose=True, port=port)
 
@@ -1032,4 +1041,7 @@ if __name__ == "__main__":
     #risk_demo(case="rosenc",std_weight=1.0)
     #plot_risk_demo_multi()
     #plot_risk_demo_rosen(case="rosenc")
-    all_infeas_test()
+    #all_infeas_test()
+    basic_pso_test()
+    mou_suite_helper.plot_results(os.path.join("mou_tests","zdt1_pso_master_risk"),sequence=True)
+    mou_suite_helper.plot_results(os.path.join("mou_tests","zdt1_de_master_risk"),sequence=True)

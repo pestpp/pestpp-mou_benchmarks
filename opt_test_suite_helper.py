@@ -601,10 +601,16 @@ def plot_results(master_d, sequence=False):
                 o2.append(ret_vals[0][1])
 
             ax.plot(o1,o2,"k",label="truth")
+            ax.set_xlim(min(df_arc.loc[:,cols[0]].min(),min(o1)),
+                max(df_arc.loc[:,cols[0]].max(),max(o1)))
+            ax.set_ylim(min(df_arc.loc[:,cols[1]].min(),min(o2)),
+                max(df_arc.loc[:,cols[1]].max(),max(o2)))
+        else:    
+            ax.set_xlim(df_arc.loc[:,cols[0]].min(),df_arc.loc[:,cols[0]].max())
+            ax.set_ylim(df_arc.loc[:,cols[1]].min(),df_arc.loc[:,cols[1]].max())
 
         ax.legend()
-        ax.set_xlim(df_arc.loc[:,cols[0]].min(),df_arc.loc[:,cols[0]].max())
-        ax.set_ylim(df_arc.loc[:,cols[1]].min(),df_arc.loc[:,cols[1]].max())
+        
         ax.set_xlabel("objective 1 (minimize)")
         ax.set_ylabel("objective 2 (minimize)")
 
@@ -616,7 +622,7 @@ def plot_results(master_d, sequence=False):
         plt.close("all")
     if sequence:
         prefix = os.path.split(master_d)[-1]+"_%03d.png"
-        pyemu.os_utils.run("ffmpeg -r 60 -f image2 -s 1920x1080 -i {0} -vcodec libx264 -crf 25  -pix_fmt yuv420p test.mp4".format(prefix),
+        pyemu.os_utils.run("ffmpeg -r 60 -y -f image2 -s 1920x1080 -i {0} -vcodec libx264 -crf 25  -pix_fmt yuv420p {1}.mp4".format(prefix,os.path.split(master_d)[-1]),
                            cwd=plt_dir)
 
 
