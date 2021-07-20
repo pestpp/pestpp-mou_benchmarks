@@ -671,8 +671,8 @@ def risk_demo(case="zdt1",noptmax=100,std_weight=0.0001,mou_gen="de",pop_size=10
     t_d = mou_suite_helper.setup_problem(case, additive_chance=False, risk_obj=False)
     pst = pyemu.Pst(os.path.join(t_d, case+".pst"))
     #pst.pestpp_options["opt_chance_points"] = "all"
-    pst.pestpp_options["opt_recalc_chance_every"] = 100000
-    #pst.pestpp_options["opt_stack_size"] = 100
+    pst.pestpp_options["opt_recalc_chance_every"] = 10000
+    pst.pestpp_options["opt_stack_size"] = 20
     pst.pestpp_options["mou_generator"] = mou_gen
     pst.pestpp_options["mou_population_size"] = pop_size
     pst.pestpp_options["opt_risk"] = 0.5
@@ -793,9 +793,10 @@ def plot_risk_demo_multi(case = "zdt1", mou_gen="de"):
     plt.show()
 
 
-def plot_risk_demo_multi_3pane(case="zdt1"):
+def plot_risk_demo_multi_3pane(case="zdt1",mou_gen="de"):
     import matplotlib.pyplot as plt
-    m_d = os.path.join("mou_tests", case + "_test_master_riskobj_more")
+    #m_d = os.path.join("mou_tests", case + "_test_master_riskobj_more_"+mou_gen)
+    m_d = os.path.join("mou_tests", case + "_test_master_95_" + mou_gen)
     pst = pyemu.Pst(os.path.join(m_d, case + ".pst"))
     obj_names = pst.pestpp_options["mou_objectives"].lower().split(',')
     df = pd.read_csv(os.path.join(m_d, case + ".pareto.archive.summary.csv"))
@@ -803,6 +804,8 @@ def plot_risk_demo_multi_3pane(case="zdt1"):
     print(mxgen)
     df = df.loc[df.generation == mxgen, :]
     df = df.loc[df.nsga2_front==1,:]
+
+    #df = df.loc[df.obj_2<1,:]
     
     #df = pyemu.ObservationEnsemble.from_binary(pst=pst,filename=os.path.join(m_d,case+".archive.obs_pop.jcb"))
     #pe = pyemu.ParameterEnsemble.from_binary(pst=pst,filename=os.path.join(m_d,case+".archive.dv_pop.jcb"))
@@ -810,7 +813,11 @@ def plot_risk_demo_multi_3pane(case="zdt1"):
     #return
     #df.loc[:,"_risk_"] = pe.loc[df.index,"_risk_"].values
     #df = df.loc[df._risk_.apply(lambda x: x > 0.95),:]
-    fig, axes = plt.subplots(3, 3, figsize=(10, 10))
+    rvals = None
+    if "_risk_" in obj_names:
+        rvals = df.loc[:,"_risk_"].values.copy()
+
+    fig, axes = plt.subplots(len(obj_names), len(obj_names), figsize=(10, 10))
     for i,o1 in enumerate(obj_names):
         for j in range(i+1):
             o2 = obj_names[j]
@@ -822,7 +829,10 @@ def plot_risk_demo_multi_3pane(case="zdt1"):
                 ax.set_xlabel(o1)
                 ax.set_yticks([])
             else:
-                ax.scatter(v2,v1,marker=".",color="0.5",s=20)
+                if rvals is None:
+                    ax.scatter(v2,v1,marker=".",color="0.5",s=20)
+                else:
+                    ax.scatter(v2,v1,marker=".",c=rvals,s=20)
                 ax.set_xlabel(o2)
                 ax.set_ylabel(o1)
 
@@ -843,8 +853,10 @@ def plot_risk_demo_multi_3pane(case="zdt1"):
             ax = axes[i, j]
             v1 = df.loc[:, o1].values
             v2 = df.loc[:, o2].values
-
-            ax.scatter(v2,v1,marker=".",color="0.5",s=20)
+            if rvals is None:
+                ax.scatter(v2,v1,marker=".",color="0.5",s=20)
+            else:
+                ax.scatter(v2,v1,marker=".",c=rvals,s=20)
             ax.set_xlabel(o2)
             ax.set_ylabel(o1)
 
@@ -863,38 +875,79 @@ def plot_risk_demo_multi_3pane(case="zdt1"):
     plt.show()
 
 
-def plot_risk_demo_rosen(mou_gen="de"):
+def plot_risk_demo_rosen():
     case = "rosenc"
     import matplotlib.pyplot as plt
+    mou_gen = "de"
     m_deter = os.path.join("mou_tests",case+"_test_master_deter_"+mou_gen)
     m_ravr = os.path.join("mou_tests",case+"_test_master_95_"+mou_gen)
     m_rtol = os.path.join("mou_tests", case+"_test_master_05_"+mou_gen)
     #m_robj = os.path.join("mou_tests",case+"_test_master_riskobj_match")
     m_robjm = os.path.join("mou_tests", case+"_test_master_riskobj_match_"+mou_gen)
-    bins = np.linspace(-5,5,30)
-    fig, axes = plt.subplots(2,2,figsize=(10,10))
-    axes = axes.flatten()
-    for d,c,ax in zip([m_deter,m_ravr,m_rtol,m_robjm],['g','b','r',"c","m"],axes):
+    bins = 30#np.linspace(-5,5,30)
+    fig, axes = plt.subplots(1,2,figsize=(8,4))
+    #axes = axes.flatten()
+    for d,c,label in zip([m_deter,m_ravr,m_rtol,m_robjm],['g','b','r',"c","m"],["risk neutral (risk=0.5)","risk averse (risk=0.95)","risk tolerant (risk=0.05)","risk as an objective"]):
 
         pst = pyemu.Pst(os.path.join(d,case+".pst"))
         df = pd.read_csv(os.path.join(d,case+".pareto.archive.summary.csv"))
+        df2 = pd.read_csv(os.path.join(d[:-2] + "pso",case+".pareto.archive.summary.csv"))
         mxgen = df.generation.max()
         #mxgen = 10
         #print(d,mxgen)
         df = df.loc[df.generation==mxgen,:]
+        mxgen2 = df2.generation.max()
+        df2 = df2.loc[df2.generation==mxgen2,:]
         print(d,mxgen)
+        ax = axes[0]
+
         if "riskobj" in d:
             #print(df.head().loc[:,['obj_1',"obj_2",'_risk_']])
             #ax.scatter(df.obj_1.values[:2],df.obj_2.values[:2],marker="+",c=df._risk_[:2],cmap='jet')
             rdf = df#.loc[df._risk_ < 0.05,:]
-            axt = plt.twinx(ax)
-            axt.scatter(rdf.obj_1,rdf._risk_,marker="o",c=1 - rdf._risk_.values,cmap='jet')
+            #axt = plt.twinx(ax)
+            ax.scatter(rdf.obj_1,rdf._risk_,marker="o",c=1 - rdf._risk_.values,cmap='jet',label="risk vs objective function\npareto frontier")
+            ax.set_ylabel("risk")
 
-        ax.hist(df.obj_1.values,bins=bins,facecolor=c,edgecolor="none",alpha=0.5,density=False)
-        ax.set_xlim(bins.min(),bins.max())
-        ax.set_title(d)
+
+        #ax.hist(df.obj_1.values,bins=bins,facecolor="0.5",edgecolor="none",alpha=0.5,density=False)
+
+        #ax.hist(df.obj_1.values, bins=bins, facecolor=0.5, density=False)
+
+        ax.plot([df.obj_1.mean(),df.obj_1.mean()],[0,1],color=c,ls="--",label=label)
+        #ax.set_xlim(bins.min(),bins.max())
+        ax.set_xlim(-5,5)
+        ax.set_title("A) DE",loc="left")
+        ax.set_xlabel("objective function value")
+
+        ax = axes[1]
+
+        if "riskobj" in d:
+            # print(df.head().loc[:,['obj_1',"obj_2",'_risk_']])
+            # ax.scatter(df.obj_1.values[:2],df.obj_2.values[:2],marker="+",c=df._risk_[:2],cmap='jet')
+            rdf = df2 # .loc[df._risk_ < 0.05,:]
+            # axt = plt.twinx(ax)
+            ax.scatter(rdf.obj_1, rdf._risk_, marker="o", c=1 - rdf._risk_.values, cmap='jet',
+                       label="risk vs objective function\npareto frontier")
+            ax.set_ylabel("risk")
+
+        # ax.hist(df.obj_1.values,bins=bins,facecolor="0.5",edgecolor="none",alpha=0.5,density=False)
+
+        # ax.hist(df.obj_1.values, bins=bins, facecolor=0.5, density=False)
+
+        ax.plot([df2.obj_1.mean(), df2.obj_1.mean()], [0, 1], color=c, ls="--", label=label)
+        # ax.set_xlim(bins.min(),bins.max())
+        ax.set_xlim(-5, 5)
+        ax.set_title("B) PSO", loc="left")
+        ax.set_xlabel("objective function value")
+        #ax.set_yticks([])
+
+    for ax in axes:
+        ax.set_ylim(0,1)
+        ax.legend(loc="upper left")
+
     #plt.show()
-    plt.savefig(mou_gen+"_rosenc_risk_demo.pdf")
+    plt.savefig("rosenc_risk_demo.pdf")
 
 def risk_obj_test():
     t_d = mou_suite_helper.setup_problem("constr", additive_chance=True, risk_obj=True)
@@ -1004,9 +1057,60 @@ def basic_pso_test(case="zdt1"):
     pyemu.os_utils.start_workers(t_d, exe_path, case+".pst", 20, worker_root="mou_tests",
                                  master_dir=m_d, verbose=True, port=port)
 
+
+def plot_risk_demo_compare_zdt1():
+    import matplotlib.pyplot as plt
+    # m_d = os.path.join("mou_tests", case + "_test_master_riskobj_more_"+mou_gen)
+    case = "zdt1"
+    master_ds = [case+"_test_master_deter",case+"_test_master_05",case+"_test_master_95"]
+    fig, axes = plt.subplots(1, 2, figsize=(8, 4))
+    obj_names = ["obj_1","obj_2"]
+    colors = ["g","r","b"]
+    labels = ["risk neutral (risk=0.5)","risk tolerant (risk=0.05)","risk averse (risk=0.95)"]
+    for m_d,c,label in zip(master_ds,colors,labels):
+        m_d = os.path.join("mou_tests",m_d)
+        pst = pyemu.Pst(os.path.join(m_d+"_de", case + ".pst"))
+
+        df_de = pd.read_csv(os.path.join(m_d+"_de", case + ".pareto.archive.summary.csv"))
+        mxgen = df_de.generation.max()
+        print(mxgen)
+        df_de = df_de.loc[df_de.generation == mxgen, :]
+        df_de = df_de.loc[df_de.nsga2_front == 1, :]
+
+        df_pso = pd.read_csv(os.path.join(m_d + "_pso", case + ".pareto.archive.summary.csv"))
+        mxgen = df_pso.generation.max()
+        print(mxgen)
+        df_pso = df_pso.loc[df_pso.generation == mxgen, :]
+        df_pso = df_pso.loc[df_pso.nsga2_front == 1, :]
+
+
+        axes[0].scatter(df_de.obj_1.values,df_de.obj_2.values,color=c,label=label)
+        axes[1].scatter(df_pso.obj_1.values, df_pso.obj_2.values, color=c, label=label)
+
+
+        x0 = np.linspace(0, 1, 1000)
+        ov1, ov2 = [], []
+        for xx0 in x0:
+            x = np.zeros(30)
+            x[0] = xx0
+            ret_vals = mou_suite_helper.zdt1(x)
+            ov1.append(ret_vals[0][0])
+            ov2.append(ret_vals[0][1])
+
+        axes[0].plot(ov1, ov2, "k", label="truth")
+        axes[1].plot(ov1, ov2, "k", label="truth")
+        axes[0].set_title("A) DE",loc="left")
+        axes[1].set_title("A) PSO", loc="left")
+        axes[0].set_xlabel("objective 1")
+        axes[1].set_xlabel("objective 1")
+        axes[0].set_ylabel("objective 2")
+        axes[1].set_ylabel("objective 2")
+
+    plt.show()
+
 if __name__ == "__main__":
         
-    shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-mou.exe"),os.path.join("..","bin","pestpp-mou.exe"))
+    #shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-mou.exe"),os.path.join("..","bin","pestpp-mou.exe"))
     #basic_pso_test()
 
     #shutil.copy2(os.path.join("..", "bin", "win", "pestpp-mou.exe"),
@@ -1035,14 +1139,16 @@ if __name__ == "__main__":
     #risk_demo(case="rosenc",std_weight=1.0,noptmax=500)
     #plot_risk_demo_multi()
     #plot_risk_demo_rosen()
-    #risk_demo(case='zdt1',noptmax=300,std_weight=0.00001)
-    #plot_risk_demo_multi_3pane(case='zdt1')
+    risk_demo(case='zdt1',noptmax=50,std_weight=0.05,pop_size=50)
+    risk_demo(case='zdt1', noptmax=50, std_weight=0.05, pop_size=50,mou_gen="pso")
+    #plot_risk_demo_multi_3pane(case='zdt1',mou_gen="de")
+    plot_risk_demo_compare_zdt1()
 
     #plot_risk_demo_rosen()
-    risk_demo(case="rosenc",std_weight=1.0,mou_gen="pso",pop_size=20,noptmax=20)
-    plot_risk_demo_rosen(mou_gen="pso")
-    risk_demo(case="rosenc", std_weight=1.0, mou_gen="de",pop_size=20,noptmax=20)
-    plot_risk_demo_rosen(mou_gen="de")
+    #risk_demo(case="rosenc",std_weight=1.0,mou_gen="pso",pop_size=100,noptmax=30)
+    #plot_risk_demo_rosen(mou_gen="pso")
+    #risk_demo(case="rosenc", std_weight=1.0, mou_gen="de",pop_size=100,noptmax=30)
+    #plot_risk_demo_rosen(mou_gen="de")
     #all_infeas_test()
     #case = "constr"
     #basic_pso_test(case=case)

@@ -221,6 +221,8 @@ def setup_problem(name,additive_chance=False, risk_obj=False, self_adaptive=Fals
             f.write("l1 w !obj_1!\n")
             if name.lower() not in ["rosen","ackley","rosenc"]:
                 f.write("l1 w !obj_2!\n")
+            else:
+                f.write("l1\n")
             if name.lower() in ["srn","tkn","rosenc"]:
                 f.write("l1 w !const_1!\n")
                 f.write("l1 w !const_2!\n")
