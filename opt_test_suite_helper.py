@@ -134,6 +134,7 @@ def helper(func):
         #f.write("obj_2 {0}\n".format(float(obj2)))
         for i,constr in enumerate(constrs):
             f.write("constr_{0} {1}\n".format(i+1,float(constr)))
+    return objs,constrs
 
 def setup_problem(name,additive_chance=False, risk_obj=False, self_adaptive=False):
     test_d = os.path.join(test_root,"{0}_template".format(name))
