@@ -240,10 +240,10 @@ def setup_pst():
     par.loc["_risk_", "partrans"] = "none"
 
     par.loc[df.parnme,"pargp"] = "dv_pars"
-    par.loc["ar_concen","parval1"] = 7.0
+    par.loc["ar_concen","parval1"] = 1.5
     par.loc["ar_concen", "parubnd"] = 35.0
     par.loc["ar_concen", "parlbnd"] = 0.5
-    par.loc["ar_concen", "partrans"] = "none"
+    par.loc["ar_concen", "partrans"] = "fixed"
 
     par.loc["ar_rate", "parval1"] = 2.5
     par.loc["ar_rate", "parubnd"] = 6.0
@@ -282,10 +282,10 @@ def setup_pst():
     pf.pst.add_pi_equation(wpar.to_list(),pilbl="pump_rate",obs_group="less_than")
     pf.pst.add_pi_equation(["ar_width"],obs_group="less_than",pilbl="ar_width")
     pf.pst.add_pi_equation(["ar_rate"], obs_group="less_than",pilbl="ar_rate")
-    pf.pst.add_pi_equation(["ar_concen"], obs_group="greater_than",pilbl="ar_concen")
+    #pf.pst.add_pi_equation(["ar_concen"], obs_group="greater_than",pilbl="ar_concen")
     pf.pst.add_pi_equation(["_risk_"], obs_group="greater_than",pilbl="_risk_")
-    pf.pst.pestpp_options["mou_objectives"] = ["ar_width","ar_rate","ar_concen","pump_rate", "_risk_"]
-    #pf.pst.pestpp_options["mou_objectives"] = ["pump_rate", "_risk_","ar_rate","ar_width"]
+    #pf.pst.pestpp_options["mou_objectives"] = ["ar_width","ar_rate","ar_concen","pump_rate", "_risk_"]
+    pf.pst.pestpp_options["mou_objectives"] = ["pump_rate", "_risk_","ar_rate","ar_width"]
 
     pf.pst.pestpp_options["opt_dec_var_groups"] = "dv_pars"
     pf.pst.pestpp_options["panther_echo"] = True
@@ -539,7 +539,7 @@ def plot_domain(cwd):
     wel_df = pd.read_csv(os.path.join(cwd,"flow.wel_stress_period_data_historic.txt"),header=None,
                          names=["l","r","c","flux","concen"],delim_whitespace=True)
     wel_df = wel_df.loc[wel_df.flux<0,:]
-    #pyemu.os_utils.run("mf6", cwd=cwd, verbose=True)
+    pyemu.os_utils.run("mf6", cwd=cwd, verbose=True)
     plt_dir = "plots"
     if not os.path.exists(plt_dir):
         os.mkdir(plt_dir)
@@ -547,12 +547,14 @@ def plot_domain(cwd):
     hds = flopy.utils.HeadFile(os.path.join(cwd, "flow.hds"))
     print(ucn.get_times())
     d = ucn.get_data(kstpkper=(0,1))
-    fig, axes = plt.subplots(2, 1, figsize=(8, 6))
+    fig, axes = plt.subplots(2, 1, figsize=(8, 4))
     ax = axes[0]
     ax.set_title("A) pre-developement salinity concentration",loc="left")
     ax.set_ylabel("layer")
     ax.set_xlabel("row")
     cb = ax.imshow(d[:, 0, :], interpolation="none", vmin=0.0, vmax=35.0)
+    cb = plt.colorbar(cb,ax=ax)
+    cb.set_label("salinity ($\\frac{g}{l}$)")
     levels = [0.5]
     ax.contour(d[:, 0, :], levels=levels, colors="w",label="potable salinity limit")
     ax.scatter(wel_df.c,wel_df.l,marker="^",color="k",label="extraction wells")
@@ -560,7 +562,7 @@ def plot_domain(cwd):
     ax.plot([0,0],ylim,"m",lw=5,label="upgradient inflow boundary")
     xmx = ax.get_xlim()[1]
     ax.plot([xmx, xmx], ylim, "r", lw=5, label="coastal boundary")
-    ax.plot([40,55],[0,0],"g",lw=5,label="feasible artifical recharge basin")
+    #ax.plot([40,55],[0,0],"g",lw=5,label="feasible artifical recharge basin")
     ax.legend(loc="lower left")
     #d = hds.get_data(totim=time)
     #levels = np.linspace(d.min(), d.mean(), 5)
@@ -573,6 +575,8 @@ def plot_domain(cwd):
 
     d = ucn.get_data(kstpkper=(0, 20))
     cb = ax.imshow(d[:, 0, :], interpolation="none", vmin=0.0, vmax=35.0)
+    cb = plt.colorbar(cb, ax=ax)
+    cb.set_label("salinity ($\\frac{g}{l}$)")
     levels = [0.5]
     ax.contour(d[:, 0, :], levels=levels, colors="w", label="potable salinity limit")
     ax.scatter(wel_df.c, wel_df.l, marker="^", color="k", label="extraction wells")
@@ -580,37 +584,26 @@ def plot_domain(cwd):
     ax.plot([0, 0], ylim, "m", lw=5, label="upgradient inflow boundary")
     xmx = ax.get_xlim()[1]
     ax.plot([xmx, xmx], ylim, "r", lw=5, label="coastal boundary")
-    ax.plot([40, 55], [0, 0], "g", lw=5, label="feasible artifical recharge basin")
+    #ax.plot([40, 55], [0, 0], "g", lw=5, label="feasible artifical recharge basin")
     ax.legend(loc="lower left")
-    plt.show()
+    plt.tight_layout()
+    plt.savefig("henry_domain.pdf")
     plt.close(fig)
 
 if __name__ == "__main__":
 
     #shutil.copy2(os.path.join("..", "bin", "win", "pestpp-mou.exe"), os.path.join("..", "bin", "pestpp-mou.exe"))
     #shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-mou.exe"),os.path.join("..","bin","pestpp-mou.exe"))
-    #prep_model()
-    #plot_domain(os.path.join("henry", "henry_temp"))
-    #run_and_plot_results(os.path.join("henry", "henry_temp"))
-    #test_add_artrch(os.path.join("henry", "henry_temp"),write_tpl=False)
-    #test_process_unc(os.path.join("henry", "henry_temp"))
+    prep_model()
+    plot_domain(os.path.join("henry", "henry_temp"))
     setup_pst()
-    #test_head_at_artrch(os.path.join("henry","henry_template"))
-    #run_and_plot_results(os.path.join("henry", "henry_template"))
-    #run_mou(risk=0.5,tag="deter",num_workers=40,noptmax=100)
+    run_mou(risk=0.5,tag="deter",num_workers=40,noptmax=100)
     #run_mou(risk=0.95,tag="95_single_once",num_workers=40,noptmax=300)
     #run_mou(risk=0.95,tag="95_all_once",chance_points="all",num_workers=40,noptmax=400)
     #run_mou(risk=0.95,tag="95_all_100th",chance_points="all",recalc_every=100,num_workers=40,noptmax=500)
     
-    # run_mou(risk=0.9,tag="90_single_once",num_workers=30)
-    # run_mou(risk=0.9,tag="90_all_once",chance_points="all",num_workers=30)
-    # run_mou(risk=0.9,tag="90_all_10th",chance_points="all",recalc_every=10,num_workers=30)
-    #run_mou(risk_obj=True,risk=0.95,tag="95_single_riskobj",num_workers=40,noptmax=300)
-    #start_workers_for_debug(False)
-    #plot_pr_real()
-    #plot_results(os.path.join("mou_tests","henry_master"))
-    #invest()
-    #plot_results(os.path.join("henry","henry_master_deter"))
+
+    plot_results(os.path.join("henry","henry_master_deter"))
     #plot_results(os.path.join("henry", "henry_master_95_single_once"))
     #plot_results(os.path.join("henry", "henry_master_95_all_once"))
     #plot_results(os.path.join("henry", "henry_master_95_all_100th"))
