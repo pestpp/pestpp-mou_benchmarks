@@ -53,7 +53,7 @@ def run_and_plot_results(cwd):
             d = ucn.get_data(totim=time)
             fig,ax = plt.subplots(1,1,figsize=(8,3))
             cb = ax.imshow(d[:,0,:],interpolation="none",vmin=0.0,vmax=35.0)
-            levels = [35 * f for f in [0.0035, 0.5]]
+            levels = [0.5,17]
             ax.contour(d[:,0,:],levels=levels,colors="w")
             d = hds.get_data(totim=time)
             levels = np.linspace(d.min(),d.mean(),5)
@@ -242,8 +242,8 @@ def setup_pst():
     par.loc[df.parnme,"pargp"] = "dv_pars"
     par.loc["ar_concen","parval1"] = 7.0
     par.loc["ar_concen", "parubnd"] = 35.0
-    par.loc["ar_concen", "parlbnd"] = 3.5
-    par.loc["ar_concen", "partrans"] = "fixed"
+    par.loc["ar_concen", "parlbnd"] = 0.5
+    par.loc["ar_concen", "partrans"] = "none"
 
     par.loc["ar_rate", "parval1"] = 2.5
     par.loc["ar_rate", "parubnd"] = 6.0
@@ -252,7 +252,7 @@ def setup_pst():
 
     par.loc["ar_dist", "parval1"] = 80
     par.loc["ar_dist", "parubnd"] = 120
-    par.loc["ar_dist", "parlbnd"] = 40
+    par.loc["ar_dist", "parlbnd"] = 1
     par.loc["ar_dist", "partrans"] = "none"
 
     par.loc["ar_width", "parval1"] = 5
@@ -282,10 +282,10 @@ def setup_pst():
     pf.pst.add_pi_equation(wpar.to_list(),pilbl="pump_rate",obs_group="less_than")
     pf.pst.add_pi_equation(["ar_width"],obs_group="less_than",pilbl="ar_width")
     pf.pst.add_pi_equation(["ar_rate"], obs_group="less_than",pilbl="ar_rate")
-    #pf.pst.add_pi_equation(["ar_concen"], obs_group="greater_than",pilbl="ar_concen")
+    pf.pst.add_pi_equation(["ar_concen"], obs_group="greater_than",pilbl="ar_concen")
     pf.pst.add_pi_equation(["_risk_"], obs_group="greater_than",pilbl="_risk_")
-    #pf.pst.pestpp_options["mou_objectives"] = ["ar_width","ar_rate","ar_concen","pump_rate", "_risk_"]
-    pf.pst.pestpp_options["mou_objectives"] = ["pump_rate", "_risk_","ar_rate","ar_width"]
+    pf.pst.pestpp_options["mou_objectives"] = ["ar_width","ar_rate","ar_concen","pump_rate", "_risk_"]
+    #pf.pst.pestpp_options["mou_objectives"] = ["pump_rate", "_risk_","ar_rate","ar_width"]
 
     pf.pst.pestpp_options["opt_dec_var_groups"] = "dv_pars"
     pf.pst.pestpp_options["panther_echo"] = True
@@ -301,7 +301,7 @@ def setup_pst():
     obs.loc[obs.time==mx_time, "obgnme"] = "less_than"
 
     obs.loc["arhead_usecol:arhead_name:scen_max_time:1","weight"] = 1.0
-    obs.loc["arhead_usecol:arhead_name:scen_max_time:1", "obsval"] = 1.25
+    obs.loc["arhead_usecol:arhead_name:scen_max_time:1", "obsval"] = 1.05
     obs.loc["arhead_usecol:arhead_name:scen_max_time:1", "obgnme"] = "less_than"
 
     pf.pst.write(os.path.join(new_dir,"henry.pst"))
@@ -425,8 +425,8 @@ def plot_results(m_d):
     rate_pars = par.loc[par.parnme.apply(lambda x: not x.startswith("ar") and not "risk" in x),"parnme"]
     print(rate_pars)
 
-    dmn = 60
-    dmx = 140
+    dmn = 0
+    dmx = 160
 
     gens = df_arc.generation.unique()
     gens.sort()
@@ -536,35 +536,65 @@ def run_mou(risk_obj=False,chance_points="single",risk=0.5,stack_size=100,
 
 
 def plot_domain(cwd):
-
-    pyemu.os_utils.run("mf6", cwd=cwd, verbose=True)
+    wel_df = pd.read_csv(os.path.join(cwd,"flow.wel_stress_period_data_historic.txt"),header=None,
+                         names=["l","r","c","flux","concen"],delim_whitespace=True)
+    wel_df = wel_df.loc[wel_df.flux<0,:]
+    #pyemu.os_utils.run("mf6", cwd=cwd, verbose=True)
     plt_dir = "plots"
     if not os.path.exists(plt_dir):
         os.mkdir(plt_dir)
     ucn = flopy.utils.HeadFile(os.path.join(cwd, "trans.ucn"), text="concentration")
     hds = flopy.utils.HeadFile(os.path.join(cwd, "flow.hds"))
-
-    d = ucn.get_data(totim=3.5)
-    fig, ax = plt.subplots(1, 1, figsize=(8, 3))
+    print(ucn.get_times())
+    d = ucn.get_data(kstpkper=(0,1))
+    fig, axes = plt.subplots(2, 1, figsize=(8, 6))
+    ax = axes[0]
+    ax.set_title("A) pre-developement salinity concentration",loc="left")
+    ax.set_ylabel("layer")
+    ax.set_xlabel("row")
     cb = ax.imshow(d[:, 0, :], interpolation="none", vmin=0.0, vmax=35.0)
-    #levels = [35 * f for f in [0.0035, 0.5]]
-    #ax.contour(d[:, 0, :], levels=levels, colors="w")
+    levels = [0.5]
+    ax.contour(d[:, 0, :], levels=levels, colors="w",label="potable salinity limit")
+    ax.scatter(wel_df.c,wel_df.l,marker="^",color="k",label="extraction wells")
+    ylim = ax.get_ylim()
+    ax.plot([0,0],ylim,"m",lw=5,label="upgradient inflow boundary")
+    xmx = ax.get_xlim()[1]
+    ax.plot([xmx, xmx], ylim, "r", lw=5, label="coastal boundary")
+    ax.plot([40,55],[0,0],"g",lw=5,label="feasible artifical recharge basin")
+    ax.legend(loc="lower left")
     #d = hds.get_data(totim=time)
     #levels = np.linspace(d.min(), d.mean(), 5)
     #ax.contour(d[:, 0, :], levels, colors="k", )
-    plt.savefig("henry_domain.pdf")
+    #plt.savefig("henry_domain.pdf")
+    ax = axes[1]
+    ax.set_title("B) salinity concentration after historic water use", loc="left")
+    ax.set_ylabel("layer")
+    ax.set_xlabel("row")
+
+    d = ucn.get_data(kstpkper=(0, 20))
+    cb = ax.imshow(d[:, 0, :], interpolation="none", vmin=0.0, vmax=35.0)
+    levels = [0.5]
+    ax.contour(d[:, 0, :], levels=levels, colors="w", label="potable salinity limit")
+    ax.scatter(wel_df.c, wel_df.l, marker="^", color="k", label="extraction wells")
+    ylim = ax.get_ylim()
+    ax.plot([0, 0], ylim, "m", lw=5, label="upgradient inflow boundary")
+    xmx = ax.get_xlim()[1]
+    ax.plot([xmx, xmx], ylim, "r", lw=5, label="coastal boundary")
+    ax.plot([40, 55], [0, 0], "g", lw=5, label="feasible artifical recharge basin")
+    ax.legend(loc="lower left")
+    plt.show()
     plt.close(fig)
 
 if __name__ == "__main__":
 
     #shutil.copy2(os.path.join("..", "bin", "win", "pestpp-mou.exe"), os.path.join("..", "bin", "pestpp-mou.exe"))
     #shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-mou.exe"),os.path.join("..","bin","pestpp-mou.exe"))
-    prep_model()
-    plot_domain(os.path.join("henry", "henry_temp"))
+    #prep_model()
+    #plot_domain(os.path.join("henry", "henry_temp"))
     #run_and_plot_results(os.path.join("henry", "henry_temp"))
     #test_add_artrch(os.path.join("henry", "henry_temp"),write_tpl=False)
     #test_process_unc(os.path.join("henry", "henry_temp"))
-    #setup_pst()
+    setup_pst()
     #test_head_at_artrch(os.path.join("henry","henry_template"))
     #run_and_plot_results(os.path.join("henry", "henry_template"))
     #run_mou(risk=0.5,tag="deter",num_workers=40,noptmax=100)
