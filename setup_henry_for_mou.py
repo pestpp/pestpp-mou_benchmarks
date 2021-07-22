@@ -535,17 +535,39 @@ def run_mou(risk_obj=False,chance_points="single",risk=0.5,stack_size=100,
                                  verbose=True, worker_root="henry")
 
 
+def plot_domain(cwd):
+
+    pyemu.os_utils.run("mf6", cwd=cwd, verbose=True)
+    plt_dir = "plots"
+    if not os.path.exists(plt_dir):
+        os.mkdir(plt_dir)
+    ucn = flopy.utils.HeadFile(os.path.join(cwd, "trans.ucn"), text="concentration")
+    hds = flopy.utils.HeadFile(os.path.join(cwd, "flow.hds"))
+
+    d = ucn.get_data(totim=3.5)
+    fig, ax = plt.subplots(1, 1, figsize=(8, 3))
+    cb = ax.imshow(d[:, 0, :], interpolation="none", vmin=0.0, vmax=35.0)
+    #levels = [35 * f for f in [0.0035, 0.5]]
+    #ax.contour(d[:, 0, :], levels=levels, colors="w")
+    #d = hds.get_data(totim=time)
+    #levels = np.linspace(d.min(), d.mean(), 5)
+    #ax.contour(d[:, 0, :], levels, colors="k", )
+    plt.savefig("henry_domain.pdf")
+    plt.close(fig)
+
 if __name__ == "__main__":
+
     #shutil.copy2(os.path.join("..", "bin", "win", "pestpp-mou.exe"), os.path.join("..", "bin", "pestpp-mou.exe"))
     #shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-mou.exe"),os.path.join("..","bin","pestpp-mou.exe"))
-    #prep_model()
+    prep_model()
+    plot_domain(os.path.join("henry", "henry_temp"))
     #run_and_plot_results(os.path.join("henry", "henry_temp"))
     #test_add_artrch(os.path.join("henry", "henry_temp"),write_tpl=False)
     #test_process_unc(os.path.join("henry", "henry_temp"))
-    setup_pst()
+    #setup_pst()
     #test_head_at_artrch(os.path.join("henry","henry_template"))
     #run_and_plot_results(os.path.join("henry", "henry_template"))
-    run_mou(risk=0.5,tag="deter",num_workers=40,noptmax=100)
+    #run_mou(risk=0.5,tag="deter",num_workers=40,noptmax=100)
     #run_mou(risk=0.95,tag="95_single_once",num_workers=40,noptmax=300)
     #run_mou(risk=0.95,tag="95_all_once",chance_points="all",num_workers=40,noptmax=400)
     #run_mou(risk=0.95,tag="95_all_100th",chance_points="all",recalc_every=100,num_workers=40,noptmax=500)
@@ -558,7 +580,7 @@ if __name__ == "__main__":
     #plot_pr_real()
     #plot_results(os.path.join("mou_tests","henry_master"))
     #invest()
-    plot_results(os.path.join("henry","henry_master_deter"))
+    #plot_results(os.path.join("henry","henry_master_deter"))
     #plot_results(os.path.join("henry", "henry_master_95_single_once"))
     #plot_results(os.path.join("henry", "henry_master_95_all_once"))
     #plot_results(os.path.join("henry", "henry_master_95_all_100th"))

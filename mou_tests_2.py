@@ -1249,7 +1249,6 @@ def plot_constr_risk():
     for m_d, c, label in zip(master_ds, colors, labels):
         m_d = os.path.join("mou_tests", m_d)
         pst = pyemu.Pst(os.path.join(m_d + "_de", case + ".pst"))
-
         df_de = pd.read_csv(os.path.join(m_d + "_de", case + ".pareto.archive.summary.csv"))
         mxgen = df_de.generation.max()
         print(mxgen)
@@ -1331,10 +1330,10 @@ def get_constr_base_plot(ax,label=False):
     # ax = axes[0]
     if label:
         ax.plot(x1, f1, "k--", label="constraint")
-        ax.plot(x2, f2, "k--", label="pareto frontier")
+        ax.plot(x2, f2, "r--", label="pareto frontier")
     else:
         ax.plot(x1, f1, "k--")
-        ax.plot(x2, f2, "k--")
+        ax.plot(x2, f2, "r--")
     ax.plot(x2, f3, "k--")
     # ax.plot(x3,f4,"")
     # ax.plot(x4,f5,"m")
