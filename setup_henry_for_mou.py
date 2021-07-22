@@ -125,6 +125,36 @@ def test_add_artrch(test_d,dist=80,width=10,rate=1,concen=0.0,write_tpl=False):
         run_and_plot_results(test_d)
     return tpl_file
 
+def test_head_at_artrch(d):
+    cwd = os.getcwd()
+    os.chdir(d)
+    df = head_at_artrch()
+    os.chdir(cwd)
+    return df
+
+def head_at_artrch():
+    import flopy
+    hds = flopy.utils.HeadFile("flow.hds")
+    df = pd.read_csv("artrch.dat",header=None,names=["var","value"],index_col=0,delim_whitespace=True)
+
+    start = int(df.loc["dist"])
+    stop = start + int(df.loc["width"])
+    hist_vals = hds.get_data((19,0))[0,0,start:stop]
+    scen_vals = hds.get_data()[0,0,start:stop]
+    d = scen_vals - hist_vals
+    perd = 100. * (d / hist_vals)
+    #print(hist_vals)
+    #print(scen_vals)
+    #print(d)
+    #print(perd)
+    with open("ar_heads.csv",'w') as f:
+        f.write("name,time,arhead\n")
+        f.write("hist_mean,0,{0:15.6E}\n".format(hist_vals.mean()))
+        f.write("scen_mean,1,{0:15.6E}\n".format(scen_vals.mean()))
+        f.write("hist_max,0,{0:15.6E}\n".format(hist_vals.max()))
+        f.write("scen_max,1,{0:15.6E}\n".format(scen_vals.max()))
+
+
 def setup_pst():
     old_dir = os.path.join("henry","henry_temp")
     new_dir = os.path.join("henry","henry_template")
@@ -141,8 +171,11 @@ def setup_pst():
     v_k = pyemu.geostats.ExpVario(1.0,0.1,bearing=90,anisotropy=100)
     gs_k = pyemu.geostats.GeoStruct(variograms=v_k)
 
+    pot_lim = 0.5 # potable limit, g/l salinity
+
     pf = pyemu.utils.PstFrom(old_dir,new_dir,spatial_reference=mg,
                              remove_existing=True,zero_based=False)
+
 
     # setup pars for k using aniso to represent vk
     pf.add_parameters("flow.npf_k.txt",par_type="grid",upper_bound=864*10.0,lower_bound=864*0.1,
@@ -181,15 +214,23 @@ def setup_pst():
     pf.mod_sys_cmds.append("mf6")
     pf.add_py_function("setup_henry_for_mou.py","add_artrch()",is_pre_cmd=True)
     pf.tmp_files.append("flow.wel_stress_period_data_scenario.txt")
-    pf.build_pst()
 
     # add artificial recharge basin dvs
     tpl_file = test_add_artrch(new_dir, write_tpl=True)
-    df = pf.pst.add_parameters(os.path.join(new_dir,tpl_file),pst_path=".")
-    with open(os.path.join(new_dir,"risk.dat.tpl"),'w') as f:
+
+
+    test_head_at_artrch(new_dir)
+    pf.add_observations("ar_heads.csv", ofile_sep=",", index_cols=[0,1], use_cols=[2], prefix="arhead")
+
+    pf.add_py_function("setup_henry_for_mou.py", "head_at_artrch()", is_pre_cmd=False)
+
+    pf.build_pst()
+
+    df = pf.pst.add_parameters(os.path.join(new_dir, tpl_file), pst_path=".")
+    with open(os.path.join(new_dir, "risk.dat.tpl"), 'w') as f:
         f.write("ptf ~\n")
         f.write("_risk_ ~   _risk_    ~\n")
-    pf.pst.add_parameters(os.path.join(new_dir,"risk.dat.tpl"),pst_path=".")
+    pf.pst.add_parameters(os.path.join(new_dir, "risk.dat.tpl"), pst_path=".")
 
     par = pf.pst.parameter_data
     par.loc["_risk_","pargp"] = "dv_pars"
@@ -199,13 +240,13 @@ def setup_pst():
     par.loc["_risk_", "partrans"] = "none"
 
     par.loc[df.parnme,"pargp"] = "dv_pars"
-    par.loc["ar_concen","parval1"] = 0.0
+    par.loc["ar_concen","parval1"] = 10.0
     par.loc["ar_concen", "parubnd"] = 35.0
-    par.loc["ar_concen", "parlbnd"] = 0.0
+    par.loc["ar_concen", "parlbnd"] = pot_lim
     par.loc["ar_concen", "partrans"] = "none"
 
-    par.loc["ar_rate", "parval1"] = 1.0
-    par.loc["ar_rate", "parubnd"] = 2.5
+    par.loc["ar_rate", "parval1"] = 1.25
+    par.loc["ar_rate", "parubnd"] = 3.5
     par.loc["ar_rate", "parlbnd"] = 0.1
     par.loc["ar_rate", "partrans"] = "none"
 
@@ -214,34 +255,37 @@ def setup_pst():
     par.loc["ar_dist", "parlbnd"] = 40
     par.loc["ar_dist", "partrans"] = "none"
 
-    par.loc["ar_width", "parval1"] = 10
+    par.loc["ar_width", "parval1"] = 5
     par.loc["ar_width", "parubnd"] = 20
-    par.loc["ar_width", "parlbnd"] = 1
+    par.loc["ar_width", "parlbnd"] = 2
     par.loc["ar_width", "partrans"] = "none"
 
     wel_par = par.loc[par.pargp=="wel",:]
     wpar = wel_par.loc[wel_par.parval1>0,"parnme"]
     par.loc[wpar, "partrans"] = "fixed"
-    # par.loc[wpar,"pargp"] = "wel_rch"
-    # par.loc[wpar, "parubnd"] = 0.11
-    # par.loc[wpar, "parlbnd"] = 0.05
+    par.loc[wpar,"pargp"] = "wel_rch"
+    par.loc[wpar, "parubnd"] = par.loc[wpar,"parval1"] * 1.2
+    par.loc[wpar, "parlbnd"] = par.loc[wpar,"parval1"] * 0.8
+
     wpar = wel_par.loc[wel_par.parval1<0,"parnme"]
     par.loc[wpar, "partrans"] = "none"
     par.loc[wpar, "pargp"] = "dv_pars"
     par.loc[wpar, "parubnd"] = 0.0
-    par.loc[wpar, "parlbnd"] = -2.0
+    par.loc[wpar, "parlbnd"] = -3.5
     pf.pst.add_pi_equation(wpar.to_list(),pilbl="pump_rate",obs_group="less_than")
 
     stage_par = par.loc[par.pargp == "stage", "parnme"]
     par.loc[stage_par, "partrans"] = "fixed"
-    
 
     pf.pst.control_data.noptmax = 0
-    pf.pst.add_pi_equation(["ar_width"],obs_group="less_than",pilbl="ar_width")
+
+    pf.pst.add_pi_equation(wpar.to_list(),pilbl="pump_rate",obs_group="less_than")
+    #pf.pst.add_pi_equation(["ar_width"],obs_group="less_than",pilbl="ar_width")
     pf.pst.add_pi_equation(["ar_rate"], obs_group="less_than",pilbl="ar_rate")
     pf.pst.add_pi_equation(["ar_concen"], obs_group="greater_than",pilbl="ar_concen")
     pf.pst.add_pi_equation(["_risk_"], obs_group="greater_than",pilbl="_risk_")
-    pf.pst.pestpp_options["mou_objectives"] = ["ar_width","ar_rate","ar_concen","pump_rate", "_risk_"]
+    #pf.pst.pestpp_options["mou_objectives"] = ["ar_width","ar_rate","ar_concen","pump_rate", "_risk_"]
+    pf.pst.pestpp_options["mou_objectives"] = ["ar_concen","pump_rate", "_risk_","ar_rate"]
 
     pf.pst.pestpp_options["opt_dec_var_groups"] = "dv_pars"
     pf.pst.pestpp_options["panther_echo"] = True
@@ -253,8 +297,12 @@ def setup_pst():
     obs = pf.pst.observation_data
     mx_time = obs.time.max()
     # use the last output time as the constraint on concen at the pumping wells
-    obs.loc[obs.time==mx_time,"obsval"] = 0.01
+    obs.loc[obs.time==mx_time,"obsval"] = pot_lim
     obs.loc[obs.time==mx_time, "obgnme"] = "less_than"
+
+    obs.loc["arhead_usecol:arhead_name:scen_max_time:1","weight"] = 1.0
+    obs.loc["arhead_usecol:arhead_name:scen_max_time:1", "obsval"] = 1.25
+    obs.loc["arhead_usecol:arhead_name:scen_max_time:1", "obgnme"] = "less_than"
 
     pf.pst.write(os.path.join(new_dir,"henry.pst"))
     pe = pf.draw(100,use_specsim=True)
@@ -383,7 +431,11 @@ def plot_results(m_d):
     gens = df_arc.generation.unique()
     gens.sort()
     print(gens)
-
+    obj_names_dict = {"ar_width": "recharge basin width ($L$)",
+                      "ar_rate": "recharge rate ($\\frac{L^3}{T}$)",
+                      "pump_rate": "combined extraction rate ($\\frac{L^3}{T}$)",
+                      "ar_concen" : "recharge salinity ($\\frac{mg}{l}$)",
+                      "_risk_":"risk"}
     cmap = plt.get_cmap("jet")
     norm = Normalize(0.0,35.0)
     with PdfPages(os.path.join(os.path.split(m_d)[-1]+".pdf")) as pdf:
@@ -427,14 +479,14 @@ def plot_results(m_d):
                     if i == j:
                         ax.hist(df_gen.loc[:,o1],facecolor="0.5",edgecolor="none",alpha=0.5)
                         ax.set_yticks([])
-                        ax.set_xlabel(o1)
+                        ax.set_xlabel(obj_names_dict[o1])
                     else:
                         if "_risk_" in obj_names:
                             ax.scatter(df_gen.loc[:, obj_names[j]], df_gen.loc[:, o1], marker=".", c=df_gen._risk_.values)
                         else:
                             ax.scatter(df_gen.loc[:,obj_names[j]],df_gen.loc[:,o1],marker=".",color="0.5")
-                        ax.set_xlabel(obj_names[j])
-                        ax.set_ylabel(o1)
+                        ax.set_xlabel(obj_names_dict[obj_names[j]])
+                        ax.set_ylabel(obj_names_dict[o1])
                 for j in range(i,len(obj_names)):
 
                     if i != j:
@@ -488,21 +540,22 @@ if __name__ == "__main__":
     #shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-mou.exe"),os.path.join("..","bin","pestpp-mou.exe"))
     #prep_model()
     #run_and_plot_results(os.path.join("henry", "henry_temp"))
-    # #test_add_artrch("henry_template",write_tpl=False)
-    # #test_process_unc("henry_temp")
+    #test_add_artrch(os.path.join("henry", "henry_temp"),write_tpl=False)
+    #test_process_unc(os.path.join("henry", "henry_temp"))
     setup_pst()
-    run_and_plot_results(os.path.join("henry", "henry_template"))
-    #run_mou(risk=0.5,tag="deter",num_workers=40,noptmax=500)
-    #run_mou(risk=0.95,tag="95_single_once",num_workers=40,noptmax=500)
-    #run_mou(risk=0.95,tag="95_all_once",chance_points="all",num_workers=40,noptmax=500)
-
+    #test_head_at_artrch(os.path.join("henry","henry_template"))
+    #run_and_plot_results(os.path.join("henry", "henry_template"))
+    #run_mou(risk=0.5,tag="deter",num_workers=40,noptmax=400)
+    #run_mou(risk=0.95,tag="95_single_once",num_workers=40,noptmax=400)
+    #run_mou(risk=0.95,tag="95_all_once",chance_points="all",num_workers=40,noptmax=400)
     #run_mou(risk=0.95,tag="95_all_100th",chance_points="all",recalc_every=100,num_workers=40,noptmax=500)
-    #run_mou(risk=0.5,tag="deter",num_workers=40,noptmax=500)
+    
+    #run_mou(risk=0.5,tag="deter",num_workers=40,noptmax=100)
     # run_mou(risk=0.9,tag="90_single_once",num_workers=30)
     # run_mou(risk=0.9,tag="90_all_once",chance_points="all",num_workers=30)
     # run_mou(risk=0.9,tag="90_all_10th",chance_points="all",recalc_every=10,num_workers=30)
-    #run_mou(risk_obj=True,risk=0.95,tag="95_all_riskobj",chance_points="all",
-    #        num_workers=30,noptmax=900)
+    #run_mou(risk_obj=True,risk=0.95,tag="95_all_riskobj",
+    #        num_workers=40,noptmax=900)
     #start_workers_for_debug(False)
     #plot_pr_real()
     #plot_results(os.path.join("mou_tests","henry_master"))
