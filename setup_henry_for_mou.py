@@ -240,13 +240,13 @@ def setup_pst():
     par.loc["_risk_", "partrans"] = "none"
 
     par.loc[df.parnme,"pargp"] = "dv_pars"
-    par.loc["ar_concen","parval1"] = 10.0
+    par.loc["ar_concen","parval1"] = 7.0
     par.loc["ar_concen", "parubnd"] = 35.0
-    par.loc["ar_concen", "parlbnd"] = pot_lim
-    par.loc["ar_concen", "partrans"] = "none"
+    par.loc["ar_concen", "parlbnd"] = 3.5
+    par.loc["ar_concen", "partrans"] = "fixed"
 
-    par.loc["ar_rate", "parval1"] = 1.25
-    par.loc["ar_rate", "parubnd"] = 3.5
+    par.loc["ar_rate", "parval1"] = 2.5
+    par.loc["ar_rate", "parubnd"] = 6.0
     par.loc["ar_rate", "parlbnd"] = 0.1
     par.loc["ar_rate", "partrans"] = "none"
 
@@ -264,14 +264,14 @@ def setup_pst():
     wpar = wel_par.loc[wel_par.parval1>0,"parnme"]
     par.loc[wpar, "partrans"] = "fixed"
     par.loc[wpar,"pargp"] = "wel_rch"
-    par.loc[wpar, "parubnd"] = par.loc[wpar,"parval1"] * 1.2
-    par.loc[wpar, "parlbnd"] = par.loc[wpar,"parval1"] * 0.8
+    par.loc[wpar, "parubnd"] = par.loc[wpar,"parval1"] * 1.1
+    par.loc[wpar, "parlbnd"] = par.loc[wpar,"parval1"] * 0.9
 
     wpar = wel_par.loc[wel_par.parval1<0,"parnme"]
     par.loc[wpar, "partrans"] = "none"
     par.loc[wpar, "pargp"] = "dv_pars"
     par.loc[wpar, "parubnd"] = 0.0
-    par.loc[wpar, "parlbnd"] = -3.5
+    par.loc[wpar, "parlbnd"] = -3.0
     pf.pst.add_pi_equation(wpar.to_list(),pilbl="pump_rate",obs_group="less_than")
 
     stage_par = par.loc[par.pargp == "stage", "parnme"]
@@ -280,12 +280,12 @@ def setup_pst():
     pf.pst.control_data.noptmax = 0
 
     pf.pst.add_pi_equation(wpar.to_list(),pilbl="pump_rate",obs_group="less_than")
-    #pf.pst.add_pi_equation(["ar_width"],obs_group="less_than",pilbl="ar_width")
+    pf.pst.add_pi_equation(["ar_width"],obs_group="less_than",pilbl="ar_width")
     pf.pst.add_pi_equation(["ar_rate"], obs_group="less_than",pilbl="ar_rate")
-    pf.pst.add_pi_equation(["ar_concen"], obs_group="greater_than",pilbl="ar_concen")
+    #pf.pst.add_pi_equation(["ar_concen"], obs_group="greater_than",pilbl="ar_concen")
     pf.pst.add_pi_equation(["_risk_"], obs_group="greater_than",pilbl="_risk_")
     #pf.pst.pestpp_options["mou_objectives"] = ["ar_width","ar_rate","ar_concen","pump_rate", "_risk_"]
-    pf.pst.pestpp_options["mou_objectives"] = ["ar_concen","pump_rate", "_risk_","ar_rate"]
+    pf.pst.pestpp_options["mou_objectives"] = ["pump_rate", "_risk_","ar_rate","ar_width"]
 
     pf.pst.pestpp_options["opt_dec_var_groups"] = "dv_pars"
     pf.pst.pestpp_options["panther_echo"] = True
@@ -438,7 +438,7 @@ def plot_results(m_d):
                       "_risk_":"risk"}
     cmap = plt.get_cmap("jet")
     norm = Normalize(0.0,35.0)
-    with PdfPages(os.path.join(os.path.split(m_d)[-1]+".pdf")) as pdf:
+    with PdfPages(os.path.join(m_d,os.path.split(m_d)[-1]+".pdf")) as pdf:
         for gen in [gens[-1]]:
             #df_gen = df_arc.loc[df_arc.generation==gen,:].copy()
             df_gen = pd.read_csv(os.path.join(m_d,"henry.archive.dv_pop.csv"))
@@ -545,23 +545,21 @@ if __name__ == "__main__":
     setup_pst()
     #test_head_at_artrch(os.path.join("henry","henry_template"))
     #run_and_plot_results(os.path.join("henry", "henry_template"))
-    #run_mou(risk=0.5,tag="deter",num_workers=40,noptmax=400)
-    #run_mou(risk=0.95,tag="95_single_once",num_workers=40,noptmax=400)
+    run_mou(risk=0.5,tag="deter",num_workers=40,noptmax=100)
+    #run_mou(risk=0.95,tag="95_single_once",num_workers=40,noptmax=300)
     #run_mou(risk=0.95,tag="95_all_once",chance_points="all",num_workers=40,noptmax=400)
     #run_mou(risk=0.95,tag="95_all_100th",chance_points="all",recalc_every=100,num_workers=40,noptmax=500)
     
-    #run_mou(risk=0.5,tag="deter",num_workers=40,noptmax=100)
     # run_mou(risk=0.9,tag="90_single_once",num_workers=30)
     # run_mou(risk=0.9,tag="90_all_once",chance_points="all",num_workers=30)
     # run_mou(risk=0.9,tag="90_all_10th",chance_points="all",recalc_every=10,num_workers=30)
-    #run_mou(risk_obj=True,risk=0.95,tag="95_all_riskobj",
-    #        num_workers=40,noptmax=900)
+    #run_mou(risk_obj=True,risk=0.95,tag="95_single_riskobj",num_workers=40,noptmax=300)
     #start_workers_for_debug(False)
     #plot_pr_real()
     #plot_results(os.path.join("mou_tests","henry_master"))
     #invest()
-    #plot_results(os.path.join("henry","henry_master_deter"))
+    plot_results(os.path.join("henry","henry_master_deter"))
     #plot_results(os.path.join("henry", "henry_master_95_single_once"))
     #plot_results(os.path.join("henry", "henry_master_95_all_once"))
     #plot_results(os.path.join("henry", "henry_master_95_all_100th"))
-    #plot_results(os.path.join("henry", "henry_master_95_all_riskobj"))
+    #plot_results(os.path.join("henry", "henry_master_95_single_riskobj"))
