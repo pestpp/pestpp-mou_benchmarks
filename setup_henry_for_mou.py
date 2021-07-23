@@ -204,6 +204,11 @@ def setup_pst():
     cols = df.columns.to_list()
     pf.add_observations(pump_filename, index_cols=["time"], use_cols=cols[1:],
                         ofile_sep=",")
+    ins_file = os.path.join(new_dir,"mean_concen.dat.ins")
+    with open(ins_file,'w') as f:
+        f.write("pif  ~\n")
+        f.write("l1 w !mean_concen_time:0.0!\n")
+    pf.add_observations_from_ins(ins_file,pst_path=".")
 
     for conc_filename in conc_filenames:
         pf.add_observations(conc_filename,index_cols=["time","k","j"],use_cols=["conc"],
@@ -240,29 +245,31 @@ def setup_pst():
     par.loc["_risk_", "partrans"] = "none"
 
     par.loc[df.parnme,"pargp"] = "dv_pars"
-    par.loc["ar_concen","parval1"] = 1.5
-    par.loc["ar_concen", "parubnd"] = 35.0
-    par.loc["ar_concen", "parlbnd"] = 0.5
-    par.loc["ar_concen", "partrans"] = "fixed"
+    par.loc["ar_concen","parval1"] = 7.0
+    par.loc["ar_concen", "parubnd"] = 17.0
+    par.loc["ar_concen", "parlbnd"] = pot_lim
+    par.loc["ar_concen", "partrans"] = "none"
 
+    #dont let this go to zero
     par.loc["ar_rate", "parval1"] = 2.5
     par.loc["ar_rate", "parubnd"] = 6.0
     par.loc["ar_rate", "parlbnd"] = 0.1
     par.loc["ar_rate", "partrans"] = "none"
 
     par.loc["ar_dist", "parval1"] = 80
-    par.loc["ar_dist", "parubnd"] = 120
+    par.loc["ar_dist", "parubnd"] = 140
     par.loc["ar_dist", "parlbnd"] = 1
     par.loc["ar_dist", "partrans"] = "none"
 
     par.loc["ar_width", "parval1"] = 5
     par.loc["ar_width", "parubnd"] = 20
     par.loc["ar_width", "parlbnd"] = 2
-    par.loc["ar_width", "partrans"] = "none"
+    par.loc["ar_width", "partrans"] = "fixed"
 
     wel_par = par.loc[par.pargp=="wel",:]
     wpar = wel_par.loc[wel_par.parval1>0,"parnme"]
-    par.loc[wpar, "partrans"] = "fixed"
+
+    par.loc[wpar, "partrans"] = "log"
     par.loc[wpar,"pargp"] = "wel_rch"
     par.loc[wpar, "parubnd"] = par.loc[wpar,"parval1"] * 1.1
     par.loc[wpar, "parlbnd"] = par.loc[wpar,"parval1"] * 0.9
@@ -280,12 +287,12 @@ def setup_pst():
     pf.pst.control_data.noptmax = 0
 
     pf.pst.add_pi_equation(wpar.to_list(),pilbl="pump_rate",obs_group="less_than")
-    pf.pst.add_pi_equation(["ar_width"],obs_group="less_than",pilbl="ar_width")
+    #pf.pst.add_pi_equation(["ar_width"],obs_group="less_than",pilbl="ar_width")
     pf.pst.add_pi_equation(["ar_rate"], obs_group="less_than",pilbl="ar_rate")
-    #pf.pst.add_pi_equation(["ar_concen"], obs_group="greater_than",pilbl="ar_concen")
+    pf.pst.add_pi_equation(["ar_concen"], obs_group="greater_than",pilbl="ar_concen")
     pf.pst.add_pi_equation(["_risk_"], obs_group="greater_than",pilbl="_risk_")
     #pf.pst.pestpp_options["mou_objectives"] = ["ar_width","ar_rate","ar_concen","pump_rate", "_risk_"]
-    pf.pst.pestpp_options["mou_objectives"] = ["pump_rate", "_risk_","ar_rate","ar_width"]
+    pf.pst.pestpp_options["mou_objectives"] = ["pump_rate", "_risk_","ar_rate","ar_concen"]
 
     pf.pst.pestpp_options["opt_dec_var_groups"] = "dv_pars"
     pf.pst.pestpp_options["panther_echo"] = True
@@ -297,8 +304,10 @@ def setup_pst():
     obs = pf.pst.observation_data
     mx_time = obs.time.max()
     # use the last output time as the constraint on concen at the pumping wells
-    obs.loc[obs.time==mx_time,"obsval"] = pot_lim
-    obs.loc[obs.time==mx_time, "obgnme"] = "less_than"
+    #obs.loc[obs.time==mx_time,"obsval"] = pot_lim
+    #obs.loc[obs.time==mx_time, "obgnme"] = "less_than"
+    obs.loc["mean_concen_time:0.0","obsval"] = pot_lim
+    obs.loc["mean_concen_time:0.0", "obgnme"] = "less_than"
 
     obs.loc["arhead_usecol:arhead_name:scen_max_time:1","weight"] = 1.0
     obs.loc["arhead_usecol:arhead_name:scen_max_time:1", "obsval"] = 1.05
@@ -319,7 +328,7 @@ def test_process_unc(test_d):
 
 def process_unc():
     ucn = flopy.utils.HeadFile("trans.ucn", text="concentration")
-    df = pd.read_csv(os.path.join("flow.wel_stress_period_data_historic.txt"),
+    df = pd.read_csv(os.path.join("flow.wel_stress_period_data_scenario.txt"),
                     delim_whitespace=True, header=None, names=["l", "r", "c", "flux", "concen"])
 
     df = df.loc[df.flux<=0, :]
@@ -327,12 +336,14 @@ def process_unc():
     # print(d.shape)
     wel_ucn = {}
     k,j = {},{}
-    for l,r,c in zip(df.l,df.r,df.c):
+    flx_dict = {}
+    for l,r,c,flx in zip(df.l,df.r,df.c,df.flux):
         dd = d[:,l-1,r-1,c-1]
         name = "well_{0:03d}_{1:03d}_{2:03d}".format(l,r,c)
         wel_ucn[name] = dd
         k[name] = l-1
         j[name] = c-1
+        flx_dict[name] = -1. * flx
 
     df = pd.DataFrame(wel_ucn,index=np.round(ucn.get_times(),5))
     df.loc[:,"time"] = df.index
@@ -341,6 +352,15 @@ def process_unc():
     cols.remove("time")
     cols.insert(0,"time")
     df = df.loc[:,cols]
+    last_concen = df.loc[df.time==df.time.max(),:].iloc[0].to_dict()
+    tflx,tmas = 0,0
+    for n,f in flx_dict.items():
+        tflx += f
+        tmas += f * last_concen[n]
+    mn_concen = tmas / tflx
+    with open("mean_concen.dat",'w') as f:
+        f.write("mean_concen {0}\n".format(mn_concen))
+
     pump_file_name = "pump_well_concen.csv"
     df.to_csv(pump_file_name,index=False)
 
@@ -591,20 +611,20 @@ def plot_domain(cwd):
     plt.close(fig)
 
 if __name__ == "__main__":
-
+    #test_process_unc(os.path.join("henry", "henry_template"))
     #shutil.copy2(os.path.join("..", "bin", "win", "pestpp-mou.exe"), os.path.join("..", "bin", "pestpp-mou.exe"))
     #shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-mou.exe"),os.path.join("..","bin","pestpp-mou.exe"))
-    prep_model()
-    plot_domain(os.path.join("henry", "henry_temp"))
+    #prep_model()
+    #plot_domain(os.path.join("henry", "henry_temp"))
     setup_pst()
     run_mou(risk=0.5,tag="deter",num_workers=40,noptmax=100)
     #run_mou(risk=0.95,tag="95_single_once",num_workers=40,noptmax=300)
     #run_mou(risk=0.95,tag="95_all_once",chance_points="all",num_workers=40,noptmax=400)
     #run_mou(risk=0.95,tag="95_all_100th",chance_points="all",recalc_every=100,num_workers=40,noptmax=500)
-    
+    #run_mou(risk=0.95,risk_obj=True,tag="riskobj_single_once",num_workers=40,noptmax=600)
 
-    plot_results(os.path.join("henry","henry_master_deter"))
+    #plot_results(os.path.join("henry","henry_master_deter"))
     #plot_results(os.path.join("henry", "henry_master_95_single_once"))
     #plot_results(os.path.join("henry", "henry_master_95_all_once"))
     #plot_results(os.path.join("henry", "henry_master_95_all_100th"))
-    #plot_results(os.path.join("henry", "henry_master_95_single_riskobj"))
+    #plot_results(os.path.join("henry", "henry_master_riskobj_single_once"))
