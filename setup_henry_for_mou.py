@@ -246,13 +246,13 @@ def setup_pst():
 
     par.loc[df.parnme,"pargp"] = "dv_pars"
     par.loc["ar_concen","parval1"] = 7.0
-    par.loc["ar_concen", "parubnd"] = 17.0
+    par.loc["ar_concen", "parubnd"] = 35.0
     par.loc["ar_concen", "parlbnd"] = pot_lim
     par.loc["ar_concen", "partrans"] = "none"
 
     #dont let this go to zero
-    par.loc["ar_rate", "parval1"] = 2.5
-    par.loc["ar_rate", "parubnd"] = 6.0
+    par.loc["ar_rate", "parval1"] = 5.5
+    par.loc["ar_rate", "parubnd"] = 30.0
     par.loc["ar_rate", "parlbnd"] = 0.1
     par.loc["ar_rate", "partrans"] = "none"
 
@@ -278,7 +278,7 @@ def setup_pst():
     par.loc[wpar, "partrans"] = "none"
     par.loc[wpar, "pargp"] = "dv_pars"
     par.loc[wpar, "parubnd"] = 0.0
-    par.loc[wpar, "parlbnd"] = -3.0
+    par.loc[wpar, "parlbnd"] = -8.0
     pf.pst.add_pi_equation(wpar.to_list(),pilbl="pump_rate",obs_group="less_than")
 
     stage_par = par.loc[par.pargp == "stage", "parnme"]
@@ -487,7 +487,7 @@ def plot_results(m_d):
                 #ax.scatter([mpt],[r],marker="o",s=(100 * (t-df_gen.pump_rate.min())/(df_gen.pump_rate.max()-df_gen.pump_rate.min())),color="k",zorder=10,alpha=0.5)
 
             ax.set_xlim(dmn,dmx)
-            ax.set_ylim(0,3.5)
+            ax.set_ylim(0,20)
             ax.set_xlabel("column")
             ax.set_ylabel("recharge flux rate")
             #cb = plt.colorbar(plt.cm.ScalarMappable(norm=norm,cmap=cmap))
@@ -618,13 +618,13 @@ if __name__ == "__main__":
     #plot_domain(os.path.join("henry", "henry_temp"))
     setup_pst()
     run_mou(risk=0.5,tag="deter",num_workers=40,noptmax=100)
-    #run_mou(risk=0.95,tag="95_single_once",num_workers=40,noptmax=300)
+    run_mou(risk=0.95,tag="95_single_once",num_workers=40,noptmax=100)
     #run_mou(risk=0.95,tag="95_all_once",chance_points="all",num_workers=40,noptmax=400)
     #run_mou(risk=0.95,tag="95_all_100th",chance_points="all",recalc_every=100,num_workers=40,noptmax=500)
-    #run_mou(risk=0.95,risk_obj=True,tag="riskobj_single_once",num_workers=40,noptmax=600)
+    run_mou(risk=0.95,risk_obj=True,tag="riskobj_single_once",num_workers=40,noptmax=100)
 
-    #plot_results(os.path.join("henry","henry_master_deter"))
-    #plot_results(os.path.join("henry", "henry_master_95_single_once"))
+    plot_results(os.path.join("henry","henry_master_deter"))
+    plot_results(os.path.join("henry", "henry_master_95_single_once"))
     #plot_results(os.path.join("henry", "henry_master_95_all_once"))
     #plot_results(os.path.join("henry", "henry_master_95_all_100th"))
-    #plot_results(os.path.join("henry", "henry_master_riskobj_single_once"))
+    plot_results(os.path.join("henry", "henry_master_riskobj_single_once"))
