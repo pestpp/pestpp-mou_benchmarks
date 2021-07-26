@@ -245,9 +245,9 @@ def setup_pst():
     par.loc["_risk_", "partrans"] = "none"
 
     par.loc[df.parnme,"pargp"] = "dv_pars"
-    par.loc["ar_concen","parval1"] = 7.0
-    par.loc["ar_concen", "parubnd"] = 35.0
-    par.loc["ar_concen", "parlbnd"] = pot_lim
+    par.loc["ar_concen","parval1"] = 5.5
+    par.loc["ar_concen", "parubnd"] = 17.0
+    par.loc["ar_concen", "parlbnd"] = 3.5
     par.loc["ar_concen", "partrans"] = "none"
 
     #dont let this go to zero
@@ -617,14 +617,12 @@ if __name__ == "__main__":
     #prep_model()
     #plot_domain(os.path.join("henry", "henry_temp"))
     setup_pst()
-    run_mou(risk=0.5,tag="deter",num_workers=40,noptmax=100)
-    run_mou(risk=0.95,tag="95_single_once",num_workers=40,noptmax=100)
+    #run_mou(risk=0.5,tag="deter",num_workers=40,noptmax=100)
+    #run_mou(risk=0.95,tag="95_single_once",num_workers=40,noptmax=100)
     #run_mou(risk=0.95,tag="95_all_once",chance_points="all",num_workers=40,noptmax=400)
     #run_mou(risk=0.95,tag="95_all_100th",chance_points="all",recalc_every=100,num_workers=40,noptmax=500)
-    run_mou(risk=0.95,risk_obj=True,tag="riskobj_single_once",num_workers=40,noptmax=100)
+    #run_mou(risk=0.95,risk_obj=True,tag="riskobj_single_once",num_workers=40,noptmax=100)
 
     plot_results(os.path.join("henry","henry_master_deter"))
-    plot_results(os.path.join("henry", "henry_master_95_single_once"))
-    #plot_results(os.path.join("henry", "henry_master_95_all_once"))
-    #plot_results(os.path.join("henry", "henry_master_95_all_100th"))
-    plot_results(os.path.join("henry", "henry_master_riskobj_single_once"))
+    #plot_results(os.path.join("henry", "henry_master_95_single_once"))
+    #plot_results(os.path.join("henry", "henry_master_riskobj_single_once"))
