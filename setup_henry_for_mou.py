@@ -280,19 +280,20 @@ def setup_pst():
     par.loc[wpar, "parubnd"] = 0.0
     par.loc[wpar, "parlbnd"] = -8.0
     pf.pst.add_pi_equation(wpar.to_list(),pilbl="pump_rate",obs_group="less_than")
+    tot = par.loc[wpar,"parval1"].sum()
+    pf.pst.add_pi_equation(wpar.to_list(), pilbl="constraint_pump_rate", obs_group="less_than",rhs=tot)
 
     stage_par = par.loc[par.pargp == "stage", "parnme"]
     par.loc[stage_par, "partrans"] = "fixed"
 
     pf.pst.control_data.noptmax = 0
 
-    pf.pst.add_pi_equation(wpar.to_list(),pilbl="pump_rate",obs_group="less_than")
     #pf.pst.add_pi_equation(["ar_width"],obs_group="less_than",pilbl="ar_width")
     pf.pst.add_pi_equation(["ar_rate"], obs_group="less_than",pilbl="ar_rate")
     pf.pst.add_pi_equation(["ar_concen"], obs_group="greater_than",pilbl="ar_concen")
     pf.pst.add_pi_equation(["_risk_"], obs_group="greater_than",pilbl="_risk_")
     #pf.pst.pestpp_options["mou_objectives"] = ["ar_width","ar_rate","ar_concen","pump_rate", "_risk_"]
-    pf.pst.pestpp_options["mou_objectives"] = ["pump_rate", "_risk_","ar_rate","ar_concen"]
+    pf.pst.pestpp_options["mou_objectives"] = ["_risk_","ar_rate","ar_concen","pump_rate"]
 
     pf.pst.pestpp_options["opt_dec_var_groups"] = "dv_pars"
     pf.pst.pestpp_options["panther_echo"] = True
@@ -624,13 +625,13 @@ if __name__ == "__main__":
     #plot_domain(os.path.join("henry", "henry_temp"))
     setup_pst()
 
-    run_mou(risk=0.95,tag="95_single_once",num_workers=40,noptmax=100)
+    #run_mou(risk=0.95,tag="95_single_once",num_workers=40,noptmax=100)
     run_mou(risk=0.5, tag="deter", num_workers=40, noptmax=100)
-    run_mou(risk=0.95,risk_obj=True,tag="riskobj_single_once",num_workers=40,noptmax=200)
+    #run_mou(risk=0.95,risk_obj=True,tag="riskobj_single_once",num_workers=40,noptmax=200)
     #run_mou(risk=0.95,tag="95_all_once",chance_points="all",num_workers=40,noptmax=400)
     #run_mou(risk=0.95,tag="95_all_100th",chance_points="all",recalc_every=100,num_workers=40,noptmax=500)
 
 
     plot_results(os.path.join("henry","henry_master_deter"))
-    plot_results(os.path.join("henry", "henry_master_95_single_once"))
-    plot_results(os.path.join("henry", "henry_master_riskobj_single_once"))
+    #plot_results(os.path.join("henry", "henry_master_95_single_once"))
+    #plot_results(os.path.join("henry", "henry_master_riskobj_single_once"))
