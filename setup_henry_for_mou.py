@@ -1,8 +1,10 @@
 import os
 import shutil
 import platform
+import string
 import numpy as np
 import pandas as pd
+import matplotlib as mpl
 from matplotlib.patches import Rectangle
 from matplotlib.colors import Normalize
 from matplotlib.backends.backend_pdf import PdfPages
@@ -239,9 +241,9 @@ def setup_pst():
 
     par = pf.pst.parameter_data
     par.loc["_risk_","pargp"] = "dv_pars"
-    par.loc["_risk_","parlbnd"] = 0.001
-    par.loc["_risk_", "parubnd"] = 0.999
-    par.loc["_risk_", "parval1"] = 0.5
+    par.loc["_risk_","parlbnd"] = 0.51
+    par.loc["_risk_", "parubnd"] = 0.99
+    par.loc["_risk_", "parval1"] = 0.6
     par.loc["_risk_", "partrans"] = "none"
 
     par.loc[df.parnme,"pargp"] = "dv_pars"
@@ -279,7 +281,9 @@ def setup_pst():
     par.loc[wpar, "pargp"] = "dv_pars"
     par.loc[wpar, "parubnd"] = 0.0
     par.loc[wpar, "parlbnd"] = -8.0
+    # this one is the objective
     pf.pst.add_pi_equation(wpar.to_list(),pilbl="pump_rate",obs_group="less_than")
+    # this one is the constraint
     tot = par.loc[wpar,"parval1"].sum()
     pf.pst.add_pi_equation(wpar.to_list(), pilbl="constraint_pump_rate", obs_group="less_than",rhs=tot)
 
@@ -311,7 +315,7 @@ def setup_pst():
     obs.loc["mean_concen_time:0.0", "obgnme"] = "less_than"
 
     obs.loc["arhead_usecol:arhead_name:scen_max_time:1","weight"] = 1.0
-    obs.loc["arhead_usecol:arhead_name:scen_max_time:1", "obsval"] = 1.025
+    obs.loc["arhead_usecol:arhead_name:scen_max_time:1", "obsval"] = 1.05
     obs.loc["arhead_usecol:arhead_name:scen_max_time:1", "obgnme"] = "less_than"
 
     pf.pst.write(os.path.join(new_dir,"henry.pst"))
@@ -462,23 +466,27 @@ def plot_results(m_d):
                       "_risk_":"risk"}
 
     cmap = plt.get_cmap("jet")
-    norm = Normalize(0.0,35.0)
+
+
     with PdfPages(os.path.join(m_d,os.path.split(m_d)[-1]+".pdf")) as pdf:
         for gen in [gens[-1]]:
+            ax_count = 0
             #df_gen = df_arc.loc[df_arc.generation==gen,:].copy()
             df_gen = pd.read_csv(os.path.join(m_d,"henry.archive.dv_pop.csv"))
+            norm = Normalize(df_gen.loc[:,"ar_concen"].min(), df_gen.loc[:,"ar_concen"].max())
 
             # flip the rate pars
             df_gen.loc[:, rate_pars] *= -1.
             df_gen.loc[:,"pump_rate"] = df_gen.loc[:, rate_pars].sum(axis=1)
-            #df_gen = df_gen.loc[df_gen.pump_rate>=3.0]
+
             # only show solutions with some min amount of pumping
-            df_gen = df_gen.loc[df_gen.pump_rate > 1.0]
-            # and only show solutions using concen > some % seawater
-            #df_gen = df_gen.loc[df_gen.ar_concen >= 17.5]
-            #df_gen = df_gen.loc[df_gen.ar_rate <= 2.0]
-            #if "riskobj" in m_d:
-            #    df_gen = df_gen.loc[df_gen._risk_>0.9,:]
+            #df_gen = df_gen.loc[df_gen.pump_rate > 1.0]
+
+            # only with risk averse
+            #if "_risk_" in obj_names:
+            #    df_gen = df_gen.loc[df_gen._risk_ > 0.75,:]
+
+
             if df_gen.shape[0] == 0:
                 continue
             fig = plt.figure(figsize=(8,11))
@@ -486,7 +494,7 @@ def plot_results(m_d):
             ax = fig.add_subplot(gs[0,:])
             for d,w,r,c,t in zip(df_gen.ar_dist,df_gen.ar_width,df_gen.ar_rate,
                                df_gen.ar_concen,df_gen.pump_rate,):
-                rect = Rectangle((d,0),w,r,facecolor=cmap(c/35.0),edgecolor="k",alpha=0.35)
+                rect = Rectangle((d,0),w,r,facecolor=cmap(norm(c)),edgecolor="k",alpha=0.25)
                 ax.add_patch(rect)
                 mpt = d + (w/2.)
                 #ax.scatter([mpt],[r],marker="o",s=(100 * (t-df_gen.pump_rate.min())/(df_gen.pump_rate.max()-df_gen.pump_rate.min())),color="k",zorder=10,alpha=0.5)
@@ -494,13 +502,20 @@ def plot_results(m_d):
             ax.set_xlim(dmn,dmx)
             ax.set_ylim(par.loc["ar_rate","parlbnd"],par.loc["ar_rate","parubnd"])
             ax.set_xlabel("column")
-            ax.set_ylabel("recharge flux rate")
+            ax.set_ylabel(obj_names_dict["ar_rate"])
+            plt.colorbar(mpl.cm.ScalarMappable(norm=norm,cmap=cmap),ax=ax,label=obj_names_dict["ar_concen"],alpha=0.25)
             #cb = plt.colorbar(plt.cm.ScalarMappable(norm=norm,cmap=cmap))
             #cb.set_label("recharge concentration")
-            ax.set_title("generation {0}, {1} feasible nondom solutions".format(gen,df_gen.shape[0]))
+
+
+            ax.set_title("{0}) generation {1}, {2} feasible nondom solutions".\
+                         format(string.ascii_uppercase[ax_count],gen,df_gen.shape[0]),loc="left")
+            ax_count += 1
             for i,o1 in enumerate(obj_names):
                 for j in range(i+1):
                     ax = fig.add_subplot(gs[i+1,j])
+                    ax.set_title("{0})".format(string.ascii_uppercase[ax_count]),loc="left")
+                    ax_count += 1
                     if i == j:
                         ax.hist(df_gen.loc[:,o1],facecolor="0.5",edgecolor="none",alpha=0.5)
                         ax.set_yticks([])
@@ -518,9 +533,17 @@ def plot_results(m_d):
 
                     if i != j:
                         ax = fig.add_subplot(gs[i + 1, j])
-                        ax.scatter(df_gen.loc[:,obj_names[j]],df_gen.loc[:,o1],marker=".",color="0.5")
-                        ax.set_xlabel(obj_names[j])
-                        ax.set_ylabel(o1)
+                        ax.set_title("{0})".format(string.ascii_uppercase[ax_count]), loc="left")
+                        ax_count += 1
+                        if "_risk_" in obj_names:
+                            ax.scatter(df_gen.loc[:, obj_names[j]], df_gen.loc[:, o1], marker=".", c=df_gen._risk_.values)
+                        else:
+                            ax.scatter(df_gen.loc[:,obj_names[j]],df_gen.loc[:,o1],marker=".",color="0.5")
+                        #ax.scatter(df_gen.loc[:,obj_names[j]],df_gen.loc[:,o1],marker=".",color="0.5")
+                        #ax.set_xlabel(obj_names[j])
+                        #ax.set_ylabel(o1)
+                        ax.set_xlabel(obj_names_dict[obj_names[j]])
+                        ax.set_ylabel(obj_names_dict[o1])
 
             plt.tight_layout()
             #plt.show()
@@ -626,12 +649,12 @@ if __name__ == "__main__":
     setup_pst()
 
     #run_mou(risk=0.95,tag="95_single_once",num_workers=40,noptmax=100)
-    run_mou(risk=0.5, tag="deter", num_workers=40, noptmax=100)
+    #run_mou(risk=0.5, tag="deter", num_workers=40, noptmax=100)
     #run_mou(risk=0.95,risk_obj=True,tag="riskobj_single_once",num_workers=40,noptmax=200)
     #run_mou(risk=0.95,tag="95_all_once",chance_points="all",num_workers=40,noptmax=400)
     #run_mou(risk=0.95,tag="95_all_100th",chance_points="all",recalc_every=100,num_workers=40,noptmax=500)
 
 
-    plot_results(os.path.join("henry","henry_master_deter"))
+    #plot_results(os.path.join("henry","henry_master_deter"))
     #plot_results(os.path.join("henry", "henry_master_95_single_once"))
-    #plot_results(os.path.join("henry", "henry_master_riskobj_single_once"))
+    #plot_results(os.path.join("henry", "henry_master_riskobj_single_once_concenobj"))
