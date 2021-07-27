@@ -245,15 +245,15 @@ def setup_pst():
     par.loc["_risk_", "partrans"] = "none"
 
     par.loc[df.parnme,"pargp"] = "dv_pars"
-    par.loc["ar_concen","parval1"] = 5.5
-    par.loc["ar_concen", "parubnd"] = 17.0
-    par.loc["ar_concen", "parlbnd"] = 3.5
+    par.loc["ar_concen","parval1"] = 3.5
+    par.loc["ar_concen", "parubnd"] = 10.0
+    par.loc["ar_concen", "parlbnd"] = pot_lim
     par.loc["ar_concen", "partrans"] = "none"
 
     #dont let this go to zero
     par.loc["ar_rate", "parval1"] = 5.5
     par.loc["ar_rate", "parubnd"] = 30.0
-    par.loc["ar_rate", "parlbnd"] = 0.1
+    par.loc["ar_rate", "parlbnd"] = 0.001
     par.loc["ar_rate", "partrans"] = "none"
 
     par.loc["ar_dist", "parval1"] = 80
@@ -261,7 +261,7 @@ def setup_pst():
     par.loc["ar_dist", "parlbnd"] = 1
     par.loc["ar_dist", "partrans"] = "none"
 
-    par.loc["ar_width", "parval1"] = 5
+    par.loc["ar_width", "parval1"] = 10
     par.loc["ar_width", "parubnd"] = 20
     par.loc["ar_width", "parlbnd"] = 2
     par.loc["ar_width", "partrans"] = "fixed"
@@ -310,7 +310,7 @@ def setup_pst():
     obs.loc["mean_concen_time:0.0", "obgnme"] = "less_than"
 
     obs.loc["arhead_usecol:arhead_name:scen_max_time:1","weight"] = 1.0
-    obs.loc["arhead_usecol:arhead_name:scen_max_time:1", "obsval"] = 1.05
+    obs.loc["arhead_usecol:arhead_name:scen_max_time:1", "obsval"] = 1.025
     obs.loc["arhead_usecol:arhead_name:scen_max_time:1", "obgnme"] = "less_than"
 
     pf.pst.write(os.path.join(new_dir,"henry.pst"))
@@ -436,14 +436,17 @@ def plot_results(m_d):
     df_arc = pd.read_csv(os.path.join(m_d,"henry.pareto.archive.summary.csv"))
 
     pst = pyemu.Pst(os.path.join(m_d,"henry.pst"))
+    par = pst.parameter_data
+    par = par.loc[par.pargp == "dv_pars", :].copy()
+    rate_pars = par.loc[par.parnme.apply(lambda x: not x.startswith("ar") and not "risk" in x), "parnme"]
     obj_names = pst.pestpp_options["mou_objectives"].split(',')
+
+    bnd_dict = {dv: [par.loc[dv, "parlbnd"], par.loc[dv, "parubnd"]] for dv in obj_names if dv in pst.par_names}
+    bnd_dict["pump_rate"] = [par.loc[rate_pars, "parubnd"].sum() * -1., par.loc[rate_pars, "parlbnd"].sum() * -1.]
+
+
     if "_risk_" in obj_names and "riskobj" not in m_d:
         obj_names.remove("_risk_")
-
-    par = pst.parameter_data
-    par = par.loc[par.pargp=="dv_pars",:].copy()
-    rate_pars = par.loc[par.parnme.apply(lambda x: not x.startswith("ar") and not "risk" in x),"parnme"]
-    print(rate_pars)
 
     dmn = 0
     dmx = 160
@@ -456,6 +459,7 @@ def plot_results(m_d):
                       "pump_rate": "combined extraction rate ($\\frac{L^3}{T}$)",
                       "ar_concen" : "recharge salinity ($\\frac{mg}{l}$)",
                       "_risk_":"risk"}
+
     cmap = plt.get_cmap("jet")
     norm = Normalize(0.0,35.0)
     with PdfPages(os.path.join(m_d,os.path.split(m_d)[-1]+".pdf")) as pdf:
@@ -466,7 +470,7 @@ def plot_results(m_d):
             # flip the rate pars
             df_gen.loc[:, rate_pars] *= -1.
             df_gen.loc[:,"pump_rate"] = df_gen.loc[:, rate_pars].sum(axis=1)
-
+            #df_gen = df_gen.loc[df_gen.pump_rate>=3.0]
             # only show solutions with some min amount of pumping
             df_gen = df_gen.loc[df_gen.pump_rate > 1.0]
             # and only show solutions using concen > some % seawater
@@ -487,7 +491,7 @@ def plot_results(m_d):
                 #ax.scatter([mpt],[r],marker="o",s=(100 * (t-df_gen.pump_rate.min())/(df_gen.pump_rate.max()-df_gen.pump_rate.min())),color="k",zorder=10,alpha=0.5)
 
             ax.set_xlim(dmn,dmx)
-            ax.set_ylim(0,20)
+            ax.set_ylim(par.loc["ar_rate","parlbnd"],par.loc["ar_rate","parubnd"])
             ax.set_xlabel("column")
             ax.set_ylabel("recharge flux rate")
             #cb = plt.colorbar(plt.cm.ScalarMappable(norm=norm,cmap=cmap))
@@ -500,6 +504,7 @@ def plot_results(m_d):
                         ax.hist(df_gen.loc[:,o1],facecolor="0.5",edgecolor="none",alpha=0.5)
                         ax.set_yticks([])
                         ax.set_xlabel(obj_names_dict[o1])
+                        #ax.set_xlim(bnd_dict[o1])
                     else:
                         if "_risk_" in obj_names:
                             ax.scatter(df_gen.loc[:, obj_names[j]], df_gen.loc[:, o1], marker=".", c=df_gen._risk_.values)
@@ -507,6 +512,7 @@ def plot_results(m_d):
                             ax.scatter(df_gen.loc[:,obj_names[j]],df_gen.loc[:,o1],marker=".",color="0.5")
                         ax.set_xlabel(obj_names_dict[obj_names[j]])
                         ax.set_ylabel(obj_names_dict[o1])
+                        #ax.set_xlim(bnd_dict[obj_names[j]])
                 for j in range(i,len(obj_names)):
 
                     if i != j:
@@ -617,12 +623,14 @@ if __name__ == "__main__":
     #prep_model()
     #plot_domain(os.path.join("henry", "henry_temp"))
     setup_pst()
-    #run_mou(risk=0.5,tag="deter",num_workers=40,noptmax=100)
-    #run_mou(risk=0.95,tag="95_single_once",num_workers=40,noptmax=100)
+
+    run_mou(risk=0.95,tag="95_single_once",num_workers=40,noptmax=100)
+    run_mou(risk=0.5, tag="deter", num_workers=40, noptmax=100)
+    run_mou(risk=0.95,risk_obj=True,tag="riskobj_single_once",num_workers=40,noptmax=200)
     #run_mou(risk=0.95,tag="95_all_once",chance_points="all",num_workers=40,noptmax=400)
     #run_mou(risk=0.95,tag="95_all_100th",chance_points="all",recalc_every=100,num_workers=40,noptmax=500)
-    #run_mou(risk=0.95,risk_obj=True,tag="riskobj_single_once",num_workers=40,noptmax=100)
+
 
     plot_results(os.path.join("henry","henry_master_deter"))
-    #plot_results(os.path.join("henry", "henry_master_95_single_once"))
-    #plot_results(os.path.join("henry", "henry_master_riskobj_single_once"))
+    plot_results(os.path.join("henry", "henry_master_95_single_once"))
+    plot_results(os.path.join("henry", "henry_master_riskobj_single_once"))
