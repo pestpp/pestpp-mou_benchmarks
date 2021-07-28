@@ -315,7 +315,7 @@ def setup_pst():
     obs.loc["mean_concen_time:0.0", "obgnme"] = "less_than"
 
     obs.loc["arhead_usecol:arhead_name:scen_max_time:1","weight"] = 1.0
-    obs.loc["arhead_usecol:arhead_name:scen_max_time:1", "obsval"] = 1.05
+    obs.loc["arhead_usecol:arhead_name:scen_max_time:1", "obsval"] = 1.025
     obs.loc["arhead_usecol:arhead_name:scen_max_time:1", "obgnme"] = "less_than"
 
     pf.pst.write(os.path.join(new_dir,"henry.pst"))
@@ -449,7 +449,6 @@ def plot_results(m_d):
     bnd_dict = {dv: [par.loc[dv, "parlbnd"], par.loc[dv, "parubnd"]] for dv in obj_names if dv in pst.par_names}
     bnd_dict["pump_rate"] = [par.loc[rate_pars, "parubnd"].sum() * -1., par.loc[rate_pars, "parlbnd"].sum() * -1.]
 
-
     if "_risk_" in obj_names and "riskobj" not in m_d:
         obj_names.remove("_risk_")
 
@@ -459,10 +458,10 @@ def plot_results(m_d):
     gens = df_arc.generation.unique()
     gens.sort()
     print(gens)
-    obj_names_dict = {"ar_width": "recharge basin width ($L$)",
-                      "ar_rate": "recharge rate ($\\frac{L^3}{T}$)",
+    obj_names_dict = {"ar_width": "artificial recharge basin width ($L$)",
+                      "ar_rate": "artificial recharge rate ($\\frac{L^3}{T}$)",
                       "pump_rate": "combined extraction rate ($\\frac{L^3}{T}$)",
-                      "ar_concen" : "recharge salinity ($\\frac{mg}{l}$)",
+                      "ar_concen" : "artificial recharge salinity ($\\frac{g}{l}$)",
                       "_risk_":"risk"}
 
     cmap = plt.get_cmap("jet")
@@ -480,7 +479,7 @@ def plot_results(m_d):
             df_gen.loc[:,"pump_rate"] = df_gen.loc[:, rate_pars].sum(axis=1)
 
             # only show solutions with some min amount of pumping
-            #df_gen = df_gen.loc[df_gen.pump_rate > 1.0]
+            #df_gen = df_gen.loc[df_gen.pump_rate > 3.0]
 
             # only with risk averse
             #if "_risk_" in obj_names:
@@ -492,23 +491,30 @@ def plot_results(m_d):
             fig = plt.figure(figsize=(8,11))
             gs = GridSpec(len(obj_names)+1,len(obj_names),figure=fig)
             ax = fig.add_subplot(gs[0,:])
+            mx = 0
+            mn = 1.0e+10
             for d,w,r,c,t in zip(df_gen.ar_dist,df_gen.ar_width,df_gen.ar_rate,
                                df_gen.ar_concen,df_gen.pump_rate,):
-                rect = Rectangle((d,0),w,r,facecolor=cmap(norm(c)),edgecolor="k",alpha=0.25)
+                rect = Rectangle((d,0),w,r/t,facecolor=cmap(norm(c)),edgecolor="k",alpha=0.25)
                 ax.add_patch(rect)
-                mpt = d + (w/2.)
+                #mpt = d + (w/2.)
+                mx = max(mx,r/t)
+                mn = min(mn,r/t)
                 #ax.scatter([mpt],[r],marker="o",s=(100 * (t-df_gen.pump_rate.min())/(df_gen.pump_rate.max()-df_gen.pump_rate.min())),color="k",zorder=10,alpha=0.5)
 
             ax.set_xlim(dmn,dmx)
-            ax.set_ylim(par.loc["ar_rate","parlbnd"],par.loc["ar_rate","parubnd"])
-            ax.set_xlabel("column")
-            ax.set_ylabel(obj_names_dict["ar_rate"])
+            #ax.set_ylim(par.loc["ar_rate","parlbnd"],par.loc["ar_rate","parubnd"])
+            ax.set_ylim(mn,mx)
+            ax.set_xlabel("model column")
+            ax.set_ylabel("ratio of artificial recharge rate\n to combined extraction rate")
+            ax.plot([60,60],ax.get_ylim(),"k--")
+            ax.text(61,(mn+mx)/2.0,"extraction wells",rotation=90)
             plt.colorbar(mpl.cm.ScalarMappable(norm=norm,cmap=cmap),ax=ax,label=obj_names_dict["ar_concen"],alpha=0.25)
             #cb = plt.colorbar(plt.cm.ScalarMappable(norm=norm,cmap=cmap))
             #cb.set_label("recharge concentration")
 
 
-            ax.set_title("{0}) generation {1}, {2} feasible nondom solutions".\
+            ax.set_title("{0}) optimal artificial recharge basin designs, generation {1}, {2} feasible nondom solutions".\
                          format(string.ascii_uppercase[ax_count],gen,df_gen.shape[0]),loc="left")
             ax_count += 1
             for i,o1 in enumerate(obj_names):
@@ -646,7 +652,7 @@ if __name__ == "__main__":
     #shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-mou.exe"),os.path.join("..","bin","pestpp-mou.exe"))
     #prep_model()
     #plot_domain(os.path.join("henry", "henry_temp"))
-    setup_pst()
+    #setup_pst()
 
     #run_mou(risk=0.95,tag="95_single_once",num_workers=40,noptmax=100)
     #run_mou(risk=0.5, tag="deter", num_workers=40, noptmax=100)
@@ -655,6 +661,6 @@ if __name__ == "__main__":
     #run_mou(risk=0.95,tag="95_all_100th",chance_points="all",recalc_every=100,num_workers=40,noptmax=500)
 
 
-    #plot_results(os.path.join("henry","henry_master_deter"))
+    plot_results(os.path.join("henry","henry_master_deter"))
     #plot_results(os.path.join("henry", "henry_master_95_single_once"))
-    #plot_results(os.path.join("henry", "henry_master_riskobj_single_once_concenobj"))
+    #plot_results(os.path.join("henry", "henry_master_riskobj_single_once"))
