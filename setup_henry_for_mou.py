@@ -241,7 +241,7 @@ def setup_pst():
 
     par = pf.pst.parameter_data
     par.loc["_risk_","pargp"] = "dv_pars"
-    par.loc["_risk_","parlbnd"] = 0.51
+    par.loc["_risk_","parlbnd"] = 0.001
     par.loc["_risk_", "parubnd"] = 0.99
     par.loc["_risk_", "parval1"] = 0.6
     par.loc["_risk_", "partrans"] = "none"
@@ -258,6 +258,7 @@ def setup_pst():
     par.loc["ar_rate", "parlbnd"] = 0.001
     par.loc["ar_rate", "partrans"] = "none"
 
+    par.loc["ar_dist", "parval1"] = 80
     par.loc["ar_dist", "parval1"] = 80
     par.loc["ar_dist", "parubnd"] = 140
     par.loc["ar_dist", "parlbnd"] = 1
@@ -287,11 +288,16 @@ def setup_pst():
     tot = par.loc[wpar,"parval1"].sum()
     pf.pst.add_pi_equation(wpar.to_list(), pilbl="constraint_pump_rate", obs_group="less_than",rhs=tot)
 
-    stage_par = par.loc[par.pargp == "stage", "parnme"]
+    stage_par = par.loc[par.pargp == "stage", "parnme"].values[0]
     par.loc[stage_par, "partrans"] = "fixed"
+    #par.loc[stage_par,"parubnd"] = 1.05
+    #par.loc[stage_par, "parlbnd"] = 1.00
+    #par.loc[stage_par,"pargp"] = "dv_pars"
+
 
     pf.pst.control_data.noptmax = 0
 
+    #pf.pst.add_pi_equation([stage_par], obs_group="greater_than", pilbl=stage_par)
     #pf.pst.add_pi_equation(["ar_width"],obs_group="less_than",pilbl="ar_width")
     pf.pst.add_pi_equation(["ar_rate"], obs_group="less_than",pilbl="ar_rate")
     pf.pst.add_pi_equation(["ar_concen"], obs_group="greater_than",pilbl="ar_concen")
@@ -462,7 +468,8 @@ def plot_results(m_d):
                       "ar_rate": "artificial recharge rate ($\\frac{L^3}{T}$)",
                       "pump_rate": "combined extraction rate ($\\frac{L^3}{T}$)",
                       "ar_concen" : "artificial recharge salinity ($\\frac{g}{l}$)",
-                      "_risk_":"risk"}
+                      "_risk_":"risk","stage_inst:0_usecol:3_direct":"coastal stage"
+                      }
 
     cmap = plt.get_cmap("jet")
 
@@ -652,15 +659,15 @@ if __name__ == "__main__":
     #shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-mou.exe"),os.path.join("..","bin","pestpp-mou.exe"))
     #prep_model()
     #plot_domain(os.path.join("henry", "henry_temp"))
-    #setup_pst()
+    setup_pst()
 
     #run_mou(risk=0.95,tag="95_single_once",num_workers=40,noptmax=100)
-    #run_mou(risk=0.5, tag="deter", num_workers=40, noptmax=100)
-    #run_mou(risk=0.95,risk_obj=True,tag="riskobj_single_once",num_workers=40,noptmax=200)
+    run_mou(risk=0.5, tag="deter", num_workers=40, noptmax=100)
+    run_mou(risk=0.95,risk_obj=True,tag="riskobj_single_once",num_workers=40,noptmax=200)
     #run_mou(risk=0.95,tag="95_all_once",chance_points="all",num_workers=40,noptmax=400)
     #run_mou(risk=0.95,tag="95_all_100th",chance_points="all",recalc_every=100,num_workers=40,noptmax=500)
 
 
     plot_results(os.path.join("henry","henry_master_deter"))
     #plot_results(os.path.join("henry", "henry_master_95_single_once"))
-    #plot_results(os.path.join("henry", "henry_master_riskobj_single_once"))
+    plot_results(os.path.join("henry", "henry_master_riskobj_single_once"))
