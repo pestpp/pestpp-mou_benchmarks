@@ -285,8 +285,8 @@ def setup_pst():
     # this one is the objective
     pf.pst.add_pi_equation(wpar.to_list(),pilbl="pump_rate",obs_group="less_than")
     # this one is the constraint
-    tot = par.loc[wpar,"parval1"].sum()
-    pf.pst.add_pi_equation(wpar.to_list(), pilbl="constraint_pump_rate", obs_group="less_than",rhs=tot)
+    #tot = par.loc[wpar,"parval1"].sum()
+    #pf.pst.add_pi_equation(wpar.to_list(), pilbl="constraint_pump_rate", obs_group="less_than",rhs=tot)
 
     stage_par = par.loc[par.pargp == "stage", "parnme"].values[0]
     par.loc[stage_par, "partrans"] = "fixed"
@@ -301,9 +301,11 @@ def setup_pst():
     #pf.pst.add_pi_equation(["ar_width"],obs_group="less_than",pilbl="ar_width")
     pf.pst.add_pi_equation(["ar_rate"], obs_group="less_than",pilbl="ar_rate")
     pf.pst.add_pi_equation(["ar_concen"], obs_group="greater_than",pilbl="ar_concen")
+    pf.pst.add_pi_equation(["ar_dist"], obs_group="greater_than", pilbl="ar_dist")
+
     pf.pst.add_pi_equation(["_risk_"], obs_group="greater_than",pilbl="_risk_")
     #pf.pst.pestpp_options["mou_objectives"] = ["ar_width","ar_rate","ar_concen","pump_rate", "_risk_"]
-    pf.pst.pestpp_options["mou_objectives"] = ["_risk_","ar_rate","ar_concen","pump_rate"]
+    pf.pst.pestpp_options["mou_objectives"] = ["_risk_","ar_dist","ar_rate","ar_concen","pump_rate"]
 
     pf.pst.pestpp_options["opt_dec_var_groups"] = "dv_pars"
     pf.pst.pestpp_options["panther_echo"] = True
@@ -468,8 +470,8 @@ def plot_results(m_d):
                       "ar_rate": "artificial recharge rate ($\\frac{L^3}{T}$)",
                       "pump_rate": "combined extraction rate ($\\frac{L^3}{T}$)",
                       "ar_concen" : "artificial recharge salinity ($\\frac{g}{l}$)",
-                      "_risk_":"risk","stage_inst:0_usecol:3_direct":"coastal stage"
-                      }
+                      "_risk_":"risk","stage_inst:0_usecol:3_direct":"coastal stage",
+                      "ar_dist":"distance to artificial recharge basin"}
 
     cmap = plt.get_cmap("jet")
 
@@ -659,11 +661,11 @@ if __name__ == "__main__":
     #shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-mou.exe"),os.path.join("..","bin","pestpp-mou.exe"))
     #prep_model()
     #plot_domain(os.path.join("henry", "henry_temp"))
-    setup_pst()
+    #setup_pst()
 
     #run_mou(risk=0.95,tag="95_single_once",num_workers=40,noptmax=100)
-    run_mou(risk=0.5, tag="deter", num_workers=40, noptmax=100)
-    run_mou(risk=0.95,risk_obj=True,tag="riskobj_single_once",num_workers=40,noptmax=200)
+    #run_mou(risk=0.5, tag="deter", num_workers=40, noptmax=200)
+    #run_mou(risk=0.95,risk_obj=True,tag="riskobj_single_once",num_workers=40,noptmax=300)
     #run_mou(risk=0.95,tag="95_all_once",chance_points="all",num_workers=40,noptmax=400)
     #run_mou(risk=0.95,tag="95_all_100th",chance_points="all",recalc_every=100,num_workers=40,noptmax=500)
 
