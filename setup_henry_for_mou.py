@@ -594,6 +594,9 @@ def run_mou(risk_obj=False,chance_points="single",risk=0.5,stack_size=100,
     pst.pestpp_options["opt_risk"] = risk
     pst.pestpp_options["mou_population_size"] = pop_size
     pst.pestpp_options["opt_stack_size"] = stack_size
+    if risk == 0.5:
+        objs = pst.pestpp_options["mou_objectives"].split(",")
+
     pst.control_data.noptmax = noptmax
     pst.write(os.path.join(t_d,"henry.pst"))
 
@@ -661,21 +664,22 @@ def plot_domain(cwd):
     plt.close(fig)
 
 if __name__ == "__main__":
-    #run_and_plot_results(os.path.join("henry","henry_temp"))
     #test_process_unc(os.path.join("henry", "henry_template"))
     #shutil.copy2(os.path.join("..", "bin", "win", "pestpp-mou.exe"), os.path.join("..", "bin", "pestpp-mou.exe"))
     #shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-mou.exe"),os.path.join("..","bin","pestpp-mou.exe"))
-    #prep_model()
+    prep_model()
+    run_and_plot_results(os.path.join("henry", "henry_temp"))
+
     #plot_domain(os.path.join("henry", "henry_temp"))
-    #setup_pst()
+    setup_pst()
 
     #run_mou(risk=0.95,tag="95_single_once",num_workers=40,noptmax=100)
-    #run_mou(risk=0.5, tag="deter", num_workers=40, noptmax=200)
+    run_mou(risk=0.5, tag="deter", num_workers=40, noptmax=200)
     #run_mou(risk=0.95,risk_obj=True,tag="riskobj_single_once",num_workers=40,noptmax=500)
     #run_mou(risk=0.95,tag="95_all_once",chance_points="all",num_workers=40,noptmax=400)
     #run_mou(risk=0.95,tag="95_all_100th",chance_points="all",recalc_every=100,num_workers=40,noptmax=500)
 
 
-    plot_results(os.path.join("henry","henry_master_deter"))
+    #plot_results(os.path.join("henry","henry_master_deter"))
     #plot_results(os.path.join("henry", "henry_master_95_single_once"))
-    plot_results(os.path.join("henry", "henry_master_riskobj_single_once"))
+    #plot_results(os.path.join("henry", "henry_master_riskobj_single_once"))
