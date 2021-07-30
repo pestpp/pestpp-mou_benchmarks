@@ -442,6 +442,7 @@ def start_workers_for_debug(with_master=True):
                                   port=4004)
 
 def plot_results(m_d):
+
     # plt_d = "henry_results"
     # if os.path.exists(plt_d):
     #     shutil.rmtree(plt_d)
@@ -457,8 +458,10 @@ def plot_results(m_d):
     bnd_dict = {dv: [par.loc[dv, "parlbnd"], par.loc[dv, "parubnd"]] for dv in obj_names if dv in pst.par_names}
     bnd_dict["pump_rate"] = [par.loc[rate_pars, "parubnd"].sum() * -1., par.loc[rate_pars, "parlbnd"].sum() * -1.]
 
+
     if "_risk_" in obj_names and "riskobj" not in m_d:
         obj_names.remove("_risk_")
+
 
     dmn = 0
     dmx = 160
@@ -471,33 +474,35 @@ def plot_results(m_d):
                       "pump_rate": "combined extraction rate ($\\frac{L^3}{T}$)",
                       "ar_concen" : "artificial recharge salinity ($\\frac{g}{l}$)",
                       "_risk_":"risk","stage_inst:0_usecol:3_direct":"coastal stage",
-                      "ar_dist":"distance to artificial recharge basin"}
+                      "ar_dist":"distance basin edge (column)"}
 
     cmap = plt.get_cmap("jet")
-
+    obj_names.sort()
 
     with PdfPages(os.path.join(m_d,os.path.split(m_d)[-1]+".pdf")) as pdf:
         for gen in [gens[-1]]:
             ax_count = 0
             #df_gen = df_arc.loc[df_arc.generation==gen,:].copy()
             df_gen = pd.read_csv(os.path.join(m_d,"henry.archive.dv_pop.csv"))
-            norm = Normalize(df_gen.loc[:,"ar_concen"].min(), df_gen.loc[:,"ar_concen"].max())
+            df_gen.loc[:,"front"] = df_arc.loc[df_gen.index,"nsga2_front"]
 
             # flip the rate pars
             df_gen.loc[:, rate_pars] *= -1.
             df_gen.loc[:,"pump_rate"] = df_gen.loc[:, rate_pars].sum(axis=1)
 
             # only show solutions with some min amount of pumping
-            #df_gen = df_gen.loc[df_gen.pump_rate > 3.0]
+            df_gen = df_gen.loc[df_gen.pump_rate > 2.1]
+
 
             # only with risk averse
             #if "_risk_" in obj_names:
-            #    df_gen = df_gen.loc[df_gen._risk_ > 0.75,:]
-
+            #    df_gen = df_gen.loc[df_gen._risk_ > 0.6,:]
 
             if df_gen.shape[0] == 0:
                 continue
-            fig = plt.figure(figsize=(8,11))
+            norm = Normalize(df_gen.loc[:, "ar_concen"].min(), df_gen.loc[:, "ar_concen"].max())
+
+            fig = plt.figure(figsize=(8,9.5))
             gs = GridSpec(len(obj_names)+1,len(obj_names),figure=fig)
             ax = fig.add_subplot(gs[0,:])
             mx = 0
@@ -515,15 +520,15 @@ def plot_results(m_d):
             #ax.set_ylim(par.loc["ar_rate","parlbnd"],par.loc["ar_rate","parubnd"])
             ax.set_ylim(mn,mx)
             ax.set_xlabel("model column")
-            ax.set_ylabel("ratio of artificial recharge rate\n to combined extraction rate")
+            ax.set_ylabel("ratio of recharge to extraction")
             ax.plot([60,60],ax.get_ylim(),"k--")
-            ax.text(61,(mn+mx)/2.0,"extraction wells",rotation=90)
+            ax.text(63,(mn+mx)/3.0,"extraction\nwells",rotation=90,va='bottom',ha="center")
             plt.colorbar(mpl.cm.ScalarMappable(norm=norm,cmap=cmap),ax=ax,label=obj_names_dict["ar_concen"],alpha=0.25)
             #cb = plt.colorbar(plt.cm.ScalarMappable(norm=norm,cmap=cmap))
             #cb.set_label("recharge concentration")
 
 
-            ax.set_title("{0}) optimal artificial recharge basin designs, generation {1}, {2} feasible nondom solutions".\
+            ax.set_title("{0}) optimal artificial recharge basin designs, {2} feasible non-dominated solutions".\
                          format(string.ascii_uppercase[ax_count],gen,df_gen.shape[0]),loc="left")
             ax_count += 1
             for i,o1 in enumerate(obj_names):
@@ -656,6 +661,7 @@ def plot_domain(cwd):
     plt.close(fig)
 
 if __name__ == "__main__":
+    #run_and_plot_results(os.path.join("henry","henry_temp"))
     #test_process_unc(os.path.join("henry", "henry_template"))
     #shutil.copy2(os.path.join("..", "bin", "win", "pestpp-mou.exe"), os.path.join("..", "bin", "pestpp-mou.exe"))
     #shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-mou.exe"),os.path.join("..","bin","pestpp-mou.exe"))
@@ -665,7 +671,7 @@ if __name__ == "__main__":
 
     #run_mou(risk=0.95,tag="95_single_once",num_workers=40,noptmax=100)
     #run_mou(risk=0.5, tag="deter", num_workers=40, noptmax=200)
-    #run_mou(risk=0.95,risk_obj=True,tag="riskobj_single_once",num_workers=40,noptmax=300)
+    #run_mou(risk=0.95,risk_obj=True,tag="riskobj_single_once",num_workers=40,noptmax=500)
     #run_mou(risk=0.95,tag="95_all_once",chance_points="all",num_workers=40,noptmax=400)
     #run_mou(risk=0.95,tag="95_all_100th",chance_points="all",recalc_every=100,num_workers=40,noptmax=500)
 
