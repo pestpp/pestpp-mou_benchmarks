@@ -254,7 +254,7 @@ def setup_pst():
 
     #dont let this go to zero
     par.loc["ar_rate", "parval1"] = 5.5
-    par.loc["ar_rate", "parubnd"] = 30.0
+    par.loc["ar_rate", "parubnd"] = 10.0
     par.loc["ar_rate", "parlbnd"] = 0.001
     par.loc["ar_rate", "partrans"] = "none"
 
@@ -281,7 +281,7 @@ def setup_pst():
     par.loc[wpar, "partrans"] = "none"
     par.loc[wpar, "pargp"] = "dv_pars"
     par.loc[wpar, "parubnd"] = 0.0
-    par.loc[wpar, "parlbnd"] = -8.0
+    par.loc[wpar, "parlbnd"] = -2.0
     # this one is the objective
     pf.pst.add_pi_equation(wpar.to_list(),pilbl="pump_rate",obs_group="less_than")
     # this one is the constraint
@@ -681,7 +681,7 @@ if __name__ == "__main__":
     #setup_pst()
 
     #run_mou(risk=0.95,tag="95_single_once",num_workers=40,noptmax=100)
-    run_mou(risk=0.5, tag="deter", num_workers=20, noptmax=200)
+    run_mou(risk=0.5, tag="deter", num_workers=8, noptmax=100,pop_size=100)
     #run_mou(risk=0.95,risk_obj=True,tag="riskobj_single_once",num_workers=40,noptmax=500)
     #run_mou(risk=0.95,tag="95_all_once",chance_points="all",num_workers=40,noptmax=400)
     #run_mou(risk=0.95,tag="95_all_100th",chance_points="all",recalc_every=100,num_workers=40,noptmax=500)
