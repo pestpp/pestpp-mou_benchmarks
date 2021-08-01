@@ -243,22 +243,23 @@ def setup_pst():
     par.loc["_risk_","pargp"] = "dv_pars"
     par.loc["_risk_","parlbnd"] = 0.001
     par.loc["_risk_", "parubnd"] = 0.99
-    par.loc["_risk_", "parval1"] = 0.6
+    # start at lower bound for cases without risk obj
+    par.loc["_risk_", "parval1"] = 0.001
     par.loc["_risk_", "partrans"] = "none"
 
     par.loc[df.parnme,"pargp"] = "dv_pars"
     par.loc["ar_concen","parval1"] = 3.5
-    par.loc["ar_concen", "parubnd"] = 10.0
+    par.loc["ar_concen", "parubnd"] = 17.0
     par.loc["ar_concen", "parlbnd"] = pot_lim
     par.loc["ar_concen", "partrans"] = "none"
 
     #dont let this go to zero
     par.loc["ar_rate", "parval1"] = 5.5
-    par.loc["ar_rate", "parubnd"] = 10.0
+    par.loc["ar_rate", "parubnd"] = 12.0
     par.loc["ar_rate", "parlbnd"] = 0.001
     par.loc["ar_rate", "partrans"] = "none"
 
-    par.loc["ar_dist", "parval1"] = 80
+
     par.loc["ar_dist", "parval1"] = 80
     par.loc["ar_dist", "parubnd"] = 140
     par.loc["ar_dist", "parlbnd"] = 1
@@ -281,7 +282,7 @@ def setup_pst():
     par.loc[wpar, "partrans"] = "none"
     par.loc[wpar, "pargp"] = "dv_pars"
     par.loc[wpar, "parubnd"] = 0.0
-    par.loc[wpar, "parlbnd"] = -2.0
+    par.loc[wpar, "parlbnd"] = -3.0
     # this one is the objective
     pf.pst.add_pi_equation(wpar.to_list(),pilbl="pump_rate",obs_group="less_than")
     # this one is the constraint
@@ -495,8 +496,8 @@ def plot_results(m_d):
 
 
             # only with risk averse
-            #if "_risk_" in obj_names:
-            #    df_gen = df_gen.loc[df_gen._risk_ > 0.6,:]
+            if "_risk_" in obj_names:
+                df_gen = df_gen.loc[df_gen._risk_ > 0.8,:]
 
             if df_gen.shape[0] == 0:
                 continue
@@ -681,12 +682,12 @@ if __name__ == "__main__":
     #setup_pst()
 
     #run_mou(risk=0.95,tag="95_single_once",num_workers=40,noptmax=100)
-    run_mou(risk=0.5, tag="deter", num_workers=8, noptmax=100,pop_size=100)
-    #run_mou(risk=0.95,risk_obj=True,tag="riskobj_single_once",num_workers=40,noptmax=500)
+    #run_mou(risk=0.5, tag="deter", num_workers=40, noptmax=100,pop_size=100)
+    run_mou(risk=0.95,risk_obj=True,tag="riskobj_single_once",num_workers=40,noptmax=500)
     #run_mou(risk=0.95,tag="95_all_once",chance_points="all",num_workers=40,noptmax=400)
     #run_mou(risk=0.95,tag="95_all_100th",chance_points="all",recalc_every=100,num_workers=40,noptmax=500)
 
 
     #plot_results(os.path.join("henry","henry_master_deter"))
     #plot_results(os.path.join("henry", "henry_master_95_single_once"))
-    #plot_results(os.path.join("henry", "henry_master_riskobj_single_once"))
+    plot_results(os.path.join("henry", "henry_master_riskobj_single_once"))
