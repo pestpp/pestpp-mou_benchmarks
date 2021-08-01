@@ -442,8 +442,8 @@ def start_workers_for_debug(with_master=True):
                                   num_workers=12, worker_root="henry",
                                   port=4004)
 
-def plot_results(m_d):
-
+def plot_results(m_d,risk_thres=0.0,tag=""):
+    fs=8
     # plt_d = "henry_results"
     # if os.path.exists(plt_d):
     #     shutil.rmtree(plt_d)
@@ -470,17 +470,17 @@ def plot_results(m_d):
     gens = df_arc.generation.unique()
     gens.sort()
     print(gens)
-    obj_names_dict = {"ar_width": "artificial recharge basin width ($L$)",
-                      "ar_rate": "artificial recharge rate ($\\frac{L^3}{T}$)",
-                      "pump_rate": "combined extraction rate ($\\frac{L^3}{T}$)",
-                      "ar_concen" : "artificial recharge salinity ($\\frac{g}{l}$)",
-                      "_risk_":"risk","stage_inst:0_usecol:3_direct":"coastal stage",
-                      "ar_dist":"distance basin edge (column)"}
+    obj_names_dict = {"ar_width": "basin width (columns)",
+                      "ar_rate": "recharge rate ($\\frac{m^3}{d}$)",
+                      "pump_rate": "extraction rate ($\\frac{m^3}{d}$)",
+                      "ar_concen" : "recharge salinity ($\\frac{g}{l}$)",
+                      "_risk_":"risk","stage_inst:0_usecol:3_direct":"coastal stage ($m$)",
+                      "ar_dist":"basin edge (column)"}
 
     cmap = plt.get_cmap("jet")
     obj_names.sort()
 
-    with PdfPages(os.path.join(m_d,os.path.split(m_d)[-1]+".pdf")) as pdf:
+    with PdfPages(os.path.join(m_d,os.path.split(m_d)[-1]+tag+".pdf")) as pdf:
         for gen in [gens[-1]]:
             ax_count = 0
             #df_gen = df_arc.loc[df_arc.generation==gen,:].copy()
@@ -497,13 +497,14 @@ def plot_results(m_d):
 
             # only with risk averse
             if "_risk_" in obj_names:
-                df_gen = df_gen.loc[df_gen._risk_ > 0.8,:]
+                df_gen = df_gen.loc[df_gen._risk_ > risk_thres,:]
 
             if df_gen.shape[0] == 0:
                 continue
             norm = Normalize(df_gen.loc[:, "ar_concen"].min(), df_gen.loc[:, "ar_concen"].max())
 
-            fig = plt.figure(figsize=(8,9.5))
+            fig = plt.figure(figsize=(7.5,9))
+
             gs = GridSpec(len(obj_names)+1,len(obj_names),figure=fig)
             ax = fig.add_subplot(gs[0,:])
             mx = 0
@@ -520,41 +521,43 @@ def plot_results(m_d):
             ax.set_xlim(dmn,dmx)
             #ax.set_ylim(par.loc["ar_rate","parlbnd"],par.loc["ar_rate","parubnd"])
             ax.set_ylim(mn,mx)
-            ax.set_xlabel("model column")
-            ax.set_ylabel("ratio of recharge to extraction")
+            ax.set_xlabel("model column",fontsize=fs)
+            ax.set_ylabel("ratio of recharge\nto extraction",fontsize=fs)
             ax.plot([60,60],ax.get_ylim(),"k--")
-            ax.text(63,(mn+mx)/3.0,"extraction\nwells",rotation=90,va='bottom',ha="center")
+            ax.text(65,(mn+mx)/3.7,"extraction\nwells",rotation=90,va='bottom',ha="center",fontsize=fs)
             plt.colorbar(mpl.cm.ScalarMappable(norm=norm,cmap=cmap),ax=ax,label=obj_names_dict["ar_concen"],alpha=0.25)
             #cb = plt.colorbar(plt.cm.ScalarMappable(norm=norm,cmap=cmap))
             #cb.set_label("recharge concentration")
 
 
             ax.set_title("{0}) optimal artificial recharge basin designs, {2} feasible non-dominated solutions".\
-                         format(string.ascii_uppercase[ax_count],gen,df_gen.shape[0]),loc="left")
+                         format(string.ascii_uppercase[ax_count],gen,df_gen.shape[0]),loc="left",fontsize=fs)
+            ax.tick_params(axis='both', which='major', labelsize=fs)
             ax_count += 1
             for i,o1 in enumerate(obj_names):
                 for j in range(i+1):
                     ax = fig.add_subplot(gs[i+1,j])
-                    ax.set_title("{0})".format(string.ascii_uppercase[ax_count]),loc="left")
+                    ax.set_title("{0})".format(string.ascii_uppercase[ax_count]),loc="left",fontsize=fs)
                     ax_count += 1
                     if i == j:
                         ax.hist(df_gen.loc[:,o1],facecolor="0.5",edgecolor="none",alpha=0.5)
                         ax.set_yticks([])
-                        ax.set_xlabel(obj_names_dict[o1])
+                        ax.set_xlabel(obj_names_dict[o1],fontsize=fs)
                         #ax.set_xlim(bnd_dict[o1])
                     else:
                         if "_risk_" in obj_names:
                             ax.scatter(df_gen.loc[:, obj_names[j]], df_gen.loc[:, o1], marker=".", c=df_gen._risk_.values)
                         else:
                             ax.scatter(df_gen.loc[:,obj_names[j]],df_gen.loc[:,o1],marker=".",color="0.5")
-                        ax.set_xlabel(obj_names_dict[obj_names[j]])
-                        ax.set_ylabel(obj_names_dict[o1])
+                        ax.set_xlabel(obj_names_dict[obj_names[j]],fontsize=fs)
+                        ax.set_ylabel(obj_names_dict[o1],fontsize=fs)
+                    ax.tick_params(axis='both', which='major', labelsize=fs)
                         #ax.set_xlim(bnd_dict[obj_names[j]])
                 for j in range(i,len(obj_names)):
 
                     if i != j:
                         ax = fig.add_subplot(gs[i + 1, j])
-                        ax.set_title("{0})".format(string.ascii_uppercase[ax_count]), loc="left")
+                        ax.set_title("{0})".format(string.ascii_uppercase[ax_count]), loc="left",fontsize=fs)
                         ax_count += 1
                         if "_risk_" in obj_names:
                             ax.scatter(df_gen.loc[:, obj_names[j]], df_gen.loc[:, o1], marker=".", c=df_gen._risk_.values)
@@ -563,10 +566,14 @@ def plot_results(m_d):
                         #ax.scatter(df_gen.loc[:,obj_names[j]],df_gen.loc[:,o1],marker=".",color="0.5")
                         #ax.set_xlabel(obj_names[j])
                         #ax.set_ylabel(o1)
-                        ax.set_xlabel(obj_names_dict[obj_names[j]])
-                        ax.set_ylabel(obj_names_dict[o1])
+                        ax.set_xlabel(obj_names_dict[obj_names[j]],fontsize=fs)
+                        ax.set_ylabel(obj_names_dict[o1],fontsize=fs)
+                        ax.tick_params(axis='both', which='major', labelsize=fs)
+
+
 
             plt.tight_layout()
+
             #plt.show()
             pdf.savefig()
             plt.close(fig)
@@ -671,6 +678,26 @@ def plot_domain(cwd):
     plt.savefig("henry_domain.pdf")
     plt.close(fig)
 
+
+def extract_and_plot_solution():
+    m_d = os.path.join("henry","henry_master_deter_100gen")
+    pst = pyemu.Pst(os.path.join(m_d,"henry.pst"))
+    df_arc = pd.read_csv(os.path.join(m_d,"henry.pareto.archive.summary.csv"))
+    df_arc = df_arc.loc[df_arc.generation==df_arc.generation.max(),:]
+    df_arc.loc[:,"member"] = df_arc.member.str.lower()
+    df_arc.sort_values(by="ar_dist",ascending=False,inplace=True)
+    df_dv = pd.read_csv(os.path.join(m_d,"henry.archive.dv_pop.csv"))
+    #dv_vals = df_dv.loc[df_arc.member.iloc[0],:]
+    df_dv.sort_values(by="ar_dist",ascending=False,inplace=True)
+    print(df_dv.loc[:,"ar_dist"])
+    pst.parameter_data.loc[:,"parval1"] = df_dv.loc[df_dv.index[0],pst.par_names]
+
+    pst.control_data.noptmax = 0
+    pst.write(os.path.join(m_d,"test.pst"))
+    pyemu.os_utils.run("{0} test.pst".format(exe_path),cwd=m_d)
+    #run_and_plot_results(m_d)
+    plot_domain(m_d)
+
 if __name__ == "__main__":
     #test_process_unc(os.path.join("henry", "henry_template"))
     #shutil.copy2(os.path.join("..", "bin", "win", "pestpp-mou.exe"), os.path.join("..", "bin", "pestpp-mou.exe"))
@@ -682,12 +709,16 @@ if __name__ == "__main__":
     #setup_pst()
 
     #run_mou(risk=0.95,tag="95_single_once",num_workers=40,noptmax=100)
-    #run_mou(risk=0.5, tag="deter", num_workers=40, noptmax=100,pop_size=100)
-    run_mou(risk=0.95,risk_obj=True,tag="riskobj_single_once",num_workers=40,noptmax=500)
+    #run_mou(risk=0.5, tag="deter", num_workers=40, noptmax=100,pop_size=250)
+    #run_mou(risk=0.95,risk_obj=True,tag="riskobj_single_once",num_workers=40,noptmax=500)
     #run_mou(risk=0.95,tag="95_all_once",chance_points="all",num_workers=40,noptmax=400)
     #run_mou(risk=0.95,tag="95_all_100th",chance_points="all",recalc_every=100,num_workers=40,noptmax=500)
 
 
-    #plot_results(os.path.join("henry","henry_master_deter"))
+    #plot_results(os.path.join("henry","henry_master_deter_100gen"))
     #plot_results(os.path.join("henry", "henry_master_95_single_once"))
-    plot_results(os.path.join("henry", "henry_master_riskobj_single_once"))
+    #plot_results(os.path.join("henry", "henry_master_riskobj_single_once"))
+    #plot_results(os.path.join("henry", "henry_master_riskobj_single_once"),risk_thres=0.75,
+    #             tag="_riskaverse")
+
+    extract_and_plot_solution()
