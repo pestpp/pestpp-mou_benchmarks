@@ -623,7 +623,9 @@ def run_mou(risk_obj=False,chance_points="single",risk=0.5,stack_size=100,
                                  verbose=True, worker_root="henry")
 
 
+
 def plot_domain(cwd):
+    fs = 10
     wel_df = pd.read_csv(os.path.join(cwd,"flow.wel_stress_period_data_historic.txt"),header=None,
                          names=["l","r","c","flux","concen"],delim_whitespace=True)
     wel_df = wel_df.loc[wel_df.flux<0,:]
@@ -635,45 +637,48 @@ def plot_domain(cwd):
     hds = flopy.utils.HeadFile(os.path.join(cwd, "flow.hds"))
     print(ucn.get_times())
     d = ucn.get_data(kstpkper=(0,1))
-    fig, axes = plt.subplots(2, 1, figsize=(8, 4))
+    fig, axes = plt.subplots(2, 1, figsize=(8, 4.5))
     ax = axes[0]
-    ax.set_title("A) pre-developement salinity concentration",loc="left")
-    ax.set_ylabel("layer")
-    ax.set_xlabel("row")
+    ax.set_title("A) pre-developement salinity concentration",loc="left",fontsize=fs)
+    ax.set_ylabel("layer",fontsize=fs)
+    ax.set_xlabel("column",fontsize=fs)
     cb = ax.imshow(d[:, 0, :], interpolation="none", vmin=0.0, vmax=35.0)
     cb = plt.colorbar(cb,ax=ax)
-    cb.set_label("salinity ($\\frac{g}{l}$)")
+    cb.set_label("salinity ($\\frac{g}{l}$)",fontsize=fs)
     levels = [0.5]
     ax.contour(d[:, 0, :], levels=levels, colors="w",label="potable salinity limit")
     ax.scatter(wel_df.c,wel_df.l,marker="^",color="k",label="extraction wells")
     ylim = ax.get_ylim()
-    ax.plot([0,0],ylim,"m",lw=5,label="upgradient inflow boundary")
+    ax.plot([0,0],ylim,"m",lw=5,label="upgradient boundary")
     xmx = ax.get_xlim()[1]
     ax.plot([xmx, xmx], ylim, "r", lw=5, label="coastal boundary")
     #ax.plot([40,55],[0,0],"g",lw=5,label="feasible artifical recharge basin")
-    ax.legend(loc="lower left")
+    ax.legend(loc="upper left",fontsize=fs)
+    ax.tick_params(axis='both', which='major', labelsize=fs)
     #d = hds.get_data(totim=time)
     #levels = np.linspace(d.min(), d.mean(), 5)
     #ax.contour(d[:, 0, :], levels, colors="k", )
     #plt.savefig("henry_domain.pdf")
     ax = axes[1]
-    ax.set_title("B) salinity concentration after historic water use", loc="left")
-    ax.set_ylabel("layer")
-    ax.set_xlabel("row")
+    ax.set_title("B) salinity concentration after historic water use", loc="left",fontsize=fs)
+    ax.set_ylabel("layer",fontsize=fs)
+    ax.set_xlabel("column",fontsize=fs)
+
 
     d = ucn.get_data(kstpkper=(0, 20))
     cb = ax.imshow(d[:, 0, :], interpolation="none", vmin=0.0, vmax=35.0)
     cb = plt.colorbar(cb, ax=ax)
-    cb.set_label("salinity ($\\frac{g}{l}$)")
+    cb.set_label("salinity ($\\frac{g}{l}$)",fontsize=fs)
     levels = [0.5]
     ax.contour(d[:, 0, :], levels=levels, colors="w", label="potable salinity limit")
     ax.scatter(wel_df.c, wel_df.l, marker="^", color="k", label="extraction wells")
     ylim = ax.get_ylim()
-    ax.plot([0, 0], ylim, "m", lw=5, label="upgradient inflow boundary")
+    ax.plot([0, 0], ylim, "m", lw=5, label="upgradient boundary")
     xmx = ax.get_xlim()[1]
     ax.plot([xmx, xmx], ylim, "r", lw=5, label="coastal boundary")
     #ax.plot([40, 55], [0, 0], "g", lw=5, label="feasible artifical recharge basin")
-    ax.legend(loc="lower left")
+    ax.legend(loc="upper left",fontsize=fs)
+    ax.tick_params(axis='both', which='major', labelsize=fs)
     plt.tight_layout()
     plt.savefig("henry_domain.pdf")
     plt.close(fig)
@@ -705,7 +710,7 @@ if __name__ == "__main__":
     #prep_model()
     #run_and_plot_results(os.path.join("henry", "henry_temp"))
 
-    #plot_domain(os.path.join("henry", "henry_temp"))
+    plot_domain(os.path.join("henry", "henry_temp"))
     #setup_pst()
 
     #run_mou(risk=0.95,tag="95_single_once",num_workers=40,noptmax=100)
@@ -715,10 +720,10 @@ if __name__ == "__main__":
     #run_mou(risk=0.95,tag="95_all_100th",chance_points="all",recalc_every=100,num_workers=40,noptmax=500)
 
 
-    #plot_results(os.path.join("henry","henry_master_deter_100gen"))
+    #plot_results(os.path.join("henry","henry_master_deter"))
     #plot_results(os.path.join("henry", "henry_master_95_single_once"))
     #plot_results(os.path.join("henry", "henry_master_riskobj_single_once"))
     #plot_results(os.path.join("henry", "henry_master_riskobj_single_once"),risk_thres=0.75,
     #             tag="_riskaverse")
 
-    extract_and_plot_solution()
+    #extract_and_plot_solution()
