@@ -1447,8 +1447,11 @@ if __name__ == "__main__":
     #risk_demo(case="rosenc",std_weight=1.0,noptmax=500)
     #plot_risk_demo_multi()
     #plot_risk_demo_rosen()
-    #risk_demo(case='constr',noptmax=50,std_weight=0.05,pop_size=100,num_workers=50,mou_gen="pso")
-    #risk_demo(case='constr', noptmax=50, std_weight=0.05, pop_size=100,mou_gen="pso",num_workers=50)
+    risk_demo(case='constr', noptmax=150, std_weight=0.05, pop_size=100, num_workers=50, mou_gen="de")
+    risk_demo(case='constr', noptmax=150, std_weight=0.05, pop_size=100, mou_gen="de", num_workers=50)
+
+    risk_demo(case='constr',noptmax=150,std_weight=0.05,pop_size=100,num_workers=50,mou_gen="pso")
+    risk_demo(case='constr', noptmax=150, std_weight=0.05, pop_size=100,mou_gen="pso",num_workers=50)
     #plot_risk_demo_multi_3pane(case='zdt1',mou_gen="de")
     #plot_zdt_risk_demo_compare(case="constr")
     #zdt1_invest()
