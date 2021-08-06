@@ -668,6 +668,42 @@ def risk_demo(case="zdt1",noptmax=100,std_weight=0.0001,mou_gen="de",pop_size=10
     obj_names = ["obj_1"]
     if "zdt" in case:
         obj_names.append("obj_2")
+
+
+    t_d = mou_suite_helper.setup_problem(case, additive_chance=True, risk_obj=True)
+    pst = pyemu.Pst(os.path.join(t_d, case+".pst"))
+    pst.pestpp_options["opt_chance_points"] = "all"
+    pst.pestpp_options["opt_recalc_chance_every"] = 10000
+    pst.pestpp_options["opt_stack_size"] = 20
+    pst.pestpp_options["mou_generator"] = mou_gen
+    pst.pestpp_options["mou_population_size"] = pop_size
+    pst.pestpp_options["opt_risk"] = 0.5
+    pst.pestpp_options["save_binary"] = True
+    pst.observation_data.loc[pst.nnz_obs_names,"weight"] = std_weight
+    pst.pestpp_options["opt_std_weights"] = False
+    pst.control_data.noptmax = noptmax
+    pst.write(os.path.join(t_d, case+".pst"))
+    m1 = os.path.join("mou_tests", case+"_test_master_riskobj_allpts_match_"+mou_gen)
+    pyemu.os_utils.start_workers(t_d, exe_path, case+".pst", num_workers, worker_root="mou_tests",
+                                 master_dir=m1, verbose=True, port=port)
+
+    t_d = mou_suite_helper.setup_problem(case, additive_chance=True, risk_obj=True)
+    pst = pyemu.Pst(os.path.join(t_d, case+".pst"))
+    pst.pestpp_options["opt_chance_points"] = "single"
+    pst.pestpp_options["opt_recalc_chance_every"] = 10000
+    pst.pestpp_options["opt_stack_size"] = 20
+    pst.pestpp_options["mou_generator"] = mou_gen
+    pst.pestpp_options["mou_population_size"] = pop_size
+    pst.pestpp_options["opt_risk"] = 0.5
+    pst.pestpp_options["save_binary"] = True
+    pst.observation_data.loc[pst.nnz_obs_names,"weight"] = std_weight
+    pst.pestpp_options["opt_std_weights"] = False
+    pst.control_data.noptmax = noptmax
+    pst.write(os.path.join(t_d, case+".pst"))
+    m1 = os.path.join("mou_tests", case+"_test_master_riskobj_singlept_match_"+mou_gen)
+    pyemu.os_utils.start_workers(t_d, exe_path, case+".pst", num_workers, worker_root="mou_tests",
+                                 master_dir=m1, verbose=True, port=port)
+    return
     t_d = mou_suite_helper.setup_problem(case, additive_chance=False, risk_obj=False)
     pst = pyemu.Pst(os.path.join(t_d, case+".pst"))
     #pst.pestpp_options["opt_chance_points"] = "all"
@@ -1232,7 +1268,8 @@ def water_invest():
 def plot_constr_risk():
     import matplotlib.pyplot as plt
     case = "constr"
-    master_ds = [case + "_test_master_deter", case + "_test_master_05", case + "_test_master_95"]
+    master_ds = [case + "_test_master_deter",
+                 case + "_test_master_05", case + "_test_master_95"]
     fig, axes = plt.subplots(2, 2, figsize=(8, 8))
     axes = axes.flatten()
     for i,ax in enumerate(axes):
@@ -1267,7 +1304,7 @@ def plot_constr_risk():
         axes[1].set_title("A) PSO specified risk", loc="left")
         axes[1].legend(loc="upper right",framealpha=1.0)
 
-    m_d = os.path.join("mou_tests", case + "_test_master_riskobj_more")
+    m_d = os.path.join("mou_tests", case + "_test_master_riskobj_allpts_match")
     df_de = pd.read_csv(os.path.join(m_d + "_de", case + ".pareto.archive.summary.csv"))
     mxgen = df_de.generation.max()
     print(mxgen)
@@ -1410,7 +1447,7 @@ if __name__ == "__main__":
     #risk_demo(case="rosenc",std_weight=1.0,noptmax=500)
     #plot_risk_demo_multi()
     #plot_risk_demo_rosen()
-    #risk_demo(case='constr',noptmax=50,std_weight=0.05,pop_size=100,num_workers=50)
+    #risk_demo(case='constr',noptmax=50,std_weight=0.05,pop_size=100,num_workers=50,mou_gen="pso")
     #risk_demo(case='constr', noptmax=50, std_weight=0.05, pop_size=100,mou_gen="pso",num_workers=50)
     #plot_risk_demo_multi_3pane(case='zdt1',mou_gen="de")
     #plot_zdt_risk_demo_compare(case="constr")
