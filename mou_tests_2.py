@@ -1301,10 +1301,10 @@ def plot_constr_risk():
         axes[1].scatter(df_pso.obj_1.values, df_pso.obj_2.values, color=c, s=4, label=label,zorder=10,alpha=0.5)
 
         axes[0].set_title("A) DE specified risk", loc="left")
-        axes[1].set_title("A) PSO specified risk", loc="left")
+        axes[1].set_title("B) PSO specified risk", loc="left")
         axes[1].legend(loc="upper right",framealpha=1.0)
 
-    m_d = os.path.join("mou_tests", case + "_test_master_riskobj_allpts_match")
+    m_d = os.path.join("mou_tests", case + "_test_master_riskobj_more")
     df_de = pd.read_csv(os.path.join(m_d + "_de", case + ".pareto.archive.summary.csv"))
     mxgen = df_de.generation.max()
     print(mxgen)
@@ -1416,6 +1416,47 @@ def get_constr_base_plot(ax,label=False):
     #ax.legend(loc="lower left")
 
 
+def plot_constr_risk_2():
+    import matplotlib.pyplot as plt
+    import string
+    case = "constr"
+    master_ds = [case + "_test_master_riskobj_singlept_match",
+                 case + "_test_master_riskobj_allpts_match"]
+    fig, axes = plt.subplots(2, 2, figsize=(8, 8))
+    ax_count = 0
+    for i,ax in enumerate(axes.flatten()):
+        label = False;
+        if i == 1:
+            label = True
+        get_constr_base_plot(ax,label=label)
+        ax.set_xlabel("objective 1 (minimize)")
+        ax.set_ylabel("objective 2 (minimize)")
+    for irow,m_d in enumerate(master_ds):
+        m_d = os.path.join("mou_tests", m_d)
+        pst = pyemu.Pst(os.path.join(m_d + "_de", case + ".pst"))
+        df_de = pd.read_csv(os.path.join(m_d + "_de", case + ".pareto.archive.summary.csv"))
+        mxgen = df_de.generation.max()
+        print(mxgen)
+        df_de = df_de.loc[df_de.generation == mxgen, :]
+        df_de = df_de.loc[df_de.nsga2_front == 1, :]
+
+        df_pso = pd.read_csv(os.path.join(m_d + "_pso", case + ".pareto.archive.summary.csv"))
+        mxgen = df_pso.generation.max()
+        print(mxgen)
+        df_pso = df_pso.loc[df_pso.generation == mxgen, :]
+        df_pso = df_pso.loc[df_pso.nsga2_front == 1, :]
+        axes[irow,0].scatter(df_de.obj_1.values, df_de.obj_2.values, c=df_de._risk_, s=4, label=label,zorder=10,alpha=0.5)
+        axes[irow,1].scatter(df_pso.obj_1.values, df_pso.obj_2.values, c=df_pso._risk_, s=4, label=label,zorder=10,alpha=0.5)
+
+        axes[irow,0].set_title("{0}) DE {1}".format(string.ascii_uppercase[ax_count],m_d), loc="left")
+        ax_count += 1
+        axes[irow,1].set_title("{0}) PSO {1}".format(string.ascii_uppercase[ax_count],m_d), loc="left")
+        axes[irow,1].legend(loc="upper right",framealpha=1.0)
+
+
+
+    plt.savefig("constr_results_2.pdf")
+
 
 if __name__ == "__main__":
         
@@ -1467,4 +1508,5 @@ if __name__ == "__main__":
     #water_invest()
     #mou_suite_helper.plot_results(os.path.join("mou_tests",case+"_pso_master_risk"),sequence=True)
     #mou_suite_helper.plot_results(os.path.join("mou_tests",case+"_de_master_risk"),sequence=True)
-    plot_constr_risk()
+    #plot_constr_risk()
+    plot_constr_risk_2()

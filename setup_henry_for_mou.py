@@ -722,11 +722,15 @@ if __name__ == "__main__":
     #test_process_unc(os.path.join("henry", "henry_template"))
     #shutil.copy2(os.path.join("..", "bin", "win", "pestpp-mou.exe"), os.path.join("..", "bin", "pestpp-mou.exe"))
     #shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-mou.exe"),os.path.join("..","bin","pestpp-mou.exe"))
-    #prep_model()
-    #run_and_plot_results(os.path.join("henry", "henry_temp"))
+    prep_model()
+    run_and_plot_results(os.path.join("henry", "henry_temp"))
 
     #plot_domain(os.path.join("henry", "henry_temp"))
-    #setup_pst()
+    setup_pst()
+
+    #run_mou(risk=0.95,tag="95_single_once",num_workers=40,noptmax=100)
+    #run_mou(risk=0.5, tag="deter", num_workers=40, noptmax=100,pop_size=250)
+    run_mou(risk=0.95,risk_obj=True,tag="riskobj_all_once",chance_points="all",num_workers=40,noptmax=500)
 
     #run_mou(risk=0.95,tag="95_single_once",num_workers=40,noptmax=100)
     #run_mou(risk=0.5, tag="deter", num_workers=40, noptmax=100,pop_size=250)
