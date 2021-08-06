@@ -1264,7 +1264,7 @@ def plot_constr_risk():
         axes[1].scatter(df_pso.obj_1.values, df_pso.obj_2.values, color=c, s=4, label=label,zorder=10,alpha=0.5)
 
         axes[0].set_title("A) DE specified risk", loc="left")
-        axes[1].set_title("A) PSO specified risk", loc="left")
+        axes[1].set_title("B) PSO specified risk", loc="left")
         axes[1].legend(loc="upper right",framealpha=1.0)
 
     m_d = os.path.join("mou_tests", case + "_test_master_riskobj_more")
