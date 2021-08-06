@@ -581,14 +581,29 @@ def plot_results(m_d,risk_thres=0.0,tag=""):
             #    break
 
 def invest():
-    m_d = os.path.join("henry","henry_master_chance")
+    m_d = os.path.join("henry","henry_master_riskobj_all_once")
     pst = pyemu.Pst(os.path.join(m_d,"henry.pst"))
-    dv = pd.read_csv(os.path.join(m_d,"henry.0.dv_pop.csv"),index_col=0)
-    pst.parameter_data.loc[:,"parval1"] = dv.loc[dv.index[0],pst.par_names]
-    pst.write_input_files(m_d)
-    pyemu.os_utils.run("python forward_run.py",cwd=m_d)
+    onames = pst.nnz_obs_names
+    df = pd.read_csv(os.path.join(m_d,"henry.0.nested.obs_stack.csv"))
+    df.loc[:,"member"] = df.real_name.apply(lambda x: x.split("||")[1])
+    df.loc[:, "real"] = df.real_name.apply(lambda x: x.split("||")[0])
+    mnames = df.member.unique()
+    mnames.sort()
+    rnames = df.real.unique()
+    rnames.sort()
+    import matplotlib.pyplot as plt
+    from matplotlib.backends.backend_pdf import PdfPages
+    with PdfPages(os.path.join(m_d,"stack_summary.pdf")) as pdf:
+        for oname in onames:
+            fig,ax = plt.subplots(1,1,figsize=(6,6))
+            for rname in rnames:
+                dfm = df.loc[df.real == rname]
+                dfm.loc[:,oname].hist(ax=ax,alpha=0.5,bins=20)
+            ax.set_title(oname)
+            pdf.savefig()
+            plt.close(fig)
 
-    run_and_plot_results(m_d)
+
 
 
 def run_mou(risk_obj=False,chance_points="single",risk=0.5,stack_size=100,
@@ -716,14 +731,19 @@ if __name__ == "__main__":
     #run_mou(risk=0.95,tag="95_single_once",num_workers=40,noptmax=100)
     #run_mou(risk=0.5, tag="deter", num_workers=40, noptmax=100,pop_size=250)
     run_mou(risk=0.95,risk_obj=True,tag="riskobj_all_once",chance_points="all",num_workers=40,noptmax=500)
+
+    #run_mou(risk=0.95,tag="95_single_once",num_workers=40,noptmax=100)
+    #run_mou(risk=0.5, tag="deter", num_workers=40, noptmax=100,pop_size=250)
+    #run_mou(risk=0.95,risk_obj=True,tag="riskobj_all_once",num_workers=40,noptmax=500,chance_points="all")
     #run_mou(risk=0.95,tag="95_all_once",chance_points="all",num_workers=40,noptmax=400)
     #run_mou(risk=0.95,tag="95_all_100th",chance_points="all",recalc_every=100,num_workers=40,noptmax=500)
 
 
     #plot_results(os.path.join("henry","henry_master_deter"))
     #plot_results(os.path.join("henry", "henry_master_95_single_once"))
-    #plot_results(os.path.join("henry", "henry_master_riskobj_single_once"))
-    #plot_results(os.path.join("henry", "henry_master_riskobj_single_once"),risk_thres=0.75,
-    #             tag="_riskaverse")
+    #plot_results(os.path.join("henry", "henry_master_riskobj_all_once"))
+    plot_results(os.path.join("henry", "henry_master_riskobj_all_once"),risk_thres=0.98,
+                 tag="_riskaverse")
 
     #extract_and_plot_solution()
+    #invest()
