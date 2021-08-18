@@ -663,52 +663,114 @@ def chance_all_binary_test():
 
 
 
-def risk_demo(case="zdt1",noptmax=100,std_weight=0.0001,mou_gen="de",pop_size=100,num_workers=30):
+def risk_demo(case="zdt1",noptmax=100,std_weight=0.05,mou_gen="de",pop_size=100,num_workers=30):
 
     obj_names = ["obj_1"]
     if "zdt" in case:
         obj_names.append("obj_2")
+    constr_bnd = std_weight * 2
+    t_d = mou_suite_helper.setup_problem(case, additive_chance=True, risk_obj=False)
+    pst = pyemu.Pst(os.path.join(t_d, case + ".pst"))
+    par = pst.parameter_data
+    add_par = par.loc[par.parnme.str.contains("_add_"), "parnme"]
+    if case == "constr":
+        par.loc[add_par, "parubnd"] = constr_bnd
+        par.loc[add_par, "parlbnd"] = -constr_bnd
 
-
-    t_d = mou_suite_helper.setup_problem(case, additive_chance=True, risk_obj=True)
-    pst = pyemu.Pst(os.path.join(t_d, case+".pst"))
-    pst.pestpp_options["opt_chance_points"] = "all"
-    pst.pestpp_options["opt_recalc_chance_every"] = 10000
-    pst.pestpp_options["opt_stack_size"] = 20
-    pst.pestpp_options["mou_generator"] = mou_gen
-    pst.pestpp_options["mou_population_size"] = pop_size
-    pst.pestpp_options["opt_risk"] = 0.5
-    pst.pestpp_options["save_binary"] = True
-    pst.observation_data.loc[pst.nnz_obs_names,"weight"] = std_weight
-    pst.pestpp_options["opt_std_weights"] = False
-    pst.control_data.noptmax = noptmax
-    pst.write(os.path.join(t_d, case+".pst"))
-    m1 = os.path.join("mou_tests", case+"_test_master_riskobj_allpts_match_"+mou_gen)
-    pyemu.os_utils.start_workers(t_d, exe_path, case+".pst", num_workers, worker_root="mou_tests",
-                                 master_dir=m1, verbose=True, port=port)
-
-    t_d = mou_suite_helper.setup_problem(case, additive_chance=True, risk_obj=True)
-    pst = pyemu.Pst(os.path.join(t_d, case+".pst"))
     pst.pestpp_options["opt_chance_points"] = "single"
     pst.pestpp_options["opt_recalc_chance_every"] = 10000
-    pst.pestpp_options["opt_stack_size"] = 20
+    pst.pestpp_options["opt_stack_size"] = 100
+    pst.pestpp_options["mou_generator"] = mou_gen
+    pst.pestpp_options["mou_population_size"] = pop_size
+    pst.pestpp_options["opt_risk"] = 0.95
+    pst.pestpp_options["save_binary"] = True
+    pst.observation_data.loc[pst.nnz_obs_names, "weight"] = std_weight
+    pst.pestpp_options["opt_std_weights"] = False
+    pst.control_data.noptmax = noptmax
+    pst.write(os.path.join(t_d, case + ".pst"))
+    m1 = os.path.join("mou_tests", case + "_test_master_95_singlept_match_" + mou_gen)
+    pyemu.os_utils.start_workers(t_d, exe_path, case + ".pst", num_workers, worker_root="mou_tests",
+                                 master_dir=m1, verbose=True, port=port)
+
+    t_d = mou_suite_helper.setup_problem(case, additive_chance=True, risk_obj=False)
+    pst = pyemu.Pst(os.path.join(t_d, case + ".pst"))
+    par = pst.parameter_data
+    add_par = par.loc[par.parnme.str.contains("_add_"), "parnme"]
+    if case == "constr":
+        par.loc[add_par, "parubnd"] = constr_bnd
+        par.loc[add_par, "parlbnd"] = -constr_bnd
+
+    pst.pestpp_options["opt_chance_points"] = "single"
+    pst.pestpp_options["opt_recalc_chance_every"] = 10000
+    pst.pestpp_options["opt_stack_size"] = 100
+    pst.pestpp_options["mou_generator"] = mou_gen
+    pst.pestpp_options["mou_population_size"] = pop_size
+    pst.pestpp_options["opt_risk"] = 0.05
+    pst.pestpp_options["save_binary"] = True
+    pst.observation_data.loc[pst.nnz_obs_names, "weight"] = std_weight
+    pst.pestpp_options["opt_std_weights"] = False
+    pst.control_data.noptmax = noptmax
+    pst.write(os.path.join(t_d, case + ".pst"))
+    m1 = os.path.join("mou_tests", case + "_test_master_05_singlept_match_" + mou_gen)
+    pyemu.os_utils.start_workers(t_d, exe_path, case + ".pst", num_workers, worker_root="mou_tests",
+                                 master_dir=m1, verbose=True, port=port)
+
+    t_d = mou_suite_helper.setup_problem(case, additive_chance=True, risk_obj=True)
+    pst = pyemu.Pst(os.path.join(t_d, case+".pst"))
+    par = pst.parameter_data
+    add_par = par.loc[par.parnme.str.contains("_add_"),"parnme"]
+    if case == "constr":
+        par.loc[add_par, "parubnd"] = constr_bnd
+        par.loc[add_par, "parlbnd"] = -constr_bnd
+
+    pst.pestpp_options["opt_chance_points"] = "all"
+    pst.pestpp_options["opt_recalc_chance_every"] = 10000
+    pst.pestpp_options["opt_stack_size"] = 100
     pst.pestpp_options["mou_generator"] = mou_gen
     pst.pestpp_options["mou_population_size"] = pop_size
     pst.pestpp_options["opt_risk"] = 0.5
     pst.pestpp_options["save_binary"] = True
     pst.observation_data.loc[pst.nnz_obs_names,"weight"] = std_weight
     pst.pestpp_options["opt_std_weights"] = False
-    pst.control_data.noptmax = noptmax
+    pst.control_data.noptmax = noptmax * 3
     pst.write(os.path.join(t_d, case+".pst"))
-    m1 = os.path.join("mou_tests", case+"_test_master_riskobj_singlept_match_"+mou_gen)
+    m1 = os.path.join("mou_tests", case+"_test_master_riskobj_allpts_more_"+mou_gen)
     pyemu.os_utils.start_workers(t_d, exe_path, case+".pst", num_workers, worker_root="mou_tests",
                                  master_dir=m1, verbose=True, port=port)
-    return
+
+    t_d = mou_suite_helper.setup_problem(case, additive_chance=True, risk_obj=True)
+    pst = pyemu.Pst(os.path.join(t_d, case+".pst"))
+    par = pst.parameter_data
+    add_par = par.loc[par.parnme.str.contains("_add_"), "parnme"]
+    if case == "constr":
+        par.loc[add_par, "parubnd"] = constr_bnd
+        par.loc[add_par, "parlbnd"] = -constr_bnd
+
+    pst.pestpp_options["opt_chance_points"] = "single"
+    pst.pestpp_options["opt_recalc_chance_every"] = 10000
+    pst.pestpp_options["opt_stack_size"] = 100
+    pst.pestpp_options["mou_generator"] = mou_gen
+    pst.pestpp_options["mou_population_size"] = pop_size
+    pst.pestpp_options["opt_risk"] = 0.5
+    pst.pestpp_options["save_binary"] = True
+    pst.observation_data.loc[pst.nnz_obs_names,"weight"] = std_weight
+    pst.pestpp_options["opt_std_weights"] = False
+    pst.control_data.noptmax = noptmax * 3
+    pst.write(os.path.join(t_d, case+".pst"))
+    m1 = os.path.join("mou_tests", case+"_test_master_riskobj_singlept_more_"+mou_gen)
+    pyemu.os_utils.start_workers(t_d, exe_path, case+".pst", num_workers, worker_root="mou_tests",
+                                 master_dir=m1, verbose=True, port=port)
+
     t_d = mou_suite_helper.setup_problem(case, additive_chance=False, risk_obj=False)
     pst = pyemu.Pst(os.path.join(t_d, case+".pst"))
-    #pst.pestpp_options["opt_chance_points"] = "all"
+    par = pst.parameter_data
+    add_par = par.loc[par.parnme.str.contains("_add_"), "parnme"]
+    if case == "constr":
+        par.loc[add_par, "parubnd"] = constr_bnd
+        par.loc[add_par, "parlbnd"] = -constr_bnd
+
     pst.pestpp_options["opt_recalc_chance_every"] = 10000
-    pst.pestpp_options["opt_stack_size"] = 20
+    pst.pestpp_options["opt_stack_size"] = 100
     pst.pestpp_options["mou_generator"] = mou_gen
     pst.pestpp_options["mou_population_size"] = pop_size
     pst.pestpp_options["opt_risk"] = 0.5
@@ -723,9 +785,12 @@ def risk_demo(case="zdt1",noptmax=100,std_weight=0.0001,mou_gen="de",pop_size=10
 
     t_d = mou_suite_helper.setup_problem(case, additive_chance=True, risk_obj=False)
     pst = pyemu.Pst(os.path.join(t_d, case+".pst"))
-    #pst.pestpp_options["opt_chance_points"] = "all"
-    #pst.pestpp_options["opt_recalc_chance_every"] = 100000
-    #pst.pestpp_options["opt_stack_size"] = 100
+    par = pst.parameter_data
+    add_par = par.loc[par.parnme.str.contains("_add_"), "parnme"]
+    if case == "constr":
+        par.loc[add_par, "parubnd"] = constr_bnd
+        par.loc[add_par, "parlbnd"] = -constr_bnd
+
     pst.observation_data.loc[pst.nnz_obs_names,"weight"] = std_weight
     pst.pestpp_options["opt_std_weights"] = True
     pst.pestpp_options["mou_generator"] = mou_gen
@@ -740,9 +805,12 @@ def risk_demo(case="zdt1",noptmax=100,std_weight=0.0001,mou_gen="de",pop_size=10
 
     t_d = mou_suite_helper.setup_problem(case, additive_chance=True, risk_obj=False)
     pst = pyemu.Pst(os.path.join(t_d, case+".pst"))
-    #pst.pestpp_options["opt_chance_points"] = "all"
-    #pst.pestpp_options["opt_recalc_chance_every"] = 100000
-    #pst.pestpp_options["opt_stack_size"] = 100
+    par = pst.parameter_data
+    add_par = par.loc[par.parnme.str.contains("_add_"), "parnme"]
+    if case == "constr":
+        par.loc[add_par, "parubnd"] = constr_bnd
+        par.loc[add_par, "parlbnd"] = -constr_bnd
+
     pst.observation_data.loc[pst.nnz_obs_names,"weight"] = std_weight
     pst.pestpp_options["opt_std_weights"] = True
     pst.pestpp_options["mou_generator"] = "de"
@@ -757,9 +825,12 @@ def risk_demo(case="zdt1",noptmax=100,std_weight=0.0001,mou_gen="de",pop_size=10
 
     t_d = mou_suite_helper.setup_problem(case, additive_chance=True, risk_obj=True)
     pst = pyemu.Pst(os.path.join(t_d, case+".pst"))
-    #pst.pestpp_options["opt_chance_points"] = "all"
-    #pst.pestpp_options["opt_recalc_chance_every"] = 100000
-    #pst.pestpp_options["opt_stack_size"] = 100
+    par = pst.parameter_data
+    add_par = par.loc[par.parnme.str.contains("_add_"), "parnme"]
+    if case == "constr":
+        par.loc[add_par, "parubnd"] = constr_bnd
+        par.loc[add_par, "parlbnd"] = -constr_bnd
+
     pst.observation_data.loc[pst.nnz_obs_names,"weight"] = std_weight
     pst.pestpp_options["opt_std_weights"] = True
     pst.pestpp_options["mou_generator"] = mou_gen
@@ -774,9 +845,12 @@ def risk_demo(case="zdt1",noptmax=100,std_weight=0.0001,mou_gen="de",pop_size=10
 
     t_d = mou_suite_helper.setup_problem(case, additive_chance=True, risk_obj=True)
     pst = pyemu.Pst(os.path.join(t_d, case+".pst"))
-    #pst.pestpp_options["opt_chance_points"] = "all"
-    #pst.pestpp_options["opt_recalc_chance_every"] = 100000
-    #pst.pestpp_options["opt_stack_size"] = 100
+    par = pst.parameter_data
+    add_par = par.loc[par.parnme.str.contains("_add_"), "parnme"]
+    if case == "constr":
+        par.loc[add_par, "parubnd"] = constr_bnd
+        par.loc[add_par, "parlbnd"] = -constr_bnd
+
     pst.observation_data.loc[pst.nnz_obs_names,"weight"] = std_weight
     pst.pestpp_options["opt_std_weights"] = True
     pst.pestpp_options["mou_generator"] = mou_gen
@@ -1273,7 +1347,7 @@ def plot_constr_risk():
     fig, axes = plt.subplots(2, 2, figsize=(8, 8))
     axes = axes.flatten()
     for i,ax in enumerate(axes):
-        label = False;
+        label = False
         if i == 1:
             label = True
         get_constr_base_plot(ax,label=label)
@@ -1420,8 +1494,9 @@ def plot_constr_risk_2():
     import matplotlib.pyplot as plt
     import string
     case = "constr"
-    master_ds = [case + "_test_master_riskobj_singlept_match",
-                 case + "_test_master_riskobj_allpts_match"]
+    master_ds = [case + "_test_master_riskobj_singlept_more",
+                 case + "_test_master_riskobj_allpts_more"]
+    labels = ["single chance point","all chance point"]
     fig, axes = plt.subplots(2, 2, figsize=(8, 8))
     ax_count = 0
     for i,ax in enumerate(axes.flatten()):
@@ -1431,7 +1506,7 @@ def plot_constr_risk_2():
         get_constr_base_plot(ax,label=label)
         ax.set_xlabel("objective 1 (minimize)")
         ax.set_ylabel("objective 2 (minimize)")
-    for irow,m_d in enumerate(master_ds):
+    for irow,(m_d,lab) in enumerate(zip(master_ds,labels)):
         m_d = os.path.join("mou_tests", m_d)
         pst = pyemu.Pst(os.path.join(m_d + "_de", case + ".pst"))
         df_de = pd.read_csv(os.path.join(m_d + "_de", case + ".pareto.archive.summary.csv"))
@@ -1448,9 +1523,9 @@ def plot_constr_risk_2():
         axes[irow,0].scatter(df_de.obj_1.values, df_de.obj_2.values, c=df_de._risk_, s=4, label=label,zorder=10,alpha=0.5)
         axes[irow,1].scatter(df_pso.obj_1.values, df_pso.obj_2.values, c=df_pso._risk_, s=4, label=label,zorder=10,alpha=0.5)
 
-        axes[irow,0].set_title("{0}) DE {1}".format(string.ascii_uppercase[ax_count],m_d), loc="left")
+        axes[irow,0].set_title("{0}) DE {1}".format(string.ascii_uppercase[ax_count],lab), loc="left")
         ax_count += 1
-        axes[irow,1].set_title("{0}) PSO {1}".format(string.ascii_uppercase[ax_count],m_d), loc="left")
+        axes[irow,1].set_title("{0}) PSO {1}".format(string.ascii_uppercase[ax_count],lab), loc="left")
         axes[irow,1].legend(loc="upper right",framealpha=1.0)
 
 
@@ -1488,11 +1563,11 @@ if __name__ == "__main__":
     #risk_demo(case="rosenc",std_weight=1.0,noptmax=500)
     #plot_risk_demo_multi()
     #plot_risk_demo_rosen()
-    risk_demo(case='constr', noptmax=150, std_weight=0.05, pop_size=100, num_workers=50, mou_gen="de")
-    risk_demo(case='constr', noptmax=150, std_weight=0.05, pop_size=100, mou_gen="de", num_workers=50)
+    #risk_demo(case='constr', noptmax=150, std_weight=0.05, pop_size=100, num_workers=50, mou_gen="de")
+    #risk_demo(case='constr', noptmax=150, std_weight=0.05, pop_size=100, mou_gen="de", num_workers=50)
 
-    risk_demo(case='constr',noptmax=150,std_weight=0.05,pop_size=100,num_workers=50,mou_gen="pso")
-    risk_demo(case='constr', noptmax=150, std_weight=0.05, pop_size=100,mou_gen="pso",num_workers=50)
+    #risk_demo(case='constr',noptmax=50,std_weight=0.05,pop_size=100,num_workers=50,mou_gen="pso")
+    #risk_demo(case='constr', noptmax=50, std_weight=0.05, pop_size=100,mou_gen="de",num_workers=50)
     #plot_risk_demo_multi_3pane(case='zdt1',mou_gen="de")
     #plot_zdt_risk_demo_compare(case="constr")
     #zdt1_invest()
