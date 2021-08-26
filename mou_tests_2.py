@@ -1153,19 +1153,22 @@ def basic_pso_test(case="zdt1"):
     pst = pyemu.Pst(os.path.join(t_d, case+".pst"))
     pst.pestpp_options["mou_generator"] = "pso"
     pst.pestpp_options["opt_risk"] = 0.95
-    pst.control_data.noptmax = 20
+    pst.control_data.noptmax = 3
     pst.write(os.path.join(t_d, case+".pst"))
     m_d = os.path.join("mou_tests", case+"_pso_master_risk")
     pyemu.os_utils.start_workers(t_d, exe_path,  case+".pst", 20, worker_root="mou_tests",
                                  master_dir=m_d, verbose=True, port=port)
+    assert os.path.exists(os.path.join(m_d,"{0}.{1}.fosm.jcb".format(case,pst.control_data.noptmax)))
 
     pst.pestpp_options["mou_generator"] = "de"
     pst.pestpp_options["opt_risk"] = 0.95
-    pst.control_data.noptmax = 20
-    pst.write(os.path.join(t_d, "zdt1.pst"))
+    pst.control_data.noptmax = 3
+    pst.write(os.path.join(t_d, case+".pst"))
     m_d = os.path.join("mou_tests", case+"_de_master_risk")
     pyemu.os_utils.start_workers(t_d, exe_path, case+".pst", 20, worker_root="mou_tests",
                                  master_dir=m_d, verbose=True, port=port)
+    assert os.path.exists(os.path.join(m_d, "{0}.{1}.fosm.jcb".format(case, pst.control_data.noptmax)))
+
 
 
 def plot_zdt_risk_demo_compare(case="zdt1"):
@@ -1533,6 +1536,19 @@ def plot_constr_risk_2():
     plt.savefig("constr_results_2.pdf")
 
 
+def stack_map_invest():
+    case = "rosen"
+    t_d = mou_suite_helper.setup_problem(case, additive_chance=True, risk_obj=False)
+    pst = pyemu.Pst(os.path.join(t_d, case + ".pst"))
+    par = pst.parameter_data
+    dv_vals = {}
+    for i,p1 in pst.par_names:
+        for j,p2 in pst.par_names[i:]:
+            print(p1,p2)
+
+
+
+
 if __name__ == "__main__":
         
     #shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-mou.exe"),os.path.join("..","bin","pestpp-mou.exe"))
@@ -1540,7 +1556,7 @@ if __name__ == "__main__":
 
     #shutil.copy2(os.path.join("..", "bin", "win", "pestpp-mou.exe"),
     #             os.path.join("..", "bin", "pestpp-mou.exe"))
-
+    basic_pso_test()
     #risk_obj_test()
     #invest_2()
     #chance_consistency_test()
@@ -1584,4 +1600,5 @@ if __name__ == "__main__":
     #mou_suite_helper.plot_results(os.path.join("mou_tests",case+"_pso_master_risk"),sequence=True)
     #mou_suite_helper.plot_results(os.path.join("mou_tests",case+"_de_master_risk"),sequence=True)
     #plot_constr_risk()
-    plot_constr_risk_2()
+    #plot_constr_risk_2()
+    #stack_map_invest()
