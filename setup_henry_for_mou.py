@@ -644,7 +644,7 @@ def plot_domain(cwd):
     wel_df = pd.read_csv(os.path.join(cwd,"flow.wel_stress_period_data_historic.txt"),header=None,
                          names=["l","r","c","flux","concen"],delim_whitespace=True)
     wel_df = wel_df.loc[wel_df.flux<0,:]
-    pyemu.os_utils.run("mf6", cwd=cwd, verbose=True)
+    #pyemu.os_utils.run("mf6", cwd=cwd, verbose=True)
     plt_dir = "plots"
     if not os.path.exists(plt_dir):
         os.mkdir(plt_dir)
@@ -652,14 +652,17 @@ def plot_domain(cwd):
     hds = flopy.utils.HeadFile(os.path.join(cwd, "flow.hds"))
     print(ucn.get_times())
     d = ucn.get_data(kstpkper=(0,1))
-    fig, axes = plt.subplots(2, 1, figsize=(8, 4.5))
+    fig, axes = plt.subplots(2, 1, figsize=(8.5, 5))
+
     ax = axes[0]
     ax.set_title("A) pre-developement salinity concentration",loc="left",fontsize=fs)
-    ax.set_ylabel("layer",fontsize=fs)
-    ax.set_xlabel("column",fontsize=fs)
+    ax.set_ylabel("layer (elevation ($m$))", fontsize=fs)
+    #ax.set_ylabel("layer",fontsize=fs)
+    #ax.set_xlabel("column",fontsize=fs)
     cb = ax.imshow(d[:, 0, :], interpolation="none", vmin=0.0, vmax=35.0)
     cb = plt.colorbar(cb,ax=ax)
     cb.set_label("salinity ($\\frac{g}{l}$)",fontsize=fs)
+    cb.ax.tick_params(axis='both', which='major', labelsize=fs)
     levels = [0.5]
     ax.contour(d[:, 0, :], levels=levels, colors="w",label="potable salinity limit")
     ax.scatter(wel_df.c,wel_df.l,marker="^",color="k",label="extraction wells")
@@ -676,14 +679,15 @@ def plot_domain(cwd):
     #plt.savefig("henry_domain.pdf")
     ax = axes[1]
     ax.set_title("B) salinity concentration after historic water use", loc="left",fontsize=fs)
-    ax.set_ylabel("layer",fontsize=fs)
-    ax.set_xlabel("column",fontsize=fs)
-
+    ax.set_ylabel("layer (elevation ($m$))",fontsize=fs)
+    ax.set_xlabel("column\n (x distance ($m$))",fontsize=fs)
 
     d = ucn.get_data(kstpkper=(0, 20))
     cb = ax.imshow(d[:, 0, :], interpolation="none", vmin=0.0, vmax=35.0)
     cb = plt.colorbar(cb, ax=ax)
     cb.set_label("salinity ($\\frac{g}{l}$)",fontsize=fs)
+    cb.ax.tick_params(axis='both', which='major', labelsize=fs)
+
     levels = [0.5]
     ax.contour(d[:, 0, :], levels=levels, colors="w", label="potable salinity limit")
     ax.scatter(wel_df.c, wel_df.l, marker="^", color="k", label="extraction wells")
@@ -694,6 +698,23 @@ def plot_domain(cwd):
     #ax.plot([40, 55], [0, 0], "g", lw=5, label="feasible artifical recharge basin")
     ax.legend(loc="upper left",fontsize=fs)
     ax.tick_params(axis='both', which='major', labelsize=fs)
+
+    zticks = np.arange(0, 50, 10)
+    zdist = zticks * 0.025
+    zlabs = ["{0:1.0f} ({1:2.1f})".format(t, d) for t, d in zip(zticks, zdist[::-1])]
+    axes[0].set_yticks(zticks)
+    axes[0].set_yticklabels(zlabs)
+    axes[1].set_yticks(zticks)
+    axes[1].set_yticklabels(zlabs)
+
+    xticks = np.arange(0, 180, 20)
+    xdist = xticks * 0.025
+    xlabs = ["{0:1.0f}\n({1:2.1f})".format(t, d) for t, d in zip(xticks, xdist)]
+    axes[0].set_xticks(xticks)
+    axes[0].set_xticklabels(xlabs)
+    axes[1].set_xticks(xticks)
+    axes[1].set_xticklabels(xlabs)
+
     plt.tight_layout()
     plt.savefig("henry_domain.pdf")
     plt.close(fig)
@@ -722,15 +743,16 @@ if __name__ == "__main__":
     #test_process_unc(os.path.join("henry", "henry_template"))
     #shutil.copy2(os.path.join("..", "bin", "win", "pestpp-mou.exe"), os.path.join("..", "bin", "pestpp-mou.exe"))
     #shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-mou.exe"),os.path.join("..","bin","pestpp-mou.exe"))
-    prep_model()
-    run_and_plot_results(os.path.join("henry", "henry_temp"))
+    #prep_model()
+    #run_and_plot_results(os.path.join("henry", "henry_temp"))
 
     #plot_domain(os.path.join("henry", "henry_temp"))
     setup_pst()
 
-    #run_mou(risk=0.95,tag="95_single_once",num_workers=40,noptmax=100)
-    #run_mou(risk=0.5, tag="deter", num_workers=40, noptmax=100,pop_size=250)
-    run_mou(risk=0.95,risk_obj=True,tag="riskobj_all_once",chance_points="all",num_workers=40,noptmax=500)
+    #run_mou(risk=0.95,tag="95_single_once",num_workers=40,noptmax=250)
+    #run_mou(risk=0.5, tag="deter", num_workers=40, noptmax=100,pop_size=100)
+    #run_mou(risk=0.95,risk_obj=True,tag="riskobj_all_once",chance_points="all",
+    #        num_workers=40,noptmax=500,pop_size=100)
 
     #run_mou(risk=0.95,tag="95_single_once",num_workers=40,noptmax=100)
     #run_mou(risk=0.5, tag="deter", num_workers=40, noptmax=100,pop_size=250)
@@ -742,8 +764,8 @@ if __name__ == "__main__":
     #plot_results(os.path.join("henry","henry_master_deter"))
     #plot_results(os.path.join("henry", "henry_master_95_single_once"))
     #plot_results(os.path.join("henry", "henry_master_riskobj_all_once"))
-    plot_results(os.path.join("henry", "henry_master_riskobj_all_once"),risk_thres=0.98,
-                 tag="_riskaverse")
+    #plot_results(os.path.join("henry", "henry_master_riskobj_all_once"),risk_thres=0.65,
+    #             tag="_riskaverse")
 
     #extract_and_plot_solution()
     #invest()
