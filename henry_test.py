@@ -217,9 +217,9 @@ def setup_pst():
                             ofile_sep=",")
         break
     pf.extra_py_imports.append("flopy")
-    pf.add_py_function("setup_henry_for_mou.py","process_unc()",is_pre_cmd=False)
+    pf.add_py_function("henry_test.py","process_unc()",is_pre_cmd=False)
     pf.mod_sys_cmds.append("mf6")
-    pf.add_py_function("setup_henry_for_mou.py","add_artrch()",is_pre_cmd=True)
+    pf.add_py_function("henry_test.py","add_artrch()",is_pre_cmd=True)
     pf.tmp_files.append("flow.wel_stress_period_data_scenario.txt")
 
     # add artificial recharge basin dvs
@@ -229,7 +229,7 @@ def setup_pst():
     test_head_at_artrch(new_dir)
     pf.add_observations("ar_heads.csv", ofile_sep=",", index_cols=[0,1], use_cols=[2], prefix="arhead")
 
-    pf.add_py_function("setup_henry_for_mou.py", "head_at_artrch()", is_pre_cmd=False)
+    pf.add_py_function("henry_test.py", "head_at_artrch()", is_pre_cmd=False)
 
     pf.build_pst()
 
@@ -739,6 +739,16 @@ def extract_and_plot_solution():
     #run_and_plot_results(m_d)
     plot_domain(m_d)
 
+def simple_henry_test():
+    prep_model()
+    run_and_plot_results(os.path.join("henry", "henry_temp"))
+
+    plot_domain(os.path.join("henry", "henry_temp"))
+    setup_pst()
+    run_mou(risk=0.65,tag="65_single_once",num_workers=10,noptmax=10,pop_size=50,stack_size=30)
+
+
+
 if __name__ == "__main__":
     #test_process_unc(os.path.join("henry", "henry_template"))
     #shutil.copy2(os.path.join("..", "bin", "win", "pestpp-mou.exe"), os.path.join("..", "bin", "pestpp-mou.exe"))
@@ -747,8 +757,8 @@ if __name__ == "__main__":
     #run_and_plot_results(os.path.join("henry", "henry_temp"))
 
     #plot_domain(os.path.join("henry", "henry_temp"))
-    setup_pst()
-
+    #setup_pst()
+    simple_henry_test()
     #run_mou(risk=0.95,tag="95_single_once",num_workers=40,noptmax=250)
     #run_mou(risk=0.5, tag="deter", num_workers=40, noptmax=100,pop_size=100)
     #run_mou(risk=0.95,risk_obj=True,tag="riskobj_all_once",chance_points="all",
