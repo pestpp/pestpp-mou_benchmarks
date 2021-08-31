@@ -201,7 +201,7 @@ def setup_pst():
                       index_cols=[0, 1, 2], use_cols=3, pargp="stage", par_name_base="stage")
 
     # setup obs for all concentrations at the end of the 3 periods
-    pump_filename,conc_filenames = test_process_unc(new_dir)
+    pump_filename,conc_filenames = eval_process_unc(new_dir)
     df = pd.read_csv(os.path.join(new_dir,pump_filename))
     cols = df.columns.to_list()
     pf.add_observations(pump_filename, index_cols=["time"], use_cols=cols[1:],
@@ -333,7 +333,7 @@ def setup_pst():
 
     pyemu.os_utils.run("{0} henry.pst".format(exe_path),cwd=new_dir)
 
-def test_process_unc(test_d):
+def eval_process_unc(test_d):
     bd = os.getcwd()
     os.chdir(test_d)
     ret = process_unc()
@@ -750,7 +750,7 @@ def simple_henry_test():
 
 
 if __name__ == "__main__":
-    #test_process_unc(os.path.join("henry", "henry_template"))
+    #eval_process_unc(os.path.join("henry", "henry_template"))
     #shutil.copy2(os.path.join("..", "bin", "win", "pestpp-mou.exe"), os.path.join("..", "bin", "pestpp-mou.exe"))
     #shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-mou.exe"),os.path.join("..","bin","pestpp-mou.exe"))
     #prep_model()
