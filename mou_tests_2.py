@@ -1442,7 +1442,7 @@ def plot_constr_risk():
     ax.set_ylim(0, 10)
     plt.savefig("constr_results.pdf")
 
-def get_constr_base_plot(ax,label=False):
+def get_constr_base_plot(ax,label=False,fontsize=10):
 
     import numpy as np
     import matplotlib.pyplot as plt
@@ -1618,6 +1618,7 @@ def plot_constr_risk_pub():
     import string
     import matplotlib.pyplot as plt
     case = "constr"
+    fs = 9
     master_ds = [case + "_test_master_deter",
                  case + "_test_master_05", case + "_test_master_95"]
     fig, axes = plt.subplots(4, 2, figsize=(8,11))
@@ -1625,14 +1626,14 @@ def plot_constr_risk_pub():
         label = False
         if i == 1:
             label = True
-        get_constr_base_plot(ax,label=label)
-        ax.set_xlabel("objective 1 (minimize)")
-        ax.set_ylabel("objective 2 (minimize)")
+        get_constr_base_plot(ax,label=label,fontsize=fs)
+        ax.set_xlabel("objective 1 (minimize)",fontsize=fs)
+        ax.set_ylabel("objective 2 (minimize)",fontsize=fs)
     obj_names = ["obj_1", "obj_2"]
     cmap = plt.get_cmap("viridis")
     colors = [cmap(r) for r in [0.5,0.05,0.95]]
-    labels = ["risk neutral (risk=0.5)", "risk tolerant (risk=0.05)", "risk averse (risk=0.95)"]
-
+    labels = ["risk neutral\n(risk=0.5)", "risk tolerant\n(risk=0.05)", "risk averse\n(risk=0.95)"]
+    
     for m_d, c, label in zip(master_ds, colors, labels):
         m_d = os.path.join("mou_tests", m_d)
         pst = pyemu.Pst(os.path.join(m_d + "_de", case + ".pst"))
@@ -1650,9 +1651,9 @@ def plot_constr_risk_pub():
         axes[0,0].scatter(df_de.obj_1.values, df_de.obj_2.values, color=c, s=4, label=label,zorder=10,alpha=0.5)
         axes[0,1].scatter(df_pso.obj_1.values, df_pso.obj_2.values, color=c, s=4, label=label,zorder=10,alpha=0.5)
 
-        axes[0,0].set_title("A) DE specified risk, specified uncertainty", loc="left")
-        axes[0,1].set_title("B) PSO specified risk, specified uncertainty", loc="left")
-        axes[0,1].legend(loc="upper right",framealpha=1.0)
+        axes[0,0].set_title("A) DE specified risk, specified uncertainty", loc="left",fontsize=fs)
+        axes[0,1].set_title("B) PSO specified risk, specified uncertainty", loc="left",fontsize=fs)
+        axes[0,1].legend(loc="upper right",framealpha=1.0,fontsize=8)
 
     master_ds = [case+"_test_master_riskobj_more",
                  case + "_test_master_riskobj_singlept_more",
@@ -1680,9 +1681,9 @@ def plot_constr_risk_pub():
         axes[irow,0].scatter(df_de.obj_1.values, df_de.obj_2.values, c=df_de._risk_, s=4, label=label,zorder=10,alpha=0.5)
         axes[irow,1].scatter(df_pso.obj_1.values, df_pso.obj_2.values, c=df_pso._risk_, s=4, label=label,zorder=10,alpha=0.5)
 
-        axes[irow,0].set_title("{0}) DE {1}".format(string.ascii_uppercase[ax_count],lab), loc="left")
+        axes[irow,0].set_title("{0}) DE {1}".format(string.ascii_uppercase[ax_count],lab), loc="left",fontsize=fs)
         ax_count += 1
-        axes[irow,1].set_title("{0}) PSO {1}".format(string.ascii_uppercase[ax_count],lab), loc="left")
+        axes[irow,1].set_title("{0}) PSO {1}".format(string.ascii_uppercase[ax_count],lab), loc="left",fontsize=fs)
         ax_count += 1
         #axes[irow,1].legend(loc="upper right",framealpha=1.0)
 
@@ -1711,7 +1712,7 @@ if __name__ == "__main__":
     #shutil.copy2(os.path.join("..", "bin", "win", "pestpp-mou.exe"),
     #             os.path.join("..", "bin", "pestpp-mou.exe"))
     #basic_pso_test()
-    risk_obj_test()
+    #risk_obj_test()
     #invest_2()
     #chance_consistency_test()
     #invest_3()
@@ -1754,7 +1755,7 @@ if __name__ == "__main__":
     #mou_suite_helper.plot_results(os.path.join("mou_tests",case+"_pso_master_risk"),sequence=True)
     #mou_suite_helper.plot_results(os.path.join("mou_tests",case+"_de_master_risk"),sequence=True)
     #plot_constr_risk()
-    #plot_constr_risk_pub()
+    plot_constr_risk_pub()
     #stack_map_invest()
 
     #pop_sched_test()
