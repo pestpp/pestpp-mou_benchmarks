@@ -50,17 +50,23 @@ def run_and_plot_results(cwd):
         os.mkdir(plt_dir)
     ucn = flopy.utils.HeadFile(os.path.join(cwd,"trans.ucn"),text="concentration")
     hds = flopy.utils.HeadFile(os.path.join(cwd,"flow.hds"))
+
+    wel_df = pd.read_csv(os.path.join(cwd, "flow.wel_stress_period_data_historic.txt"), header=None,
+                         names=["l", "r", "c", "flux", "concen"], delim_whitespace=True)
+    wel_df = wel_df.loc[wel_df.flux < 0, :]
+
+
     with PdfPages(os.path.join(plt_dir,"henry.pdf")) as pdf:
         for i,time in enumerate(ucn.get_times()):
             d = ucn.get_data(totim=time)
             fig,ax = plt.subplots(1,1,figsize=(8,3))
             cb = ax.imshow(d[:,0,:],interpolation="none",vmin=0.0,vmax=35.0)
-            levels = [0.5,17]
+            levels = [0.5]
             ax.contour(d[:,0,:],levels=levels,colors="w")
             d = hds.get_data(totim=time)
             levels = np.linspace(d.min(),d.mean(),5)
-            ax.contour(d[:,0,:],levels,colors="k",)
-
+            #ax.contour(d[:,0,:],levels,colors="k",)
+            ax.scatter(wel_df.c-1, wel_df.l-1, marker="^", color="k", label="extraction wells")
             ax.set_title("{0}".format(time))
             #plt.savefig(os.path.join(plt_dir,"{0:03d}_henry.pdf".format(i)))
             pdf.savefig()
@@ -525,7 +531,9 @@ def plot_results(m_d,risk_thres=0.0,tag=""):
             ax.set_ylabel("ratio of recharge\nto extraction",fontsize=fs)
             ax.plot([60,60],ax.get_ylim(),"k--")
             ax.text(65,(mn+mx)/3.7,"extraction\nwells",rotation=90,va='bottom',ha="center",fontsize=fs)
-            plt.colorbar(mpl.cm.ScalarMappable(norm=norm,cmap=cmap),ax=ax,label=obj_names_dict["ar_concen"],alpha=0.25)
+            cb = plt.colorbar(mpl.cm.ScalarMappable(norm=norm,cmap=cmap),ax=ax,alpha=0.25)
+            cb.set_label(label=obj_names_dict["ar_concen"],size=fs)
+            cb.ax.tick_params(labelsize=fs)
             #cb = plt.colorbar(plt.cm.ScalarMappable(norm=norm,cmap=cmap))
             #cb.set_label("recharge concentration")
 
@@ -644,6 +652,7 @@ def plot_domain(cwd):
     wel_df = pd.read_csv(os.path.join(cwd,"flow.wel_stress_period_data_historic.txt"),header=None,
                          names=["l","r","c","flux","concen"],delim_whitespace=True)
     wel_df = wel_df.loc[wel_df.flux<0,:]
+
     #pyemu.os_utils.run("mf6", cwd=cwd, verbose=True)
     plt_dir = "plots"
     if not os.path.exists(plt_dir):
@@ -722,6 +731,7 @@ def plot_domain(cwd):
 
 def extract_and_plot_solution():
     m_d = os.path.join("henry","henry_master_deter_100gen")
+    #m_d = os.path.join("henry","henry_master_95_single_once")
     pst = pyemu.Pst(os.path.join(m_d,"henry.pst"))
     df_arc = pd.read_csv(os.path.join(m_d,"henry.pareto.archive.summary.csv"))
     df_arc = df_arc.loc[df_arc.generation==df_arc.generation.max(),:]
@@ -729,6 +739,7 @@ def extract_and_plot_solution():
     df_arc.sort_values(by="ar_dist",ascending=False,inplace=True)
     df_dv = pd.read_csv(os.path.join(m_d,"henry.archive.dv_pop.csv"))
     #dv_vals = df_dv.loc[df_arc.member.iloc[0],:]
+    #df_dv = df_dv.loc[df_dv._risk_>0.95,:]
     df_dv.sort_values(by="ar_dist",ascending=False,inplace=True)
     print(df_dv.loc[:,"ar_dist"])
     pst.parameter_data.loc[:,"parval1"] = df_dv.loc[df_dv.index[0],pst.par_names]
@@ -736,8 +747,9 @@ def extract_and_plot_solution():
     pst.control_data.noptmax = 0
     pst.write(os.path.join(m_d,"test.pst"))
     pyemu.os_utils.run("{0} test.pst".format(exe_path),cwd=m_d)
-    #run_and_plot_results(m_d)
-    plot_domain(m_d)
+    run_and_plot_results(m_d)
+
+    #plot_domain(m_d)
 
 def simple_henry_test():
     prep_model()
@@ -758,7 +770,7 @@ if __name__ == "__main__":
 
     #plot_domain(os.path.join("henry", "henry_temp"))
     #setup_pst()
-    simple_henry_test()
+    #simple_henry_test()
     #run_mou(risk=0.95,tag="95_single_once",num_workers=40,noptmax=250)
     #run_mou(risk=0.5, tag="deter", num_workers=40, noptmax=100,pop_size=100)
     #run_mou(risk=0.95,risk_obj=True,tag="riskobj_all_once",chance_points="all",
@@ -771,11 +783,11 @@ if __name__ == "__main__":
     #run_mou(risk=0.95,tag="95_all_100th",chance_points="all",recalc_every=100,num_workers=40,noptmax=500)
 
 
-    #plot_results(os.path.join("henry","henry_master_deter"))
+    plot_results(os.path.join("henry","henry_master_deter"))
     #plot_results(os.path.join("henry", "henry_master_95_single_once"))
-    #plot_results(os.path.join("henry", "henry_master_riskobj_all_once"))
+    plot_results(os.path.join("henry", "henry_master_riskobj_all_once"))
     #plot_results(os.path.join("henry", "henry_master_riskobj_all_once"),risk_thres=0.65,
     #             tag="_riskaverse")
 
-    #extract_and_plot_solution()
+    #xtract_and_plot_solution()
     #invest()
