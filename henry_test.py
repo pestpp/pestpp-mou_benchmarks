@@ -107,7 +107,7 @@ def add_artrch():
         for line in lines:
             f.write(line)
 
-def test_add_artrch(test_d,dist=80,width=10,rate=1,concen=0.0,write_tpl=False):
+def eval_add_artrch(test_d,dist=80,width=10,rate=1,concen=0.0,write_tpl=False):
     with open(os.path.join(test_d,"artrch.dat"),'w') as f:
         f.write("dist {0}\n".format(dist))
         f.write("width {0}\n".format(width))
@@ -133,7 +133,7 @@ def test_add_artrch(test_d,dist=80,width=10,rate=1,concen=0.0,write_tpl=False):
         run_and_plot_results(test_d)
     return tpl_file
 
-def test_head_at_artrch(d):
+def eval_head_at_artrch(d):
     cwd = os.getcwd()
     os.chdir(d)
     df = head_at_artrch()
@@ -207,7 +207,7 @@ def setup_pst():
                       index_cols=[0, 1, 2], use_cols=3, pargp="stage", par_name_base="stage")
 
     # setup obs for all concentrations at the end of the 3 periods
-    pump_filename,conc_filenames = test_process_unc(new_dir)
+    pump_filename,conc_filenames = eval_process_unc(new_dir)
     df = pd.read_csv(os.path.join(new_dir,pump_filename))
     cols = df.columns.to_list()
     pf.add_observations(pump_filename, index_cols=["time"], use_cols=cols[1:],
@@ -229,10 +229,10 @@ def setup_pst():
     pf.tmp_files.append("flow.wel_stress_period_data_scenario.txt")
 
     # add artificial recharge basin dvs
-    tpl_file = test_add_artrch(new_dir, write_tpl=True)
+    tpl_file = eval_add_artrch(new_dir, write_tpl=True)
 
 
-    test_head_at_artrch(new_dir)
+    eval_head_at_artrch(new_dir)
     pf.add_observations("ar_heads.csv", ofile_sep=",", index_cols=[0,1], use_cols=[2], prefix="arhead")
 
     pf.add_py_function("henry_test.py", "head_at_artrch()", is_pre_cmd=False)
@@ -339,7 +339,7 @@ def setup_pst():
 
     pyemu.os_utils.run("{0} henry.pst".format(exe_path),cwd=new_dir)
 
-def test_process_unc(test_d):
+def eval_process_unc(test_d):
     bd = os.getcwd()
     os.chdir(test_d)
     ret = process_unc()
@@ -762,7 +762,7 @@ def simple_henry_test():
 
 
 if __name__ == "__main__":
-    #test_process_unc(os.path.join("henry", "henry_template"))
+    #eval_process_unc(os.path.join("henry", "henry_template"))
     #shutil.copy2(os.path.join("..", "bin", "win", "pestpp-mou.exe"), os.path.join("..", "bin", "pestpp-mou.exe"))
     #shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-mou.exe"),os.path.join("..","bin","pestpp-mou.exe"))
     #prep_model()
