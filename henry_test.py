@@ -329,9 +329,9 @@ def setup_pst():
     obs.loc["mean_concen_time:0.0","obsval"] = pot_lim
     obs.loc["mean_concen_time:0.0", "obgnme"] = "less_than"
 
-    obs.loc["arhead_usecol:arhead_name:scen_max_time:1","weight"] = 1.0
-    obs.loc["arhead_usecol:arhead_name:scen_max_time:1", "obsval"] = 1.025
-    obs.loc["arhead_usecol:arhead_name:scen_max_time:1", "obgnme"] = "less_than"
+    obs.loc["oname:arhead_otype:lst_usecol:arhead_name:scen_max_time:1","weight"] = 1.0
+    obs.loc["oname:arhead_otype:lst_usecol:arhead_name:scen_max_time:1", "obsval"] = 1.025
+    obs.loc["oname:arhead_otype:lst_usecol:arhead_name:scen_max_time:1", "obgnme"] = "less_than"
 
     pf.pst.write(os.path.join(new_dir,"henry.pst"))
     pe = pf.draw(100,use_specsim=True)
@@ -752,16 +752,17 @@ def extract_and_plot_solution():
     #plot_domain(m_d)
 
 def simple_henry_test():
-    prep_model()
-    run_and_plot_results(os.path.join("henry", "henry_temp"))
+    #prep_model()
+    #run_and_plot_results(os.path.join("henry", "henry_temp"))
 
-    plot_domain(os.path.join("henry", "henry_temp"))
+    #plot_domain(os.path.join("henry", "henry_temp"))
     setup_pst()
     run_mou(risk=0.65,tag="65_single_once",num_workers=10,noptmax=10,pop_size=50,stack_size=30)
 
 
 
 if __name__ == "__main__":
+    simple_henry_test()
     #eval_process_unc(os.path.join("henry", "henry_template"))
     #shutil.copy2(os.path.join("..", "bin", "win", "pestpp-mou.exe"), os.path.join("..", "bin", "pestpp-mou.exe"))
     #shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-mou.exe"),os.path.join("..","bin","pestpp-mou.exe"))
@@ -783,9 +784,9 @@ if __name__ == "__main__":
     #run_mou(risk=0.95,tag="95_all_100th",chance_points="all",recalc_every=100,num_workers=40,noptmax=500)
 
 
-    plot_results(os.path.join("henry","henry_master_deter"))
+    #plot_results(os.path.join("henry","henry_master_deter"))
     #plot_results(os.path.join("henry", "henry_master_95_single_once"))
-    plot_results(os.path.join("henry", "henry_master_riskobj_all_once"))
+    #plot_results(os.path.join("henry", "henry_master_riskobj_all_once"))
     #plot_results(os.path.join("henry", "henry_master_riskobj_all_once"),risk_thres=0.65,
     #             tag="_riskaverse")
 

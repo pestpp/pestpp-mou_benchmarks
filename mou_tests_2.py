@@ -1707,10 +1707,13 @@ def simplex_invest_1():
     case = "zdt1"
     t_d = mou_suite_helper.setup_problem(case, additive_chance=False, risk_obj=False)
     pst = pyemu.Pst(os.path.join(t_d, case + ".pst"))
-    pst.pestpp_options["mou_generator"] = "simplex"
+    pst.pestpp_options["mou_generator"] = "de,simplex"
     pst.pestpp_options["mou_simplex_reflections"] = 10
+    pst.control_data.noptmax = 100
+
     pst.write(os.path.join(t_d, case + ".pst"))
-    m_d = os.path.join("mou_tests",case+"_master_pop_sched")
+    m_d = os.path.join("mou_tests",case+"_master_simplex1")
+
     pyemu.os_utils.start_workers(t_d, exe_path, case + ".pst", 50, worker_root="mou_tests",
                                  master_dir=m_d, verbose=True, port=port)
 
@@ -1749,7 +1752,7 @@ if __name__ == "__main__":
     #risk_demo(case='constr', noptmax=150, std_weight=0.05, pop_size=100, num_workers=50, mou_gen="de")
     #risk_demo(case='constr', noptmax=150, std_weight=0.05, pop_size=100, mou_gen="de", num_workers=50)
 
-    #risk_demo(case='constr',noptmax=20,std_weight=0.05,pop_size=100,num_workers=50,mou_gen="pso")
+    risk_demo(case='constr',noptmax=20,std_weight=0.05,pop_size=100,num_workers=50,mou_gen="simplex,de")
     #risk_demo(case='constr', noptmax=20, std_weight=0.05, pop_size=100,mou_gen="de",num_workers=50)
     #plot_risk_demo_multi_3pane(case='zdt1',mou_gen="de")
     #plot_zdt_risk_demo_compare(case="constr")
@@ -1771,4 +1774,4 @@ if __name__ == "__main__":
     #stack_map_invest()
 
     #pop_sched_test()
-    simplex_invest_1()
+    #simplex_invest_1()
