@@ -752,10 +752,10 @@ def extract_and_plot_solution():
     #plot_domain(m_d)
 
 def simple_henry_test():
-    #prep_model()
-    #run_and_plot_results(os.path.join("henry", "henry_temp"))
+    prep_model()
+    run_and_plot_results(os.path.join("henry", "henry_temp"))
 
-    #plot_domain(os.path.join("henry", "henry_temp"))
+    plot_domain(os.path.join("henry", "henry_temp"))
     setup_pst()
     run_mou(risk=0.65,tag="65_single_once",num_workers=10,noptmax=10,pop_size=50,stack_size=30)
 
