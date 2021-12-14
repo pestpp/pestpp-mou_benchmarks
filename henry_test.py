@@ -156,7 +156,7 @@ def head_at_artrch():
     #print(d)
     #print(perd)
     with open("ar_heads.csv",'w') as f:
-        f.write("name,time,arhead\n")
+        f.write("qname,time,arhead\n")
         f.write("hist_mean,0,{0:15.6E}\n".format(hist_vals.mean()))
         f.write("scen_mean,1,{0:15.6E}\n".format(scen_vals.mean()))
         f.write("hist_max,0,{0:15.6E}\n".format(hist_vals.max()))
@@ -329,9 +329,9 @@ def setup_pst():
     obs.loc["mean_concen_time:0.0","obsval"] = pot_lim
     obs.loc["mean_concen_time:0.0", "obgnme"] = "less_than"
 
-    obs.loc["oname:arhead_otype:lst_usecol:arhead_name:scen_max_time:1","weight"] = 1.0
-    obs.loc["oname:arhead_otype:lst_usecol:arhead_name:scen_max_time:1", "obsval"] = 1.025
-    obs.loc["oname:arhead_otype:lst_usecol:arhead_name:scen_max_time:1", "obgnme"] = "less_than"
+    obs.loc["oname:arhead_otype:lst_usecol:arhead_qname:scen_max_time:1","weight"] = 1.0
+    obs.loc["oname:arhead_otype:lst_usecol:arhead_qname:scen_max_time:1", "obsval"] = 1.025
+    obs.loc["oname:arhead_otype:lst_usecol:arhead_qname:scen_max_time:1", "obgnme"] = "less_than"
 
     pf.pst.write(os.path.join(new_dir,"henry.pst"))
     pe = pf.draw(100,use_specsim=True)
