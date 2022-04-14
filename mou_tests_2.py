@@ -1721,7 +1721,7 @@ def simplex_invest_1():
 
 if __name__ == "__main__":
         
-    #shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-mou.exe"),os.path.join("..","bin","pestpp-mou.exe"))
+    shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-mou.exe"),os.path.join("..","bin","pestpp-mou.exe"))
     #basic_pso_test()
 
     #shutil.copy2(os.path.join("..", "bin", "win", "pestpp-mou.exe"),
@@ -1729,7 +1729,7 @@ if __name__ == "__main__":
     #basic_pso_test()
     #risk_obj_test()
     #invest_2()
-    #chance_consistency_test()
+    chance_consistency_test()
     #invest_3()
     # mou_suite_helper.start_workers("zdt1")
     #all_infeas_test()
@@ -1752,7 +1752,7 @@ if __name__ == "__main__":
     #risk_demo(case='constr', noptmax=150, std_weight=0.05, pop_size=100, num_workers=50, mou_gen="de")
     #risk_demo(case='constr', noptmax=150, std_weight=0.05, pop_size=100, mou_gen="de", num_workers=50)
 
-    risk_demo(case='constr',noptmax=20,std_weight=0.05,pop_size=100,num_workers=50,mou_gen="simplex,de")
+    #risk_demo(case='constr',noptmax=20,std_weight=0.05,pop_size=100,num_workers=50,mou_gen="simplex,de")
     #risk_demo(case='constr', noptmax=20, std_weight=0.05, pop_size=100,mou_gen="de",num_workers=50)
     #plot_risk_demo_multi_3pane(case='zdt1',mou_gen="de")
     #plot_zdt_risk_demo_compare(case="constr")
