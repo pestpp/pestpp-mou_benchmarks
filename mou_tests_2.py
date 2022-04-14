@@ -1627,8 +1627,8 @@ def plot_constr_risk_pub():
         if i == 1:
             label = True
         get_constr_base_plot(ax,label=label,fontsize=fs)
-        ax.set_xlabel("objective 1 (minimize)",fontsize=fs)
-        ax.set_ylabel("objective 2 (minimize)",fontsize=fs)
+        ax.set_xlabel("$f_1$ (minimize)",fontsize=fs)
+        ax.set_ylabel("$f_2$ (minimize)",fontsize=fs)
     obj_names = ["obj_1", "obj_2"]
     cmap = plt.get_cmap("viridis")
     colors = [cmap(r) for r in [0.5,0.05,0.95]]
@@ -1770,7 +1770,7 @@ if __name__ == "__main__":
     #mou_suite_helper.plot_results(os.path.join("mou_tests",case+"_pso_master_risk"),sequence=True)
     #mou_suite_helper.plot_results(os.path.join("mou_tests",case+"_de_master_risk"),sequence=True)
     #plot_constr_risk()
-    #plot_constr_risk_pub()
+    plot_constr_risk_pub()
     #stack_map_invest()
 
     #pop_sched_test()
