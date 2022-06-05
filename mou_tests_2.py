@@ -303,7 +303,7 @@ def fail_test():
     pst.pestpp_options["mou_population_size"] = 30
     pst.pestpp_options["ies_debug_fail_remainder"] = True
     pst.pestpp_options["opt_risk"] = 0.95
-    pst.control_data.noptmax = 8
+    pst.control_data.noptmax = 4
     pst.write(os.path.join(t_d, "zdt1.pst"))
     m1 = os.path.join("mou_tests", "zdt1_test_master_fail_1")
     pyemu.os_utils.start_workers(t_d, exe_path, "zdt1.pst", 35, worker_root="mou_tests",
@@ -336,7 +336,7 @@ def fail_test():
     pst.pestpp_options["mou_population_size"] = 30
     pst.pestpp_options["ies_debug_fail_subset"] = True
     pst.pestpp_options["opt_risk"] = 0.95
-    pst.control_data.noptmax = 8
+    pst.control_data.noptmax = 4
     pst.write(os.path.join(t_d, "zdt1.pst"))
     m1 = os.path.join("mou_tests", "zdt1_test_master_fail_1")
     pyemu.os_utils.start_workers(t_d, exe_path, "zdt1.pst", 35, worker_root="mou_tests",
@@ -369,7 +369,7 @@ def fail_test():
     pst.pestpp_options["mou_population_size"] = 30
     pst.pestpp_options["ies_debug_fail_subset"] = True
     pst.pestpp_options["opt_risk"] = 0.95
-    pst.control_data.noptmax = 8
+    pst.control_data.noptmax = 4
     pst.write(os.path.join(t_d, "zdt1.pst"))
     m1 = os.path.join("mou_tests", "zdt1_test_master_fail_1")
     pyemu.os_utils.start_workers(t_d, exe_path, "zdt1.pst", 35, worker_root="mou_tests",
@@ -386,7 +386,7 @@ def pso_fail_test():
     pst.pestpp_options["mou_population_size"] = 30
     pst.pestpp_options["ies_debug_fail_remainder"] = True
     pst.pestpp_options["opt_risk"] = 0.95
-    pst.control_data.noptmax = 8
+    pst.control_data.noptmax = 4
     pst.write(os.path.join(t_d, "zdt1.pst"))
     m1 = os.path.join("mou_tests", "zdt1_test_master_fail_1")
     pyemu.os_utils.start_workers(t_d, exe_path, "zdt1.pst", 35, worker_root="mou_tests",
@@ -419,7 +419,7 @@ def pso_fail_test():
     pst.pestpp_options["mou_population_size"] = 30
     pst.pestpp_options["ies_debug_fail_subset"] = True
     pst.pestpp_options["opt_risk"] = 0.95
-    pst.control_data.noptmax = 8
+    pst.control_data.noptmax = 4
     pst.write(os.path.join(t_d, "zdt1.pst"))
     m1 = os.path.join("mou_tests", "zdt1_test_master_fail_1")
     pyemu.os_utils.start_workers(t_d, exe_path, "zdt1.pst", 35, worker_root="mou_tests",
@@ -452,7 +452,7 @@ def pso_fail_test():
     pst.pestpp_options["mou_population_size"] = 30
     pst.pestpp_options["ies_debug_fail_subset"] = True
     pst.pestpp_options["opt_risk"] = 0.95
-    pst.control_data.noptmax = 8
+    pst.control_data.noptmax = 4
     pst.write(os.path.join(t_d, "zdt1.pst"))
     m1 = os.path.join("mou_tests", "zdt1_test_master_fail_1")
     pyemu.os_utils.start_workers(t_d, exe_path, "zdt1.pst", 35, worker_root="mou_tests",
@@ -1770,7 +1770,7 @@ if __name__ == "__main__":
     #mou_suite_helper.plot_results(os.path.join("mou_tests",case+"_pso_master_risk"),sequence=True)
     #mou_suite_helper.plot_results(os.path.join("mou_tests",case+"_de_master_risk"),sequence=True)
     #plot_constr_risk()
-    plot_constr_risk_pub()
+    #plot_constr_risk_pub()
     #stack_map_invest()
 
     #pop_sched_test()
