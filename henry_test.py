@@ -499,7 +499,9 @@ def plot_results(m_d,risk_thres=0.0,tag=""):
 
             # only show solutions with some min amount of pumping
             df_gen = df_gen.loc[df_gen.pump_rate > 2.1]
+            print(df_gen.loc[:,"ar_rate"])
 
+     
 
             # only with risk averse
             if "_risk_" in obj_names:
@@ -762,7 +764,7 @@ def plot_domain(cwd,include_pred=False):
 
 
 def extract_and_plot_solution():
-    m_d = os.path.join("henry","henry_master_deter_100gen")
+    m_d = os.path.join("henry","henry_master_riskobj_all_once")
     #m_d = os.path.join("henry","henry_master_95_single_once")
     pst = pyemu.Pst(os.path.join(m_d,"henry.pst"))
     df_arc = pd.read_csv(os.path.join(m_d,"henry.pareto.archive.summary.csv"))
@@ -772,9 +774,10 @@ def extract_and_plot_solution():
     df_dv = pd.read_csv(os.path.join(m_d,"henry.archive.dv_pop.csv"))
     #dv_vals = df_dv.loc[df_arc.member.iloc[0],:]
     #df_dv = df_dv.loc[df_dv._risk_>0.95,:]
-    df_dv.sort_values(by="ar_dist",ascending=False,inplace=True)
-    print(df_dv.loc[:,"ar_dist"])
-    pst.parameter_data.loc[:,"parval1"] = df_dv.loc[df_dv.index[0],pst.par_names]
+    df_dv.sort_values(by="_risk_",ascending=False,inplace=True)
+    print(df_dv.loc[:,"ar_rate"])
+   
+    pst.parameter_data.loc[:,"parval1"] = df_dv.loc[df_dv.index[2],pst.par_names]
 
     pst.control_data.noptmax = 0
     pst.write(os.path.join(m_d,"test.pst"))
@@ -801,8 +804,8 @@ if __name__ == "__main__":
     #prep_model()
     #run_and_plot_results(os.path.join("henry", "henry_temp"))
 
-    plot_domain(os.path.join("henry", "henry_master_deter_100gen"),include_pred=True)
-    #extract_and_plot_solution()
+    #plot_domain(os.path.join("henry", "henry_master_deter_100gen"),include_pred=True)
+    extract_and_plot_solution()
     #setup_pst()
     #simple_henry_test()
     #run_mou(risk=0.95,tag="95_single_once",num_workers=40,noptmax=250)
@@ -819,7 +822,7 @@ if __name__ == "__main__":
 
     #plot_results(os.path.join("henry","henry_master_deter"))
     #plot_results(os.path.join("henry", "henry_master_95_single_once"))
-    #plot_results(os.path.join("henry", "henry_master_riskobj_all_once"))
+    plot_results(os.path.join("henry", "henry_master_riskobj_all_once"))
     #plot_results(os.path.join("henry", "henry_master_riskobj_all_once"),risk_thres=0.65,
     #             tag="_riskaverse")
 
