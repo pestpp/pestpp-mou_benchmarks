@@ -1807,10 +1807,112 @@ def zdt1_tied_test():
             assert d == 0, d
 
 
+def zdt1_stack_invest():
+    t_d = mou_suite_helper.setup_problem("zdt1",True,True)
+    
+    pst = pyemu.Pst(os.path.join(t_d,"zdt1.pst"))
+    par = pst.parameter_data
+    
+
+    pst.pestpp_options["opt_recalc_chance_every"] = 10000
+    pst.pestpp_options["mou_save_population_every"] = 1
+    pst.pestpp_options["opt_stack_size"] = 50
+    #pst.pestpp_options["opt_par_stack"] = "prior.csv"
+    pst.pestpp_options["mou_generator"] = "de"
+    pst.pestpp_options["mou_population_size"] = 100
+    pst.pestpp_options["mou_verbose_level"] = 4
+    pst.pestpp_options["opt_chance_points"] = "single"
+    pst.control_data.noptmax = 30
+    pst.write(os.path.join(t_d,"zdt1.pst"))
+    m1 = os.path.join("mou_tests","master_zdt1_stack_test")
+    pyemu.os_utils.start_workers(t_d,exe_path,"zdt1.pst",20,worker_root="mou_tests",
+                                 master_dir=m1,verbose=True,port=port)
+
+    pdf = pd.read_csv(os.path.join(m1,"zdt1.0.nested.par_stack.csv"),index_col=0)
+    pdf.loc[:,"member"] = pdf.index.map(lambda x: x.split("||")[1])
+    umem = pdf.member.unique()
+    umem.sort()
+    print(umem)
+    pdf0 = pdf.loc[pdf.member==umem[0],:].copy()
+    pdf0.index = pdf0.pop("member")
+    print(pdf0)
+    pdf0.to_csv(os.path.join(m1,"sweep_in.csv"))
+    pyemu.os_utils.run("{0} zdt1.pst".format(exe_path.replace("-mou","-swp")),cwd=m1)
+
+    odf = pd.read_csv(os.path.join(m1,"zdt1.0.nested.obs_stack.csv"),index_col=0)
+    odf.loc[:,"member"] = odf.index.map(lambda x: x.split("||")[1])
+    odf = odf.loc[odf.member == umem[0],:]
+    odf.index = odf.pop("member")
+
+    sdf = pd.read_csv(os.path.join(m1,"sweep_out.csv"),index_col=1)
+    diff = sdf.loc[:,odf.columns] - odf
+    print(diff.apply(np.abs).sum())
+
+
+def invest(name="binh"):
+    t_d = mou_suite_helper.setup_problem(name,False,False)
+    pst = pyemu.Pst(os.path.join(t_d,"{0}.pst".format(name)))
+    par = pst.parameter_data
+    par_org = par.copy()
+    par.loc[["dv_0","dv_1"],"parval1"] = 9
+    par.loc[["dv_0","dv_1"],"parlbnd"] = 9
+    pst.parameter_data = par_org
+    pe = pyemu.ParameterEnsemble.from_uniform_draw(pst=pst,num_reals=30)
+    pe.to_csv(os.path.join(t_d,"init.csv"))
+    
+    pst.pestpp_options["mou_save_population_every"] = 1
+    pst.pestpp_options["mou_generator"] = "de"
+    pst.pestpp_options["mou_population_size"] = 30
+    pst.pestpp_options["mou_verbose_level"] = 4
+    pst.pestpp_options["mou_dv_population_file"] = "init.csv"
+
+    #pst.pestpp_options["opt_chance_points"] = "all"
+    pst.control_data.noptmax = 30
+    pst.write(os.path.join(t_d,"{0}.pst".format(name)))
+    m1 = os.path.join("mou_tests","master_{0}_test".format(name))
+    pyemu.os_utils.start_workers(t_d,exe_path,"{0}.pst".format(name),30,worker_root="mou_tests",
+                                 master_dir=m1,verbose=True,port=port)
+
+
+def plot(name="binh"):
+    import matplotlib.pyplot as plt
+    m_d = os.path.join("mou_tests","master_{0}_test".format(name))
+    pst = pyemu.Pst(os.path.join(m_d,"{0}.pst".format(name)))
+    df = pd.read_csv(os.path.join(m_d,"{0}.pareto.archive.summary.csv".format(name)))
+    gens = df.generation.unique()
+    gens.sort()
+    plt_d = "plots"
+    if os.path.exists(plt_d):
+        shutil.rmtree(plt_d)
+    os.makedirs(plt_d)
+    for i,g in enumerate(gens):
+        #gdf = df.loc[df.generation==g,:].copy()
+        gdf = pd.read_csv(os.path.join(m_d,"{0}.{1}.archive.obs_pop.csv".format(name,g)))
+        fig,ax = plt.subplots(1,1,figsize=(5,5))
+        ax.scatter(gdf.obj_1.values,gdf.obj_2.values,marker=".",s=20,c='b')
+        ax.set_xlim(-0.1,250)
+        ax.set_ylim(-0.1,55)
+        #ax.set_yticks([])
+        #ax.set_xticks([])
+        ax.set_title("generation {0:03d}".format(g),loc="left")
+        plt.tight_layout()
+        plt.savefig(os.path.join(plt_d,"mou_{0:03d}.png".format(i)),dpi=400)
+        plt.close(fig)
+    fps = 3
+    pyemu.os_utils.run("ffmpeg -i mou_{0:03d}.png -vf palettegen=256 palette.png".format(i),cwd=plt_d)
+    pyemu.os_utils.run("ffmpeg -r {0} -y -s 1920X1080 -i mou_%03d.png -i palette.png -filter_complex \"scale=720:-1:flags=lanczos[x];[x][1:v]paletteuse\" logo.gif".format(fps),
+            cwd=plt_d)
+
+
+
 if __name__ == "__main__":
-        
+      
     #shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-mou.exe"),os.path.join("..","bin","pestpp-mou.exe"))
-    zdt1_tied_test()
+    #invest()
+    #plot()
+
+    zdt1_stack_invest()
+    #zdt1_tied_test()
     #basic_pso_test()
 
     #shutil.copy2(os.path.join("..", "bin", "win", "pestpp-mou.exe"),

@@ -115,6 +115,11 @@ def ackley(x):
     t2 = -1. * np.exp(0.5 * (np.cos(2. * np.pi * x[0]) + np.cos(2.0 * np.pi * x[1]))) + np.e + 20.0
     return (t1 + t2,np.array([-999])),[]
 
+def binh(x):
+    f1 = (4. * x[0]**2) + (4. * x[1]**2)
+    f2 = (x[0] - 5)**2 + (x[1]-5)**2
+    return (f1,f2),[]
+
 def helper(func):
     pdf = pd.read_csv("dv.dat",delim_whitespace=True,index_col=0, header=None, names=["parnme","parval1"])
     #obj1,obj2 = func(pdf.values)
@@ -161,6 +166,8 @@ def setup_problem(name,additive_chance=False, risk_obj=False, self_adaptive=Fals
         num_dv = 3
     elif name.lower() == "kur":
         num_dv = 100
+    elif name.lower() == "binh":
+        num_dv = 2
 
     # write a generic template file for the dec vars
     tpl_file = "dv.dat.tpl".format(name)
@@ -358,6 +365,14 @@ def setup_problem(name,additive_chance=False, risk_obj=False, self_adaptive=Fals
         par.loc["dv_0","parval1"] = -1.
         par.loc["dv_1","parlbnd"] = -4.
         par.loc["dv_1","parubnd"] = 4
+        par.loc["dv_1","parval1"] = -1.
+
+    elif name.lower() == "binh":
+        par.loc["dv_0","parlbnd"] = -10.
+        par.loc["dv_0","parubnd"] = 10
+        par.loc["dv_0","parval1"] = -1.
+        par.loc["dv_1","parlbnd"] = -10.
+        par.loc["dv_1","parubnd"] = 10
         par.loc["dv_1","parval1"] = -1.
 
 
