@@ -1807,7 +1807,7 @@ def zdt1_tied_test():
             assert d == 0, d
 
 
-def zdt1_stack_invest():
+def zdt1_stack_run_for_animation():
     t_d = mou_suite_helper.setup_problem("zdt1",True,True)
     
     pst = pyemu.Pst(os.path.join(t_d,"zdt1.pst"))
@@ -1816,37 +1816,38 @@ def zdt1_stack_invest():
 
     pst.pestpp_options["opt_recalc_chance_every"] = 10000
     pst.pestpp_options["mou_save_population_every"] = 1
-    pst.pestpp_options["opt_stack_size"] = 50
+    pst.pestpp_options["opt_stack_size"] = 100
     #pst.pestpp_options["opt_par_stack"] = "prior.csv"
     pst.pestpp_options["mou_generator"] = "de"
-    pst.pestpp_options["mou_population_size"] = 100
+    pst.pestpp_options["mou_population_size"] = 300
     pst.pestpp_options["mou_verbose_level"] = 4
     pst.pestpp_options["opt_chance_points"] = "single"
-    pst.control_data.noptmax = 30
+    pst.pestpp_options["mou_max_archive_size"] = 100000
+    pst.control_data.noptmax = 300
     pst.write(os.path.join(t_d,"zdt1.pst"))
-    m1 = os.path.join("mou_tests","master_zdt1_stack_test")
+    m1 = os.path.join("mou_tests","master_zdt1_test")
     pyemu.os_utils.start_workers(t_d,exe_path,"zdt1.pst",20,worker_root="mou_tests",
                                  master_dir=m1,verbose=True,port=port)
 
-    pdf = pd.read_csv(os.path.join(m1,"zdt1.0.nested.par_stack.csv"),index_col=0)
-    pdf.loc[:,"member"] = pdf.index.map(lambda x: x.split("||")[1])
-    umem = pdf.member.unique()
-    umem.sort()
-    print(umem)
-    pdf0 = pdf.loc[pdf.member==umem[0],:].copy()
-    pdf0.index = pdf0.pop("member")
-    print(pdf0)
-    pdf0.to_csv(os.path.join(m1,"sweep_in.csv"))
-    pyemu.os_utils.run("{0} zdt1.pst".format(exe_path.replace("-mou","-swp")),cwd=m1)
+    # pdf = pd.read_csv(os.path.join(m1,"zdt1.0.nested.par_stack.csv"),index_col=0)
+    # pdf.loc[:,"member"] = pdf.index.map(lambda x: x.split("||")[1])
+    # umem = pdf.member.unique()
+    # umem.sort()
+    # print(umem)
+    # pdf0 = pdf.loc[pdf.member==umem[0],:].copy()
+    # pdf0.index = pdf0.pop("member")
+    # print(pdf0)
+    # pdf0.to_csv(os.path.join(m1,"sweep_in.csv"))
+    # pyemu.os_utils.run("{0} zdt1.pst".format(exe_path.replace("-mou","-swp")),cwd=m1)
 
-    odf = pd.read_csv(os.path.join(m1,"zdt1.0.nested.obs_stack.csv"),index_col=0)
-    odf.loc[:,"member"] = odf.index.map(lambda x: x.split("||")[1])
-    odf = odf.loc[odf.member == umem[0],:]
-    odf.index = odf.pop("member")
+    # odf = pd.read_csv(os.path.join(m1,"zdt1.0.nested.obs_stack.csv"),index_col=0)
+    # odf.loc[:,"member"] = odf.index.map(lambda x: x.split("||")[1])
+    # odf = odf.loc[odf.member == umem[0],:]
+    # odf.index = odf.pop("member")
 
-    sdf = pd.read_csv(os.path.join(m1,"sweep_out.csv"),index_col=1)
-    diff = sdf.loc[:,odf.columns] - odf
-    print(diff.apply(np.abs).sum())
+    # sdf = pd.read_csv(os.path.join(m1,"sweep_out.csv"),index_col=1)
+    # diff = sdf.loc[:,odf.columns] - odf
+    # print(diff.apply(np.abs).sum())
 
 
 def invest(name="binh"):
@@ -1874,34 +1875,141 @@ def invest(name="binh"):
                                  master_dir=m1,verbose=True,port=port)
 
 
-def plot(name="binh"):
+def plot_zdt1(name="binh",m_d=None):
+    if m_d is None:
+        m_d = os.path.join("mou_tests","master_{0}_test".format(name))
     import matplotlib.pyplot as plt
-    m_d = os.path.join("mou_tests","master_{0}_test".format(name))
+    import matplotlib as mpl
     pst = pyemu.Pst(os.path.join(m_d,"{0}.pst".format(name)))
     df = pd.read_csv(os.path.join(m_d,"{0}.pareto.archive.summary.csv".format(name)))
     gens = df.generation.unique()
     gens.sort()
-    plt_d = "plots"
+    plt_d = "plots_{0}".format(name)
     if os.path.exists(plt_d):
         shutil.rmtree(plt_d)
     os.makedirs(plt_d)
     for i,g in enumerate(gens):
         #gdf = df.loc[df.generation==g,:].copy()
         gdf = pd.read_csv(os.path.join(m_d,"{0}.{1}.archive.obs_pop.csv".format(name,g)))
-        fig,ax = plt.subplots(1,1,figsize=(5,5))
-        ax.scatter(gdf.obj_1.values,gdf.obj_2.values,marker=".",s=20,c='b')
-        ax.set_xlim(-0.1,250)
-        ax.set_ylim(-0.1,55)
+        dvdf = pd.read_csv(os.path.join(m_d,"{0}.{1}.archive.dv_pop.csv".format(name,g)))
+        dvdf.index = dvdf.real_name
+        fig,ax = plt.subplots(1,1,figsize=(5.5,5))
+        c = 'b'
+        if "_risk_" in dvdf.columns:
+            c = dvdf.loc[gdf.real_name.values,"_risk_"].values
+        #print(g,c)
+        ax.scatter(gdf.obj_1.values,gdf.obj_2.values,marker=".",s=20,c=c,cmap="jet_r")
+        ax.set_xlim(2,-0.75)
+        ax.set_ylim(-1,7)
+        ax.set_xticklabels([])
+        ax.set_yticklabels([])
+        ax.set_xlabel("increasing quality",fontsize=12)
+        ax.set_ylabel("increasing cost",fontsize=12)
         #ax.set_yticks([])
         #ax.set_xticks([])
-        ax.set_title("generation {0:03d}".format(g),loc="left")
+        ax.grid()
+        cax = fig.colorbar(mpl.cm.ScalarMappable(cmap="jet_r"),ax=ax,orientation="vertical",
+            shrink=0.8,location="right",pad=.025)
+        cax.set_ticks([0.05,0.5,0.95])
+        cax.set_ticklabels(["tolerant","neutral","averse"],rotation=90,fontsize=12,va="center")
+        #cax.set_label("increasing reliability",fontsize=12)
+        ax.set_title("generation {0:03d}".format(g),loc="left",fontsize=12)
         plt.tight_layout()
         plt.savefig(os.path.join(plt_d,"mou_{0:03d}.png".format(i)),dpi=400)
         plt.close(fig)
-    fps = 3
+
+    fps = 15
     pyemu.os_utils.run("ffmpeg -i mou_{0:03d}.png -vf palettegen=256 palette.png".format(i),cwd=plt_d)
     pyemu.os_utils.run("ffmpeg -r {0} -y -s 1920X1080 -i mou_%03d.png -i palette.png -filter_complex \"scale=720:-1:flags=lanczos[x];[x][1:v]paletteuse\" logo.gif".format(fps),
             cwd=plt_d)
+
+
+
+def stack_invest():
+    name = "constroc"
+    t_d = mou_suite_helper.setup_problem(name,True,True)
+    
+    pst = pyemu.Pst(os.path.join(t_d,"{0}.pst".format(name)))
+    par = pst.parameter_data
+    pst.control_data.noptmax = 10
+    pst.pestpp_options["opt_recalc_chance_every"] = pst.control_data.noptmax
+    pst.pestpp_options["mou_save_population_every"] = 1
+    pst.pestpp_options["opt_stack_size"] = 100
+    #pst.pestpp_options["opt_par_stack"] = "prior.csv"
+    pst.pestpp_options["mou_generator"] = "de"
+    pst.pestpp_options["mou_population_size"] = 30
+    pst.pestpp_options["mou_verbose_level"] = 4
+    pst.pestpp_options["opt_chance_points"] = "all"
+    pst.pestpp_options["mou_max_archive_size"] = 100000
+    pst.pestpp_options["opt_risk"] = 0.95
+    
+    pst.write(os.path.join(t_d,"{0}.pst".format(name)))
+    m1 = os.path.join("mou_tests","master_stack_test")
+    # pyemu.os_utils.start_workers(t_d,exe_path,"{0}.pst".format(name),20,worker_root="mou_tests",
+    #                             master_dir=m1,verbose=True,port=port)
+
+    pdf = pd.read_csv(os.path.join(m1,"{0}.{1}.nested.par_stack.csv".\
+        format(name,pst.control_data.noptmax)),index_col=0)
+    pdf.loc[:,"member"] = pdf.index.map(lambda x: x.split("||")[1])
+    umem = pdf.member.unique()
+    umem.sort()
+    print(umem)
+    pdf0 = pdf.loc[pdf.member==umem[-1],:].copy()
+    pdf0.index = pdf0.pop("member")
+    print(pdf0)
+    pdf0.to_csv(os.path.join(t_d,"sweep_in.csv"))
+    
+    m2 = os.path.join("mou_tests","master_sweep_test")
+    # pyemu.os_utils.start_workers(t_d,exe_path.replace("-mou","-swp"),"{0}.pst".format(name),20,worker_root="mou_tests",
+    #                              master_dir=m2,verbose=True,port=port)
+
+
+    odf = pd.read_csv(os.path.join(m1,"{0}.{1}.nested.obs_stack.csv".\
+        format(name,pst.control_data.noptmax)),index_col=0)
+    odf.loc[:,"member"] = odf.index.map(lambda x: x.split("||")[1])
+    odf0 = odf.loc[odf.member == umem[-1],:].copy()
+    odf0.index = odf0.pop("member")
+
+    sdf = pd.read_csv(os.path.join(m2,"sweep_out.csv"),index_col=1)
+    diff = sdf.loc[:,odf0.columns] - odf0
+    print(diff.apply(np.abs).sum())
+
+    arc = pd.read_csv(os.path.join(m1,"{0}.pareto.summary.csv".format(name)))
+    arc.loc[:,"memgen"] = arc.member.apply(lambda x: int(x.split('_')[0].split('=')[1]))
+    arc = arc.loc[arc.memgen==pst.control_data.noptmax,:]
+    umem = arc.member.unique()
+    umem.sort()
+
+    chance = pd.read_csv(os.path.join(m1,"constroc.10.chance.obs_pop.csv"),index_col=0)
+
+    import matplotlib.pyplot as plt
+
+    from matplotlib.backends.backend_pdf import PdfPages
+    obs = pst.observation_data
+    with PdfPages("chance.pdf") as pdfpages:
+        for mem in umem:
+
+            fig,axes = plt.subplots(obs.shape[0],1,figsize=(5*obs.shape[0],10))
+            for oname,ax in zip(obs.obsnme,axes):
+                ax.hist(odf.loc[odf.member==mem,:].loc[:,oname],alpha=0.25,facecolor="0.5",label="stack")
+                if "const" in oname:
+                    ax.plot([obs.loc[oname,"obsval"],obs.loc[oname,"obsval"]],ax.get_ylim(),"r--",lw=2.5,label="rhs")
+                ax.plot([chance.loc[mem, oname], chance.loc[mem, oname]], ax.get_ylim(), "b--", lw=2.5,label="chance value")
+
+                risk = pdf.loc[pdf.member==mem,"_risk_"].values[0]
+                ax.set_title("output:{0}, group:{1}, member:{2}, risk:{3:3.2f}".format(oname,obs.loc[oname,"obgnme"],mem,float(risk)),loc="left",fontsize=12)
+                ax.set_yticks([])
+                print(mem, oname)
+                ax.set_xlim(min(obs.loc[oname,"obsval"]*.75,odf.loc[:,oname].min()),max(obs.loc[oname,"obsval"]*1.25,odf.loc[:,oname].max()))
+                ax.legend(loc="upper left",fontsize=12)
+            plt.tight_layout()
+            pdfpages.savefig()
+            plt.close(fig)
+
+
+
+
+
 
 
 
@@ -1911,7 +2019,9 @@ if __name__ == "__main__":
     #invest()
     #plot()
 
-    zdt1_stack_invest()
+    stack_invest()
+    #plot_zdt1(name="zdt1",m_d=os.path.join("mou_tests","master_zdt1_test"))
+
     #zdt1_tied_test()
     #basic_pso_test()
 

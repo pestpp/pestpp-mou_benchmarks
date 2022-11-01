@@ -93,6 +93,9 @@ def zdt6(x):
 def constr(x):
     return (x[0],(1 + x[1]) / x[0]),[]
 
+def constroc(x):
+    return (x[0],(1 + x[1]) / x[0]),[(9. * x[0])+x[1],(9. * x[0]) - x[1]]
+
 def srn(x):
     const1 = np.power(x[0], 2) + np.power(x[1], 2)  # lest than or equal to 225
     const2 =  x[0] - (3 * x[1])  # less than or equal to -10
@@ -150,7 +153,7 @@ def setup_problem(name,additive_chance=False, risk_obj=False, self_adaptive=Fals
     num_dv = 30
     if name.lower() in ["zdt4","zdt6"]:
         num_dv = 10
-    elif name.lower() == "constr":
+    elif name.lower() == "constr" or name.lower() == "constroc":
         num_dv = 2
     elif name.lower() == "srn":
         num_dv = 2
@@ -182,7 +185,7 @@ def setup_problem(name,additive_chance=False, risk_obj=False, self_adaptive=Fals
         f.write("ptf ~\n")
         f.write("obj1_add_par ~   obj1_add_par   ~\n")
         f.write("obj2_add_par ~   obj2_add_par   ~\n")
-        if name.lower() in ["srn","constr","tkn","rosenc"]:
+        if name.lower() in ["srn","constr","tkn","rosenc","constroc"]:
             f.write("constr1_add_par ~   constr1_add_par   ~\n")
             f.write("constr2_add_par ~   constr2_add_par   ~\n")
         elif name.lower() == "water":
@@ -192,7 +195,7 @@ def setup_problem(name,additive_chance=False, risk_obj=False, self_adaptive=Fals
     with open(os.path.join(test_d,additive_chance_tpl_file.replace(".tpl","")),'w') as f:
         f.write("obj1_add_par 0.0\n")
         f.write("obj2_add_par 0.0\n")
-        if name.lower() in ["srn","constr","tkn","rosenc"]:
+        if name.lower() in ["srn","constr","tkn","rosenc","constroc"]:
             f.write("constr1_add_par 0.0\n")
             f.write("constr2_add_par 0.0\n")
         elif name.lower() == "water":
@@ -231,7 +234,7 @@ def setup_problem(name,additive_chance=False, risk_obj=False, self_adaptive=Fals
                 f.write("l1 w !obj_2!\n")
             else:
                 f.write("l1\n")
-            if name.lower() in ["srn","tkn","rosenc"]:
+            if name.lower() in ["srn","tkn","rosenc","constroc"]:
                 f.write("l1 w !const_1!\n")
                 f.write("l1 w !const_2!\n")
         
@@ -322,24 +325,25 @@ def setup_problem(name,additive_chance=False, risk_obj=False, self_adaptive=Fals
         par.loc[:,"partrans"] = "none"
         par.loc[:,"parval1"] = 1.0
 
-    elif name.lower() == "constr":
+    elif name.lower() == "constr" or name.lower() == "constroc":
         par.loc["dv_0","parlbnd"] = 0.1
         par.loc["dv_0","parubnd"] = 1.0
         par.loc["dv_0","parval1"] = 0.5
         par.loc["dv_1","parlbnd"] = 0.0
         par.loc["dv_1","parubnd"] = 5.0
         par.loc["dv_1","parval1"] = 2.5
-        pst.prior_information = pst.null_prior
-        pi = pst.prior_information
-        pi.loc["const_1","pilbl"] = "const_1"
-        pi.loc["const_1","equation"] = "9.0 * dv_0 + 1.0 * dv_1 = 6.0"
-        pi.loc["const_1","weight"] = 1.0
-        
-        pi.loc["const_1","obgnme"] = "greater_than"
-        pi.loc["const_2","pilbl"] = "const_2"
-        pi.loc["const_2","equation"] = "9.0 * dv_0 - 1.0 * dv_1 = 1.0"
-        pi.loc["const_2","weight"] = 1.0
-        pi.loc["const_2","obgnme"] = "greater_than"
+        if name.lower() == "constr":
+            pst.prior_information = pst.null_prior
+            pi = pst.prior_information
+            pi.loc["const_1","pilbl"] = "const_1"
+            pi.loc["const_1","equation"] = "9.0 * dv_0 + 1.0 * dv_1 = 6.0"
+            pi.loc["const_1","weight"] = 1.0
+            
+            pi.loc["const_1","obgnme"] = "greater_than"
+            pi.loc["const_2","pilbl"] = "const_2"
+            pi.loc["const_2","equation"] = "9.0 * dv_0 - 1.0 * dv_1 = 1.0"
+            pi.loc["const_2","weight"] = 1.0
+            pi.loc["const_2","obgnme"] = "greater_than"
         
       
     elif name.lower() == "sch":
@@ -444,10 +448,10 @@ def setup_problem(name,additive_chance=False, risk_obj=False, self_adaptive=Fals
     if name.lower() == "srn":
         obs.loc["const_1","obsval"] = 225
         obs.loc["const_2","obsval"] = -10
-    if name.lower() == "tkn":
+    elif name.lower() == "tkn":
         obs.loc["const_1","obsval"] = 0.0
         obs.loc["const_2","obsval"] = 0.5
-    if name.lower() == "water":
+    elif name.lower() == "water":
         obs.loc["const_1","obsval"] = 1
         obs.loc["const_2","obsval"] = 1
         obs.loc["const_3","obsval"] = 50000
@@ -455,9 +459,15 @@ def setup_problem(name,additive_chance=False, risk_obj=False, self_adaptive=Fals
         obs.loc["const_5","obsval"] = 10000
         obs.loc["const_6","obsval"] = 2000
         obs.loc["const_7","obsval"] = 550
-    if name.lower() == "rosenc":
+    elif name.lower() == "rosenc":
         obs.loc["const_1", "obsval"] = 0
         obs.loc["const_2", "obsval"] = 0
+    elif name.lower() == "constroc":
+        obs.loc["const_1", "obsval"] = 6
+        obs.loc["const_2", "obsval"] = 1
+        obs.loc["const_1","obgnme"] = "greater_than"
+        obs.loc["const_2","obgnme"] = "greater_than"
+
 
            
     pst.pestpp_options["opt_dec_var_groups"] = "decvars"
