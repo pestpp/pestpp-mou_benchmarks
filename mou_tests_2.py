@@ -2045,13 +2045,15 @@ def zdt1_fixed_scaleoffset_test():
     pst.pestpp_options["mou_dv_population_file"] = "init_pop.csv"
     pst.control_data.noptmax = -1
     pst.write(os.path.join(t_d,"zdt1.pst"))
-    try:
-        pyemu.os_utils.run("{0} {1}".format(exe_path,"zdt1.pst"),cwd=t_d)
-    except Exception as e:
-        pass
-    else:
-        raise Exception("should have failed")
     
+    pyemu.os_utils.run("{0} {1}".format(exe_path,"zdt1.pst"),cwd=t_d)
+    df = pd.read_csv(os.path.join(t_d,"dv.dat"),header=None,names=["dv","val"],delim_whitespace=True)
+    df.index = df.dv 
+
+    print(df.loc[others,:])
+    assert np.all(df.loc[others,"val"].values =< 0)
+    
+
 if __name__ == "__main__":
     zdt1_fixed_scaleoffset_test()
     #shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-mou.exe"),os.path.join("..","bin","pestpp-mou.exe"))
