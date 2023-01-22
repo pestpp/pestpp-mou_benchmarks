@@ -1931,10 +1931,10 @@ def stack_invest():
     
     pst = pyemu.Pst(os.path.join(t_d,"{0}.pst".format(name)))
     par = pst.parameter_data
-    pst.control_data.noptmax = 10
+    pst.control_data.noptmax = 100
     pst.pestpp_options["opt_recalc_chance_every"] = pst.control_data.noptmax
     pst.pestpp_options["mou_save_population_every"] = 1
-    pst.pestpp_options["opt_stack_size"] = 100
+    pst.pestpp_options["opt_stack_size"] = 30
     #pst.pestpp_options["opt_par_stack"] = "prior.csv"
     pst.pestpp_options["mou_generator"] = "de"
     pst.pestpp_options["mou_population_size"] = 30
@@ -1945,7 +1945,7 @@ def stack_invest():
     
     pst.write(os.path.join(t_d,"{0}.pst".format(name)))
     m1 = os.path.join("mou_tests","master_stack_test")
-    # pyemu.os_utils.start_workers(t_d,exe_path,"{0}.pst".format(name),20,worker_root="mou_tests",
+    #pyemu.os_utils.start_workers(t_d,exe_path,"{0}.pst".format(name),20,worker_root="mou_tests",
     #                             master_dir=m1,verbose=True,port=port)
 
     pdf = pd.read_csv(os.path.join(m1,"{0}.{1}.nested.par_stack.csv".\
@@ -1970,9 +1970,9 @@ def stack_invest():
     odf0 = odf.loc[odf.member == umem[-1],:].copy()
     odf0.index = odf0.pop("member")
 
-    sdf = pd.read_csv(os.path.join(m2,"sweep_out.csv"),index_col=1)
-    diff = sdf.loc[:,odf0.columns] - odf0
-    print(diff.apply(np.abs).sum())
+    #sdf = pd.read_csv(os.path.join(m2,"sweep_out.csv"),index_col=1)
+    #diff = sdf.loc[:,odf0.columns] - odf0
+    #print(diff.apply(np.abs).sum())
 
     arc = pd.read_csv(os.path.join(m1,"{0}.pareto.summary.csv".format(name)))
     arc.loc[:,"memgen"] = arc.member.apply(lambda x: int(x.split('_')[0].split('=')[1]))
@@ -1980,7 +1980,8 @@ def stack_invest():
     umem = arc.member.unique()
     umem.sort()
 
-    chance = pd.read_csv(os.path.join(m1,"constroc.10.chance.obs_pop.csv"),index_col=0)
+    chance = pd.read_csv(os.path.join(m1,"constroc.{0}.chance.obs_pop.csv".format(pst.control_data.noptmax)),index_col=0)
+    actual = pd.read_csv(os.path.join(m1,"constroc.{0}.obs_pop.csv".format(pst.control_data.noptmax)),index_col=0)
 
     import matplotlib.pyplot as plt
 
@@ -1995,6 +1996,7 @@ def stack_invest():
                 if "const" in oname:
                     ax.plot([obs.loc[oname,"obsval"],obs.loc[oname,"obsval"]],ax.get_ylim(),"r--",lw=2.5,label="rhs")
                 ax.plot([chance.loc[mem, oname], chance.loc[mem, oname]], ax.get_ylim(), "b--", lw=2.5,label="chance value")
+                ax.plot([actual.loc[mem, oname], actual.loc[mem, oname]], ax.get_ylim(), "k--", lw=2.5,label="sim value")
 
                 risk = pdf.loc[pdf.member==mem,"_risk_"].values[0]
                 ax.set_title("output:{0}, group:{1}, member:{2}, risk:{3:3.2f}".format(oname,obs.loc[oname,"obgnme"],mem,float(risk)),loc="left",fontsize=12)
@@ -2008,6 +2010,8 @@ def stack_invest():
 
 
 
+def run():
+    pyemu.os_utils.start_workers(os.path.join("mou_tests","constroc_template"),exe_path,"constroc.pst",worker_root="mou_tests",num_workers=20,master_dir=os.path.join("mou_tests","constroc_mimic"))
 
 
 
@@ -2018,8 +2022,8 @@ if __name__ == "__main__":
     #shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-mou.exe"),os.path.join("..","bin","pestpp-mou.exe"))
     #invest()
     #plot()
-
-    stack_invest()
+    run()
+    #stack_invest()
     #plot_zdt1(name="zdt1",m_d=os.path.join("mou_tests","master_zdt1_test"))
 
     #zdt1_tied_test()
