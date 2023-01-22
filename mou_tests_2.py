@@ -2014,15 +2014,50 @@ def run():
     pyemu.os_utils.start_workers(os.path.join("mou_tests","constroc_template"),exe_path,"constroc.pst",worker_root="mou_tests",num_workers=20,master_dir=os.path.join("mou_tests","constroc_mimic"))
 
 
+def zdt1_fixed_scaleoffset_test():
+    t_d = mou_suite_helper.setup_problem("zdt1",False,False)
+    pst = pyemu.Pst(os.path.join(t_d,"zdt1.pst"))
+    pe = pyemu.ParameterEnsemble.from_uniform_draw(pst,num_reals=10)
+    pe.to_csv(os.path.join(t_d,"init_pop.csv"))
+    par = pst.parameter_data
+    first = pst.par_names[1]
+    others = pst.par_names[2:5]
+    par.loc[others,"partrans"] = "fixed"
+    par.loc[others,"scale"] = -1
+    
+    pst.pestpp_options["opt_recalc_chance_every"] = 1000
+    pst.pestpp_options["opt_dec_var_groups"] = "decvars"
+    pst.pestpp_options["mou_save_population_every"] = 1
+    #pst.pestpp_options["opt_stack_size"] = 10
+    #pst.pestpp_options["opt_par_stack"] = "prior.csv"
+    pst.pestpp_options["mou_generator"] = "de"
+    pst.pestpp_options["mou_population_size"] = 10
+    pst.control_data.noptmax = 0
+    pst.write(os.path.join(t_d,"zdt1.pst"))
+    pyemu.os_utils.run("{0} {1}".format(exe_path,"zdt1.pst"),cwd=t_d)
+    df = pd.read_csv(os.path.join(t_d,"dv.dat"),header=None,names=["dv","val"],delim_whitespace=True)
+    df.index = df.dv 
 
-
-
+    print(df.loc[others,:])
+    assert np.all(df.loc[others,"val"].values < 0)
+    
+    
+    pst.pestpp_options["mou_dv_population_file"] = "init_pop.csv"
+    pst.control_data.noptmax = -1
+    pst.write(os.path.join(t_d,"zdt1.pst"))
+    try:
+        pyemu.os_utils.run("{0} {1}".format(exe_path,"zdt1.pst"),cwd=t_d)
+    except Exception as e:
+        pass
+    else:
+        raise Exception("should have failed")
+    
 if __name__ == "__main__":
-      
+    zdt1_fixed_scaleoffset_test()
     #shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-mou.exe"),os.path.join("..","bin","pestpp-mou.exe"))
     #invest()
     #plot()
-    run()
+    #run()
     #stack_invest()
     #plot_zdt1(name="zdt1",m_d=os.path.join("mou_tests","master_zdt1_test"))
 
