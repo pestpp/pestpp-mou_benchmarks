@@ -2051,7 +2051,7 @@ def zdt1_fixed_scaleoffset_test():
     df.index = df.dv 
 
     print(df.loc[others,:])
-    assert np.all(df.loc[others,"val"].values =< 0)
+    assert np.all(df.loc[others,"val"].values <= 0)
     
 
 if __name__ == "__main__":
