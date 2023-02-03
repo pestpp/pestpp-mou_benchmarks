@@ -2202,36 +2202,7 @@ def zdt1_fixedtied_stack_test():
                 assert d < 1.0e-6
     
 
-    exit()
-    pst.pestpp_options["save_binary"] = True
-    pst.write(os.path.join(t_d, "zdt1.pst"))
-    m1 = os.path.join("mou_tests", "zdt1_tied_test")
-    pyemu.os_utils.start_workers(t_d, exe_path, "zdt1.pst", 10, worker_root="mou_tests",
-                                 master_dir=m1, verbose=True, port=port)
-    for i in range(pst.control_data.noptmax + 1):
-        dp = pyemu.ParameterEnsemble.from_binary(pst=pst, filename=os.path.join(m1, "zdt1.{0}.dv_pop.jcb").format(i))
-        op = pyemu.ObservationEnsemble.from_binary(pst=pst, filename=os.path.join(m1, "zdt1.{0}.obs_pop.jcb").format(i))
-        assert dp.shape[0] == op.shape[0]
-        print(dp.shape[0])
-        for ii in range(dp.shape[0]):
-            assert dp.index[ii] == op.index[ii]
-            ii = dp.index[ii]
-            d = np.abs(dp._df.loc[ii, others].values - dp._df.loc[ii, first]).sum()
-            assert d == 0, d
-
-        dp = pyemu.ParameterEnsemble.from_binary(pst=pst,
-                                                 filename=os.path.join(m1, "zdt1.{0}.archive.dv_pop.jcb").format(i))
-        op = pyemu.ObservationEnsemble.from_binary(pst=pst,
-                                                   filename=os.path.join(m1, "zdt1.{0}.archive.obs_pop.jcb").format(i))
-        assert dp.shape[0] == op.shape[0]
-        print(dp.shape[0])
-        for ii in range(dp.shape[0]):
-            assert dp.index[ii] == op.index[ii]
-            ii = dp.index[ii]
-            d = np.abs(dp._df.loc[ii, others].values - dp._df.loc[ii, first]).sum()
-            #print(dp._df.loc[ii,others].values)
-            #print(dp._df.loc[ii, first])
-            assert d == 0, d
+    
 
 
 if __name__ == "__main__":
