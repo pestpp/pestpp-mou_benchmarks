@@ -2091,8 +2091,8 @@ def zdt1_fixedtied_stack_test():
     par.loc[others[0],"parval1"] = par.loc[others[0],"parubnd"]
     tied = par.loc[par.partrans=="tied","parnme"].values
     
-    #pe = pyemu.ParameterEnsemble.from_uniform_draw(pst,num_reals=10)
-    #pe.to_csv(os.path.join(t_d,"init_pop.csv"))
+    pe = pyemu.ParameterEnsemble.from_uniform_draw(pst,num_reals=10)
+    pe.to_csv(os.path.join(t_d,"init_pop.csv"))
 
 
     #par.loc[first,"parval1"] = 1.0
@@ -2120,8 +2120,8 @@ def zdt1_fixedtied_stack_test():
     m1 = os.path.join("mou_tests","zdt1_fixedtied_stack_test")
     pst.control_data.noptmax = 1
     pst.write(os.path.join(t_d,"zdt1.pst"))
-    #pyemu.os_utils.start_workers(t_d,exe_path,"zdt1.pst",10,worker_root="mou_tests",
-    #                             master_dir=m1,verbose=True,port=port)
+    pyemu.os_utils.start_workers(t_d,exe_path,"zdt1.pst",10,worker_root="mou_tests",
+                                 master_dir=m1,verbose=True,port=port)
 
     for i in range(pst.control_data.noptmax+1):
 
@@ -2175,15 +2175,12 @@ def zdt1_fixedtied_stack_test():
                 in_pop = stack_ovals[0] in pop_ovals
                 assert in_pop
 
-
-    
-
     pst.pestpp_options["opt_chance_points"] = "all"
     m1 = os.path.join("mou_tests","zdt1_fixedtied_stack_every_test")
     pst.control_data.noptmax = 1
     pst.write(os.path.join(t_d,"zdt1.pst"))
-    #pyemu.os_utils.start_workers(t_d,exe_path,"zdt1.pst",10,worker_root="mou_tests",
-    #                             master_dir=m1,verbose=True,port=port)
+    pyemu.os_utils.start_workers(t_d,exe_path,"zdt1.pst",10,worker_root="mou_tests",
+                                 master_dir=m1,verbose=True,port=port)
     for i in range(pst.control_data.noptmax+1):
 
         dp = pd.read_csv(os.path.join(m1, "zdt1.{0}.archive.dv_pop.csv").format(i), index_col=0)
