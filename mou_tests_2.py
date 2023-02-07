@@ -2079,6 +2079,9 @@ def zdt1_fixedtied_stack_test():
     pst.add_observations(ins_file,ins_file.replace(".ins",""),pst_path=".")
 
     par = pst.parameter_data
+    log_pars = pst.par_names[:2]
+    par.loc[log_pars,"partrans"] = "log"
+    par.loc[log_pars, "parlbnd"] = 0.0001
     first = pst.par_names[1]
     others = pst.par_names[2:-4]
     par.loc[others,"partrans"] = "tied"
@@ -2088,8 +2091,8 @@ def zdt1_fixedtied_stack_test():
     par.loc[others[0],"parval1"] = par.loc[others[0],"parubnd"]
     tied = par.loc[par.partrans=="tied","parnme"].values
     
-    pe = pyemu.ParameterEnsemble.from_uniform_draw(pst,num_reals=10)
-    pe.to_csv(os.path.join(t_d,"init_pop.csv"))
+    #pe = pyemu.ParameterEnsemble.from_uniform_draw(pst,num_reals=10)
+    #pe.to_csv(os.path.join(t_d,"init_pop.csv"))
 
 
     #par.loc[first,"parval1"] = 1.0
@@ -2104,7 +2107,8 @@ def zdt1_fixedtied_stack_test():
     pst.pestpp_options["mou_generator"] = "de"
     pst.pestpp_options["mou_population_size"] = 10
     pst.pestpp_options["opt_risk"] = 0.95
-    pst.pestpp_options["mou_dv_population_file"] = "init_pop.csv"
+    pst.pestpp_options["ensemble_output_precision"] = 10
+    #pst.pestpp_options["mou_dv_population_file"] = "init_pop.csv"
     pst.control_data.noptmax = 0
     pst.write(os.path.join(t_d,"zdt1.pst"))
     pyemu.os_utils.run("{0} {1}".format(exe_path,"zdt1.pst"),cwd=t_d)
@@ -2116,9 +2120,12 @@ def zdt1_fixedtied_stack_test():
     m1 = os.path.join("mou_tests","zdt1_fixedtied_stack_test")
     pst.control_data.noptmax = 1
     pst.write(os.path.join(t_d,"zdt1.pst"))
-    pyemu.os_utils.start_workers(t_d,exe_path,"zdt1.pst",10,worker_root="mou_tests",
-                                 master_dir=m1,verbose=True,port=port)
+    #pyemu.os_utils.start_workers(t_d,exe_path,"zdt1.pst",10,worker_root="mou_tests",
+    #                             master_dir=m1,verbose=True,port=port)
+
     for i in range(pst.control_data.noptmax+1):
+
+
         dp = pd.read_csv(os.path.join(m1,"zdt1.{0}.dv_pop.csv").format(i),index_col=0)
         op = pd.read_csv(os.path.join(m1, "zdt1.{0}.obs_pop.csv").format(i), index_col=0)
         assert dp.shape[0] == op.shape[0]
@@ -2126,7 +2133,7 @@ def zdt1_fixedtied_stack_test():
         for ii in range(dp.shape[0]):
             assert dp.index[ii] == op.index[ii]
             ii = dp.index[ii]
-            
+
             d = np.abs(dp.loc[ii,tied].values - dp.loc[ii,first]).sum()
             assert d == 0,d
 
@@ -2140,40 +2147,44 @@ def zdt1_fixedtied_stack_test():
 
             d = np.abs(dp.loc[ii, tied].values - dp.loc[ii, first]).sum()
             assert d == 0, d
-        dp = pd.read_csv(os.path.join(m1,"zdt1.{0}.par_stack.csv").format(i),index_col=0)
-        op = pd.read_csv(os.path.join(m1, "zdt1.{0}.obs_stack.csv").format(i), index_col=0)
+
+        dps = pd.read_csv(os.path.join(m1,"zdt1.{0}.par_stack.csv").format(i),index_col=0)
+        ops = pd.read_csv(os.path.join(m1, "zdt1.{0}.obs_stack.csv").format(i), index_col=0)
         for pname in pst.par_names:
-            if pname in op.columns:
-                d = (dp.loc[:,pname] - op.loc[:,pname]).apply(np.abs).sum()
+            if pname in ops.columns:
+                d = (dps.loc[:,pname] - ops.loc[:,pname]).apply(np.abs).sum()
                 #print(pname,d)
                 assert d < 1.0e-7
                 if par.loc[pname,"partrans"] == "fixed":
-                    assert np.abs(op.loc[:,pname].values - par.loc[pname,"parval1"]).sum() == 0
+                    assert np.abs(ops.loc[:,pname].values - par.loc[pname,"parval1"]).sum() == 0
                 else:    
-                     assert np.abs(op.loc[:,pname].values - par.loc[pname,"parval1"]).min() > 0
+                     assert np.abs(ops.loc[:,pname].values - par.loc[pname,"parval1"]).min() > 0
+                
             for ii in op.index:
                 d = np.abs(op.loc[ii,tied].values - op.loc[ii,first]).sum()
             #print(d)
                 assert d < 1.0e-6
+
+            #make sure the dv value in the stack is in the dv population - checking for transform issues
+            # compare with the archive
+            if pname.startswith('dv'):
+                stack_ovals = list(np.round(ops.loc[:,pname].values,5))
+                pop_ovals = list(np.round(op.loc[:,pname].values,5))
+                #print(pop_ovals)
+                #print(stack_ovals)
+                in_pop = stack_ovals[0] in pop_ovals
+                assert in_pop
+
+
     
 
     pst.pestpp_options["opt_chance_points"] = "all"
     m1 = os.path.join("mou_tests","zdt1_fixedtied_stack_every_test")
     pst.control_data.noptmax = 1
     pst.write(os.path.join(t_d,"zdt1.pst"))
-    pyemu.os_utils.start_workers(t_d,exe_path,"zdt1.pst",10,worker_root="mou_tests",
-                                 master_dir=m1,verbose=True,port=port)
+    #pyemu.os_utils.start_workers(t_d,exe_path,"zdt1.pst",10,worker_root="mou_tests",
+    #                             master_dir=m1,verbose=True,port=port)
     for i in range(pst.control_data.noptmax+1):
-        dp = pd.read_csv(os.path.join(m1,"zdt1.{0}.dv_pop.csv").format(i),index_col=0)
-        op = pd.read_csv(os.path.join(m1, "zdt1.{0}.obs_pop.csv").format(i), index_col=0)
-        assert dp.shape[0] == op.shape[0]
-        print(dp.shape[0])
-        for ii in range(dp.shape[0]):
-            assert dp.index[ii] == op.index[ii]
-            ii = dp.index[ii]
-            
-            d = np.abs(dp.loc[ii,tied].values - dp.loc[ii,first]).sum()
-            assert d == 0,d
 
         dp = pd.read_csv(os.path.join(m1, "zdt1.{0}.archive.dv_pop.csv").format(i), index_col=0)
         op = pd.read_csv(os.path.join(m1, "zdt1.{0}.archive.obs_pop.csv").format(i), index_col=0)
@@ -2185,29 +2196,55 @@ def zdt1_fixedtied_stack_test():
 
             d = np.abs(dp.loc[ii, tied].values - dp.loc[ii, first]).sum()
             assert d == 0, d
-        dp = pd.read_csv(os.path.join(m1,"zdt1.{0}.nested.par_stack.csv").format(i),index_col=0)
-        op = pd.read_csv(os.path.join(m1, "zdt1.{0}.nested.obs_stack.csv").format(i), index_col=0)
+
+        dp = pd.read_csv(os.path.join(m1, "zdt1.{0}.dv_pop.csv").format(i), index_col=0)
+        op = pd.read_csv(os.path.join(m1, "zdt1.{0}.obs_pop.csv").format(i), index_col=0)
+        assert dp.shape[0] == op.shape[0]
+        print(dp.shape[0])
+        for ii in range(dp.shape[0]):
+            assert dp.index[ii] == op.index[ii]
+            ii = dp.index[ii]
+
+            d = np.abs(dp.loc[ii, tied].values - dp.loc[ii, first]).sum()
+            assert d == 0, d
+
+
+        dps = pd.read_csv(os.path.join(m1,"zdt1.{0}.nested.par_stack.csv").format(i),index_col=0)
+        ops = pd.read_csv(os.path.join(m1, "zdt1.{0}.nested.obs_stack.csv").format(i), index_col=0)
         for pname in pst.par_names:
-            if pname in op.columns:
-                d = (dp.loc[:,pname] - op.loc[:,pname]).apply(np.abs).sum()
+            if pname in ops.columns:
+                d = (dps.loc[:,pname] - ops.loc[:,pname]).apply(np.abs).sum()
                 #print(pname,d)
                 assert d < 1.0e-7
                 if par.loc[pname,"partrans"] == "fixed":
-                    assert np.abs(op.loc[:,pname].values - par.loc[pname,"parval1"]).sum() == 0
+                    assert np.abs(ops.loc[:,pname].values - par.loc[pname,"parval1"]).sum() == 0
                 else:    
-                     assert np.abs(op.loc[:,pname].values - par.loc[pname,"parval1"]).min() > 0
-            for ii in op.index:
-                d = np.abs(op.loc[ii,tied].values - op.loc[ii,first]).sum()
-            #print(d)
+                     assert np.abs(ops.loc[:,pname].values - par.loc[pname,"parval1"]).min() > 0
+            for ii in ops.index:
+                d = np.abs(ops.loc[ii,tied].values - ops.loc[ii,first]).sum()
+                #print(d)
                 assert d < 1.0e-6
+                # make sure the dv value in the stack is in the dv population - checking for transform issues
+                # compare with the non-archive
+            if pname.startswith('dv'):
+                for real in op.index:
+                    rvals = np.round(ops.loc[ops.index.map(lambda x: real in x), pname].values, 5)
+                    stack_ovals = list(rvals)
+                    pop_oval = op.loc[real, pname]
+                    pop_oval = list(np.round([pop_oval], 5))[0]
+                    print(pop_oval)
+                    print(stack_ovals)
+                    print(i,pname,real)
+                    in_pop = pop_oval in stack_ovals
+                    assert in_pop
     
 
     
 
 
 if __name__ == "__main__":
-    basic_pso_test()
-    #zdt1_fixedtied_stack_test()
+    #basic_pso_test()
+    zdt1_fixedtied_stack_test()
     #zdt1_fixed_scaleoffset_test()
     #shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-mou.exe"),os.path.join("..","bin","pestpp-mou.exe"))
     #invest()
