@@ -471,7 +471,10 @@ def setup_problem(name,additive_chance=False, risk_obj=False, self_adaptive=Fals
 
            
     pst.pestpp_options["opt_dec_var_groups"] = "decvars"
-    pst.pestpp_options["mou_objectives"] = "obj_1,obj_2"
+    if name.lower() in ["rosen","rosenc"]:
+        pst.pestpp_options["mou_objectives"] = "obj_1"
+    else:
+        pst.pestpp_options["mou_objectives"] = "obj_1,obj_2"
     if name.lower() == "water":
         pst.pestpp_options["mou_objectives"] = "obj_1,obj_2,obj_3,obj_4,obj_5"
 
