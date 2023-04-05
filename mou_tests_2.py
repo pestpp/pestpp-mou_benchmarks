@@ -1931,7 +1931,7 @@ def stack_invest():
     
     pst = pyemu.Pst(os.path.join(t_d,"{0}.pst".format(name)))
     par = pst.parameter_data
-    pst.control_data.noptmax = 100
+    pst.control_data.noptmax = 3
     pst.pestpp_options["opt_recalc_chance_every"] = pst.control_data.noptmax
     pst.pestpp_options["mou_save_population_every"] = 1
     pst.pestpp_options["opt_stack_size"] = 30
@@ -1945,8 +1945,8 @@ def stack_invest():
     
     pst.write(os.path.join(t_d,"{0}.pst".format(name)))
     m1 = os.path.join("mou_tests","master_stack_test")
-    #pyemu.os_utils.start_workers(t_d,exe_path,"{0}.pst".format(name),20,worker_root="mou_tests",
-    #                             master_dir=m1,verbose=True,port=port)
+    pyemu.os_utils.start_workers(t_d,exe_path,"{0}.pst".format(name),20,worker_root="mou_tests",
+                                 master_dir=m1,verbose=True,port=port)
 
     pdf = pd.read_csv(os.path.join(m1,"{0}.{1}.nested.par_stack.csv".\
         format(name,pst.control_data.noptmax)),index_col=0)
@@ -2241,13 +2241,13 @@ def zdt1_fixedtied_stack_test():
 
 if __name__ == "__main__":
     #basic_pso_test()
-    zdt1_fixedtied_stack_test()
+    #zdt1_fixedtied_stack_test()
     #zdt1_fixed_scaleoffset_test()
     #shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-mou.exe"),os.path.join("..","bin","pestpp-mou.exe"))
     #invest()
     #plot()
     #run()
-    #stack_invest()
+    stack_invest()
     #plot_zdt1(name="zdt1",m_d=os.path.join("mou_tests","master_zdt1_test"))
 
     #zdt1_tied_test()
