@@ -133,7 +133,7 @@ def test_risk_obj():
     for test_file in test_files:
         df1 = pd.read_csv(os.path.join(m1,test_file),index_col=0)
         df2 = pd.read_csv(os.path.join(m2, test_file), index_col=0)
-        d = (df1 - df2).apply(np.abs)
+        d = (df1 - df2).apply(lambda x: np.abs(x))
         print(d.max().max())
 
 
@@ -168,7 +168,7 @@ def test_restart_single():
     chance_file = "zdt1.0.obs_pop.chance.csv"
     d1 = pd.read_csv(os.path.join(m1,chance_file),index_col=0)
     d2 = pd.read_csv(os.path.join(m2, chance_file), index_col=0)
-    d = (d1-d2).apply(np.abs)
+    d = (d1-d2).apply(lambda x: np.abs(x))
     print(d.max().max())
     assert d.max().max() < 0.01
 
@@ -202,7 +202,7 @@ def test_restart_all():
     chance_file = "zdt1.0.obs_pop.chance.csv"
     d1 = pd.read_csv(os.path.join(m1, chance_file), index_col=0)
     d2 = pd.read_csv(os.path.join(m2, chance_file), index_col=0)
-    d = (d1 - d2).apply(np.abs)
+    d = (d1 - d2).apply(lambda x: np.abs(x))
     print(d.max().max())
     assert d.max().max() < 0.01
 
@@ -235,7 +235,7 @@ def test_restart_all():
     chance_file = "zdt1.0.obs_pop.chance.csv"
     d1 = pd.read_csv(os.path.join(m1, chance_file), index_col=0)
     d2 = pd.read_csv(os.path.join(m2, chance_file), index_col=0)
-    d = (d1 - d2).apply(np.abs)
+    d = (d1 - d2).apply(lambda x: np.abs(x))
     print(d.max().max())
     assert d.max().max() < 0.01
 
@@ -460,7 +460,7 @@ def pso_fail_test():
 
 
 
-def invest():
+def invest_5():
     cases = ["kur","sch","srn","tkn","constr","zdt2","zdt3","zdt4","zdt6"]
     noptmax = 100
     for case in cases:
@@ -1144,12 +1144,12 @@ def risk_obj_test():
 
     op1 = pd.read_csv(os.path.join(m1, "constr.0.obs_pop.csv"), index_col=0)
     op2 = pd.read_csv(os.path.join(m2, "constr.0.obs_pop.csv"), index_col=0)
-    d = (op1 - op2).apply(np.abs)
+    d = (op1 - op2).apply(lambda x: np.abs(x))
     print(d.max())
     assert d.max().max() < 1.0e-10,d.max().max()
     op1 = pd.read_csv(os.path.join(m1, "constr.0.obs_pop.chance.csv"), index_col=0)
     op2 = pd.read_csv(os.path.join(m2, "constr.0.obs_pop.chance.csv"), index_col=0)
-    d = (op1 - op2).apply(np.abs)
+    d = (op1 - op2).apply(lambda x: np.abs(x))
     print(d.max())
     assert d.max().max() < 1.0e-10, d.max().max()
 
@@ -1173,12 +1173,12 @@ def risk_obj_test():
 
     op1 = pd.read_csv(os.path.join(m1, "constr.0.obs_pop.csv"), index_col=0)
     op2 = pd.read_csv(os.path.join(m2, "constr.0.obs_pop.csv"), index_col=0)
-    d = (op1 - op2).apply(np.abs)
+    d = (op1 - op2).apply(lambda x: np.abs(x))
     print(d.max())
     assert d.max().max() < 1.0e-10, d.max().max()
     op1 = pd.read_csv(os.path.join(m1, "constr.0.obs_pop.chance.csv"), index_col=0)
     op2 = pd.read_csv(os.path.join(m2, "constr.0.obs_pop.chance.csv"), index_col=0)
-    d = (op1 - op2).apply(np.abs)
+    d = (op1 - op2).apply(lambda x: np.abs(x))
     print(d.max())
     assert d.max().max() < 1.0e-10, d.max().max()
 
@@ -1748,7 +1748,7 @@ def zdt1_tied_test():
     pyemu.os_utils.run("{0} {1}".format(exe_path,"zdt1.pst"),cwd=t_d)
     df = pd.read_csv(os.path.join(t_d,"dv.dat"),header=None,names=["dv","val"],delim_whitespace=True)
     df.index = df.dv
-    assert (df.loc[others,"val"] - df.loc[first,"val"]).apply(np.abs).sum() == 0.0
+    assert (df.loc[others,"val"] - df.loc[first,"val"]).apply(lambda x: np.abs(x)).sum() == 0.0
 
     m1 = os.path.join("mou_tests","zdt1_tied_test")
     pst.control_data.noptmax = 3
@@ -1807,7 +1807,7 @@ def zdt1_tied_test():
             assert d == 0, d
 
 
-def zdt1_stack_run_for_animation():
+def zdt1_stack_run_for_animation(mou_gen):
     t_d = mou_suite_helper.setup_problem("zdt1",True,True)
     
     pst = pyemu.Pst(os.path.join(t_d,"zdt1.pst"))
@@ -1818,14 +1818,14 @@ def zdt1_stack_run_for_animation():
     pst.pestpp_options["mou_save_population_every"] = 1
     pst.pestpp_options["opt_stack_size"] = 100
     #pst.pestpp_options["opt_par_stack"] = "prior.csv"
-    pst.pestpp_options["mou_generator"] = "de"
+    pst.pestpp_options["mou_generator"] = mou_gen
     pst.pestpp_options["mou_population_size"] = 300
     pst.pestpp_options["mou_verbose_level"] = 4
     pst.pestpp_options["opt_chance_points"] = "single"
     pst.pestpp_options["mou_max_archive_size"] = 100000
     pst.control_data.noptmax = 300
     pst.write(os.path.join(t_d,"zdt1.pst"))
-    m1 = os.path.join("mou_tests","master_zdt1_test")
+    m1 = os.path.join("mou_tests","master_zdt1_test_{0}".format(mou_gen))
     pyemu.os_utils.start_workers(t_d,exe_path,"zdt1.pst",20,worker_root="mou_tests",
                                  master_dir=m1,verbose=True,port=port)
 
@@ -1850,14 +1850,14 @@ def zdt1_stack_run_for_animation():
     # print(diff.apply(np.abs).sum())
 
 
-def invest(name="binh"):
+def invest(name="zdt1"):
     t_d = mou_suite_helper.setup_problem(name,False,False)
     pst = pyemu.Pst(os.path.join(t_d,"{0}.pst".format(name)))
     par = pst.parameter_data
-    par_org = par.copy()
-    par.loc[["dv_0","dv_1"],"parval1"] = 9
-    par.loc[["dv_0","dv_1"],"parlbnd"] = 9
-    pst.parameter_data = par_org
+    #par_org = par.copy()
+    #par.loc[["dv_0","dv_1"],"parval1"] = 9
+    #par.loc[["dv_0","dv_1"],"parlbnd"] = 9
+    #pst.parameter_data = par_org
     pe = pyemu.ParameterEnsemble.from_uniform_draw(pst=pst,num_reals=30)
     pe.to_csv(os.path.join(t_d,"init.csv"))
     
@@ -1870,12 +1870,12 @@ def invest(name="binh"):
     #pst.pestpp_options["opt_chance_points"] = "all"
     pst.control_data.noptmax = 30
     pst.write(os.path.join(t_d,"{0}.pst".format(name)))
-    m1 = os.path.join("mou_tests","master_{0}_test".format(name))
+    m1 = os.path.join("mou_tests","master_{0}_test_{1}".format(name,pst.pestpp_options["mou_generator"]))
     pyemu.os_utils.start_workers(t_d,exe_path,"{0}.pst".format(name),30,worker_root="mou_tests",
                                  master_dir=m1,verbose=True,port=port)
 
 
-def plot_zdt1(name="binh",m_d=None):
+def plot_zdt1(name="zdt1",m_d=None):
     if m_d is None:
         m_d = os.path.join("mou_tests","master_{0}_test".format(name))
     import matplotlib.pyplot as plt
@@ -1884,7 +1884,7 @@ def plot_zdt1(name="binh",m_d=None):
     df = pd.read_csv(os.path.join(m_d,"{0}.pareto.archive.summary.csv".format(name)))
     gens = df.generation.unique()
     gens.sort()
-    plt_d = "plots_{0}".format(name)
+    plt_d = m_d+"_plots"
     if os.path.exists(plt_d):
         shutil.rmtree(plt_d)
     os.makedirs(plt_d)
@@ -1931,12 +1931,12 @@ def stack_invest():
     
     pst = pyemu.Pst(os.path.join(t_d,"{0}.pst".format(name)))
     par = pst.parameter_data
-    pst.control_data.noptmax = 3
+    pst.control_data.noptmax = 50
     pst.pestpp_options["opt_recalc_chance_every"] = pst.control_data.noptmax
     pst.pestpp_options["mou_save_population_every"] = 1
     pst.pestpp_options["opt_stack_size"] = 30
     #pst.pestpp_options["opt_par_stack"] = "prior.csv"
-    pst.pestpp_options["mou_generator"] = "de"
+    pst.pestpp_options["mou_generator"] = "pso"
     pst.pestpp_options["mou_population_size"] = 30
     pst.pestpp_options["mou_verbose_level"] = 4
     pst.pestpp_options["opt_chance_points"] = "all"
@@ -2114,7 +2114,7 @@ def zdt1_fixedtied_stack_test():
     pyemu.os_utils.run("{0} {1}".format(exe_path,"zdt1.pst"),cwd=t_d)
     df = pd.read_csv(os.path.join(t_d,"dv.dat"),header=None,names=["dv","val"],delim_whitespace=True)
     df.index = df.dv
-    assert (df.loc[df.dv!=others[0],"val"] - df.loc[first,"val"]).apply(np.abs).sum() == 0.0
+    assert (df.loc[df.dv!=others[0],"val"] - df.loc[first,"val"]).apply(lambda x: np.abs(x)).sum() == 0.0
     df.loc[others[0],"val"] == par.loc[others[0],"parubnd"]
   
     m1 = os.path.join("mou_tests","zdt1_fixedtied_stack_test")
@@ -2152,7 +2152,7 @@ def zdt1_fixedtied_stack_test():
         ops = pd.read_csv(os.path.join(m1, "zdt1.{0}.obs_stack.csv").format(i), index_col=0)
         for pname in pst.par_names:
             if pname in ops.columns:
-                d = (dps.loc[:,pname] - ops.loc[:,pname]).apply(np.abs).sum()
+                d = (dps.loc[:,pname] - ops.loc[:,pname]).apply(lambda x: np.abs(x)).sum()
                 #print(pname,d)
                 assert d < 1.0e-7
                 if par.loc[pname,"partrans"] == "fixed":
@@ -2210,7 +2210,7 @@ def zdt1_fixedtied_stack_test():
         ops = pd.read_csv(os.path.join(m1, "zdt1.{0}.nested.obs_stack.csv").format(i), index_col=0)
         for pname in pst.par_names:
             if pname in ops.columns:
-                d = (dps.loc[:,pname] - ops.loc[:,pname]).apply(np.abs).sum()
+                d = (dps.loc[:,pname] - ops.loc[:,pname]).apply(lambda x: np.abs(x)).sum()
                 #print(pname,d)
                 assert d < 1.0e-7
                 if par.loc[pname,"partrans"] == "fixed":
@@ -2247,8 +2247,12 @@ if __name__ == "__main__":
     #invest()
     #plot()
     #run()
-    stack_invest()
-    #plot_zdt1(name="zdt1",m_d=os.path.join("mou_tests","master_zdt1_test"))
+    #stack_invest()
+    zdt1_stack_run_for_animation(mou_gen="de")
+    plot_zdt1(name="zdt1",m_d=os.path.join("mou_tests","master_zdt1_test_de"))
+
+    zdt1_stack_run_for_animation(mou_gen="pso")
+    plot_zdt1(name="zdt1",m_d=os.path.join("mou_tests","master_zdt1_test_pso"))
 
     #zdt1_tied_test()
     #basic_pso_test()
