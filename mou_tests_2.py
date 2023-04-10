@@ -1189,11 +1189,22 @@ def basic_pso_test(case="zdt1"):
     pst.pestpp_options["mou_generator"] = "pso"
     pst.pestpp_options["opt_risk"] = 0.95
     pst.control_data.noptmax = 3
+    pst.pestpp_options["mou_population_size"] = 30
+    pst.pestpp_options["mou_save_population_every"] = 1
     pst.write(os.path.join(t_d, case+".pst"))
     m_d = os.path.join("mou_tests", case+"_pso_master_risk")
     pyemu.os_utils.start_workers(t_d, exe_path,  case+".pst", 20, worker_root="mou_tests",
                                  master_dir=m_d, verbose=True, port=port)
     assert os.path.exists(os.path.join(m_d,"{0}.{1}.fosm.jcb".format(case,pst.control_data.noptmax)))
+
+    for i in range(0,pst.control_data.noptmax+1):
+        dv_file = os.path.join(m_d,"{0}.{1}.dv_pop.csv".format(case,i))
+        oe_file = os.path.join(m_d,"{0}.{1}.obs_pop.csv".format(case,i))
+        assert os.path.exists(dv_file)
+        assert os.path.exists(oe_file)
+        dv = pd.read_csv(dv_file)
+        oe = pd.read_csv(oe_file)
+        assert dv.shape[0] == oe.shape[0]
 
     pst.pestpp_options["mou_generator"] = "de"
     pst.pestpp_options["opt_risk"] = 0.95
@@ -1203,6 +1214,8 @@ def basic_pso_test(case="zdt1"):
     pyemu.os_utils.start_workers(t_d, exe_path, case+".pst", 20, worker_root="mou_tests",
                                  master_dir=m_d, verbose=True, port=port)
     assert os.path.exists(os.path.join(m_d, "{0}.{1}.fosm.jcb".format(case, pst.control_data.noptmax)))
+
+    
 
 
 
@@ -1823,7 +1836,7 @@ def zdt1_stack_run_for_animation(mou_gen):
     pst.pestpp_options["mou_verbose_level"] = 4
     pst.pestpp_options["opt_chance_points"] = "single"
     pst.pestpp_options["mou_max_archive_size"] = 100000
-    pst.control_data.noptmax = 300
+    pst.control_data.noptmax = 40
     pst.write(os.path.join(t_d,"zdt1.pst"))
     m1 = os.path.join("mou_tests","master_zdt1_test_{0}".format(mou_gen))
     pyemu.os_utils.start_workers(t_d,exe_path,"zdt1.pst",20,worker_root="mou_tests",
@@ -1901,10 +1914,10 @@ def plot_zdt1(name="zdt1",m_d=None):
         ax.scatter(gdf.obj_1.values,gdf.obj_2.values,marker=".",s=20,c=c,cmap="jet_r")
         ax.set_xlim(2,-0.75)
         ax.set_ylim(-1,7)
-        ax.set_xticklabels([])
-        ax.set_yticklabels([])
-        ax.set_xlabel("increasing quality",fontsize=12)
-        ax.set_ylabel("increasing cost",fontsize=12)
+        #ax.set_xticklabels([])
+        #ax.set_yticklabels([])
+        #ax.set_xlabel("increasing quality",fontsize=12)
+        #ax.set_ylabel("increasing cost",fontsize=12)
         #ax.set_yticks([])
         #ax.set_xticks([])
         ax.grid()
@@ -2248,14 +2261,14 @@ if __name__ == "__main__":
     #plot()
     #run()
     #stack_invest()
-    zdt1_stack_run_for_animation(mou_gen="de")
-    plot_zdt1(name="zdt1",m_d=os.path.join("mou_tests","master_zdt1_test_de"))
+    #zdt1_stack_run_for_animation(mou_gen="de")
+    #plot_zdt1(name="zdt1",m_d=os.path.join("mou_tests","master_zdt1_test_de"))
 
-    zdt1_stack_run_for_animation(mou_gen="pso")
-    plot_zdt1(name="zdt1",m_d=os.path.join("mou_tests","master_zdt1_test_pso"))
+    #zdt1_stack_run_for_animation(mou_gen="pso")
+    #plot_zdt1(name="zdt1",m_d=os.path.join("mou_tests","master_zdt1_test_pso"))
 
     #zdt1_tied_test()
-    #basic_pso_test()
+    basic_pso_test()
 
     #shutil.copy2(os.path.join("..", "bin", "win", "pestpp-mou.exe"),
     #             os.path.join("..", "bin", "pestpp-mou.exe"))
