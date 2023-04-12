@@ -2248,11 +2248,54 @@ def zdt1_fixedtied_stack_test():
                     in_pop = pop_oval in stack_ovals
                     assert in_pop
     
+def multigen_test():
+    t_d = mou_suite_helper.setup_problem("tkn")
+    pst = pyemu.Pst(os.path.join(t_d,"tkn.pst"))
+    obs = pst.observation_data
+    #print(obs)
+    #obs.loc["const_1","obsval"] = -1
+    df = pd.DataFrame(data={"gen":[0,1],"pop_size":[100,20]})
+    df.to_csv(os.path.join(t_d,"pop_sched.dat"),index=False,header=False,sep=" ")
+    pst.pestpp_options["mou_population_schedule"] = "pop_sched.dat"
+    pst.pestpp_options["mou_population_size"] = 15
+    pst.pestpp_options["mou_generator"] = "pso"
+    pst.pestpp_options["mou_env_selector"] = "nsga"
+    pst.pestpp_options["mou_use_multigen_population"] = True
+    pst.pestpp_options["mou_save_population_every"] = 1
+    pst.pestpp_options["mou_verbose_level"] = 4
+    pst.control_data.noptmax = 10
+    pst.write(os.path.join(t_d,"tkn.pst"))
+    m1 = os.path.join("mou_tests", "test_master_multigen_pso")
+    pyemu.os_utils.start_workers(t_d, exe_path, "tkn.pst", 15, worker_root="mou_tests",
+                                 master_dir=m1, verbose=True,port=port)
 
+    dp = pd.read_csv(os.path.join(m1,"tkn.0.dv_pop.csv"),index_col=0)
+    print(dp.shape)
+    assert dp.shape[0] == 100
+    op = pd.read_csv(os.path.join(m1,"tkn.0.obs_pop.csv"),index_col=0)
+    print(op.shape)
+    assert op.shape[0] == 100
+
+    dp = pd.read_csv(os.path.join(m1,"tkn.1.dv_pop.csv"),index_col=0)
+    print(dp.shape)
+    assert dp.shape[0] == 20
+    op = pd.read_csv(os.path.join(m1,"tkn.1.obs_pop.csv"),index_col=0)
+    print(op.shape)
+    assert op.shape[0] == 20
+
+    dp = pd.read_csv(os.path.join(m1,"tkn.{0}.dv_pop.csv".format(pst.control_data.noptmax)),index_col=0)
+    print(dp.shape)
+    assert dp.shape[0] == 15
+    op = pd.read_csv(os.path.join(m1,"tkn.{0}.obs_pop.csv".format(pst.control_data.noptmax)),index_col=0)
+    print(op.shape)
+    assert op.shape[0] == 15
+    
+    
     
 
 
 if __name__ == "__main__":
+    multigen_test()
     #basic_pso_test()
     #zdt1_fixedtied_stack_test()
     #zdt1_fixed_scaleoffset_test()
@@ -2268,7 +2311,7 @@ if __name__ == "__main__":
     #plot_zdt1(name="zdt1",m_d=os.path.join("mou_tests","master_zdt1_test_pso"))
 
     #zdt1_tied_test()
-    basic_pso_test()
+    #basic_pso_test()
 
     #shutil.copy2(os.path.join("..", "bin", "win", "pestpp-mou.exe"),
     #             os.path.join("..", "bin", "pestpp-mou.exe"))
