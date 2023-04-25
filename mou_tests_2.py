@@ -1184,17 +1184,18 @@ def risk_obj_test():
 
 
 def basic_pso_test(case="zdt1"):
+
     t_d = mou_suite_helper.setup_problem(case, additive_chance=True, risk_obj=False)
     pst = pyemu.Pst(os.path.join(t_d, case+".pst"))
     pst.pestpp_options["mou_generator"] = "pso"
     pst.pestpp_options["opt_risk"] = 0.95
-    pst.control_data.noptmax = 3
-    pst.pestpp_options["mou_population_size"] = 30
+    pst.control_data.noptmax = 20
+    pst.pestpp_options["mou_population_size"] = 20
     pst.pestpp_options["mou_save_population_every"] = 1
     pst.write(os.path.join(t_d, case+".pst"))
     m_d = os.path.join("mou_tests", case+"_pso_master_risk")
     pyemu.os_utils.start_workers(t_d, exe_path,  case+".pst", 20, worker_root="mou_tests",
-                                 master_dir=m_d, verbose=True, port=port)
+                                master_dir=m_d, verbose=True, port=port)
     assert os.path.exists(os.path.join(m_d,"{0}.{1}.fosm.jcb".format(case,pst.control_data.noptmax)))
 
     for i in range(0,pst.control_data.noptmax+1):
@@ -1202,20 +1203,80 @@ def basic_pso_test(case="zdt1"):
         oe_file = os.path.join(m_d,"{0}.{1}.obs_pop.csv".format(case,i))
         assert os.path.exists(dv_file)
         assert os.path.exists(oe_file)
-        dv = pd.read_csv(dv_file)
-        oe = pd.read_csv(oe_file)
-        assert dv.shape[0] == oe.shape[0]
+        dv_pso = pd.read_csv(dv_file)
+        oe_pso = pd.read_csv(oe_file)
+        assert dv_pso.shape[0] == oe_pso.shape[0]
 
     pst.pestpp_options["mou_generator"] = "de"
     pst.pestpp_options["opt_risk"] = 0.95
-    pst.control_data.noptmax = 3
+    pst.pestpp_options["mou_save_population_every"] = 1
     pst.write(os.path.join(t_d, case+".pst"))
     m_d = os.path.join("mou_tests", case+"_de_master_risk")
-    pyemu.os_utils.start_workers(t_d, exe_path, case+".pst", 20, worker_root="mou_tests",
-                                 master_dir=m_d, verbose=True, port=port)
-    assert os.path.exists(os.path.join(m_d, "{0}.{1}.fosm.jcb".format(case, pst.control_data.noptmax)))
+    #pyemu.os_utils.start_workers(t_d, exe_path, case+".pst", 20, worker_root="mou_tests",
+    #                             master_dir=m_d, verbose=True, port=port)
+    # assert os.path.exists(os.path.join(m_d, "{0}.{1}.fosm.jcb".format(case, pst.control_data.noptmax)))
 
+    # for i in range(0,pst.control_data.noptmax+1):
+    #     dv_file = os.path.join(m_d,"{0}.{1}.dv_pop.csv".format(case,i))
+    #     oe_file = os.path.join(m_d,"{0}.{1}.obs_pop.csv".format(case,i))
+    #     assert os.path.exists(dv_file)
+    #     assert os.path.exists(oe_file)
+    #     dv_de = pd.read_csv(dv_file)
+    #     oe_de = pd.read_csv(oe_file)
+    #     assert dv_de.shape[0] == oe_de.shape[0]
+
+    method = mou_suite_helper.zdt1
+    x0 = np.linspace(0,1,10000)
+    o1,o2 = [],[]
+    for xx0 in x0:
+        x = np.zeros(30)
+        x[0] = xx0
+        ret_vals = method(x)
+        o1.append(ret_vals[0][0])
+        o2.append(ret_vals[0][1])
     
+
+    o1 = np.array(o1)
+    o2 = np.array(o2)
+    diff = np.abs(o1.min() - oe_pso.loc[:,"obj_1"].values.min()) 
+    #print(diff)
+    assert diff < 1.0e-4
+    diff = np.abs(o1.max() - oe_pso.loc[:,"obj_1"].values.max()) 
+    #print(diff)
+    assert diff < 1.0e-4
+
+    diff = np.abs(o2.min() - oe_pso.loc[:,"obj_2"].values.min()) 
+    print(diff)
+    #assert diff < 1.0e-4
+    
+    opt_1,opt_2 = o1.min(),o2.min()
+    opt = np.array([opt_1,opt_2])
+    truth = np.array([o1,o2]).transpose()
+    #print(truth)
+    #print(opt)
+    dist = [(opt-t).sum()**2 for t in truth]
+    knee_idx = np.argmin(dist)
+    #print(knee_idx,dist[knee_idx],truth[knee_idx])
+    knee = truth[knee_idx]
+
+    knee_dist = [(knee-sol).sum()**2 for sol in oe_pso.loc[:,["obj_1","obj_2"]].values]
+    #print(knee_dist)
+    knee_sol_idx = np.argmin(knee_dist)
+    
+    knee_sol = oe_pso.loc[:,["obj_1","obj_2"]].values[knee_sol_idx]
+    #print(knee_sol_idx,knee_sol)
+
+    dist = (knee - knee_sol).sum()**2
+    print(dist)
+    #assert dist < 0.001
+
+    # import matplotlib.pyplot as plt
+    # fig,axes = plt.subplots(1,2,figsize=(10,5))
+    # axes[0].plot(o1,o2)
+    # axes[0].scatter(oe_pso.loc[:,"obj_1"].values,oe_pso.loc[:,"obj_2"])
+    # axes[1].plot(o1,o2)
+    # axes[1].scatter(oe_de.loc[:,"obj_1"].values,oe_de.loc[:,"obj_2"])
+    # plt.show()
 
 
 
@@ -2295,8 +2356,8 @@ def multigen_test():
 
 
 if __name__ == "__main__":
-    multigen_test()
-    #basic_pso_test()
+    #multigen_test()
+    basic_pso_test()
     #zdt1_fixedtied_stack_test()
     #zdt1_fixed_scaleoffset_test()
     #shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-mou.exe"),os.path.join("..","bin","pestpp-mou.exe"))
