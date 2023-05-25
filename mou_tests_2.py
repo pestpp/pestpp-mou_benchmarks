@@ -2352,12 +2352,91 @@ def multigen_test():
     assert op.shape[0] == 15
     
     
+def zdt1_fixed_robust_opt_test():
+    t_d = mou_suite_helper.setup_problem("zdt1",True,False)
+    pst = pyemu.Pst(os.path.join(t_d,"zdt1.pst"))
     
+    df = pd.read_csv(os.path.join(t_d,"dv.dat"),header=None,names=["dv","val"],delim_whitespace=True) 
+    ins_file = os.path.join(t_d,"dv.dat.ins")
+    with open(ins_file,'w') as f:
+        f.write("pif ~\n")
+        for name in df.dv:
+            f.write("l1 w !{0}!\n".format(name))
+    pst.add_observations(ins_file,ins_file.replace(".ins",""),pst_path=".")
+
+    df = pd.read_csv(os.path.join(t_d,"additive_par.dat"),header=None,names=["dv","val"],delim_whitespace=True) 
+    ins_file = os.path.join(t_d,"additive_par.dat.ins")
+    with open(ins_file,'w') as f:
+        f.write("pif ~\n")
+        for name in df.dv:
+            f.write("l1 w !{0}!\n".format(name))
+    pst.add_observations(ins_file,ins_file.replace(".ins",""),pst_path=".")
+
+    par = pst.parameter_data
+    pe = pyemu.ParameterEnsemble.from_uniform_draw(pst,num_reals=10)
+    pe.to_csv(os.path.join(t_d,"init_pop.csv"))
+    par.loc[df.dv.values,"partrans"] = "fixed"
+    
+    pst.pestpp_options["opt_dec_var_groups"] = "decvars"
+    pst.pestpp_options["mou_save_population_every"] = 1
+    pst.pestpp_options["mou_generator"] = "pso"
+    pst.pestpp_options["mou_population_size"] = 10
+    pst.pestpp_options["opt_risk"] = 0.5
+    pst.pestpp_options["ensemble_output_precision"] = 10
+    pst.pestpp_options["mou_dv_population_file"] = "init_pop.csv"
+    pst.control_data.noptmax = 0
+    pst.write(os.path.join(t_d,"zdt1.pst"))
+    pyemu.os_utils.run("{0} {1}".format(exe_path,"zdt1.pst"),cwd=t_d)
+    df = pd.read_csv(os.path.join(t_d,"additive_par.dat"),header=None,names=["dv","val"],delim_whitespace=True)
+    assert np.all(par.loc[df.dv.values,"parval1"].values == df.loc[:,"val"].values)
+  
+    m1 = os.path.join("mou_tests","zdt1_fixed_robust_opt_test")
+    pst.control_data.noptmax = 3
+    pst.write(os.path.join(t_d,"zdt1.pst"))
+    pyemu.os_utils.start_workers(t_d,exe_path,"zdt1.pst",10,worker_root="mou_tests",
+                                 master_dir=m1,verbose=True,port=port)
+    pe0 = pd.read_csv(os.path.join(m1,"zdt1.0.dv_pop.csv"),index_col=0)
+    assert pe0.shape == pe0.shape
+    d = np.abs(pe._df.values - pe0.values)
+    print(d.max())
+    assert d.max() < 1.0e-6
+
+    oe0 = pd.read_csv(os.path.join(m1,"zdt1.0.obs_pop.csv"),index_col=0)
+    oe0 = oe0.loc[:,pe.columns]
+    assert oe0.shape == oe0.dropna().shape
+    d = np.abs(pe._df.values - oe0.values)
+    print(d.max())
+    assert d.max() < 1.0e-6
+
+    pe1 = pd.read_csv(os.path.join(m1,"zdt1.1.dv_pop.csv"),index_col=0)
+    assert pe.shape == pe1.shape
+    fpar = par.loc[par.partrans=="fixed","parnme"].values
+    pe1f = pe1.loc[:,fpar]
+    pef = pe0.loc[:,fpar]
+    for f in fpar:
+        vals = set(list(pef.loc[:,f].values))
+        for v in pe1.loc[:,f].values:
+            if v not in vals:
+                print(v,vals)
+                raise Exception("not found")
+    oe1 = pd.read_csv(os.path.join(m1,"zdt1.1.obs_pop.csv"),index_col=0)
+    oe1 = oe1.loc[:,pe.columns]
+    assert oe1.shape == oe1.dropna().shape 
+    for f in fpar:
+        vals = set(list(pef.loc[:,f].values))
+        for v in oe1.loc[:,f].values:
+            if v not in vals:
+                print(v,vals)
+                raise Exception("not found")       
+
+
+
 
 
 if __name__ == "__main__":
+    zdt1_fixed_robust_opt_test()
     #multigen_test()
-    basic_pso_test()
+    #basic_pso_test()
     #zdt1_fixedtied_stack_test()
     #zdt1_fixed_scaleoffset_test()
     #shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-mou.exe"),os.path.join("..","bin","pestpp-mou.exe"))
