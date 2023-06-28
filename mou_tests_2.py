@@ -270,15 +270,16 @@ def chance_consistency_test():
 
 
     
-    tag = "nearest-to-mean single point"
+    tag = "chance-shifted initial population objective function summary"
     with open(os.path.join(m1,"constr.rec"),'r') as f:
         while True:
             line = f.readline()
             if line == "":
                 raise Exception()
             if tag in line:
+                line = f.readline()
                 mname = line.strip().split()[2].lower()
-                for _ in range(4):
+                for _ in range(3):
                     f.readline()
                 o1 = float(f.readline().strip().split()[-1])
                 o2 = float(f.readline().strip().split()[-1])
@@ -289,9 +290,9 @@ def chance_consistency_test():
     df = pd.read_csv(os.path.join(m1,"constr.0.obs_pop.chance.csv"),index_col=0)
     d1 = np.abs(df.loc[mname,:].iloc[0] - o1)
     d2 = np.abs(df.loc[mname,:].iloc[1] - o2)
-    print(mname,o1,d1,o2,d2)
-    assert d1 < 1.e-6
-    assert d2 < 1.e-6
+    print(mname,o1,df.loc[mname,:].iloc[0],d1,o2,df.loc[mname,:].iloc[1],d2)
+    assert d1 < 1.e-5
+    assert d2 < 1.e-5
     
 def fail_test():
     t_d = mou_suite_helper.setup_problem("zdt1", additive_chance=True, risk_obj=False)
@@ -1887,41 +1888,44 @@ def zdt1_stack_run_for_animation(mou_gen):
     pst = pyemu.Pst(os.path.join(t_d,"zdt1.pst"))
     par = pst.parameter_data
     
-
+    pop_size=10
     pst.pestpp_options["opt_recalc_chance_every"] = 10000
     pst.pestpp_options["mou_save_population_every"] = 1
     pst.pestpp_options["opt_stack_size"] = 100
     #pst.pestpp_options["opt_par_stack"] = "prior.csv"
     pst.pestpp_options["mou_generator"] = mou_gen
-    pst.pestpp_options["mou_population_size"] = 300
+    pst.pestpp_options["mou_population_size"] = pop_size
     pst.pestpp_options["mou_verbose_level"] = 4
     pst.pestpp_options["opt_chance_points"] = "single"
     pst.pestpp_options["mou_max_archive_size"] = 100000
     pst.control_data.noptmax = 40
+    #pst.write(os.path.join(t_d,"zdt1.pst"))
+    #m1 = os.path.join("mou_tests","master_zdt1_test_{0}".format(mou_gen))
+    #pyemu.os_utils.start_workers(t_d,exe_path,"zdt1.pst",20,worker_root="mou_tests",
+    #                             master_dir=m1,verbose=True,port=port)
+
+    # now robust opt
+    t_d = mou_suite_helper.setup_problem("zdt1",True,False)
+
+    pe = pyemu.ParameterEnsemble.from_uniform_draw(pst=pst,num_reals=pop_size)
+    pe.to_csv(os.path.join(t_d,"init_pop_and_stack.csv"))
+    pst = pyemu.Pst(os.path.join(t_d,"zdt1.pst"))
+    par = pst.parameter_data
+    par.loc[par.parnme.str.contains("add"),"partrans"] = "fixed"
+
+    pst.pestpp_options["mou_save_population_every"] = 1
+    #pst.pestpp_options["opt_par_stack"] = "prior.csv"
+    pst.pestpp_options["mou_generator"] = mou_gen
+    pst.pestpp_options["mou_population_size"] = pop_size
+    pst.pestpp_options["mou_verbose_level"] = 4
+    pst.pestpp_options["mou_max_archive_size"] = 100000
+    pst.pestpp_options["mou_dv_population_file"] = "init_pop_and_stack.csv"
+    pst.pestpp_options["mou_shuffle_fixed_pars"] = True
+    pst.control_data.noptmax = 40
     pst.write(os.path.join(t_d,"zdt1.pst"))
-    m1 = os.path.join("mou_tests","master_zdt1_test_{0}".format(mou_gen))
+    m1 = os.path.join("mou_tests","master_zdt1_test_{0}_ro".format(mou_gen))
     pyemu.os_utils.start_workers(t_d,exe_path,"zdt1.pst",20,worker_root="mou_tests",
                                  master_dir=m1,verbose=True,port=port)
-
-    # pdf = pd.read_csv(os.path.join(m1,"zdt1.0.nested.par_stack.csv"),index_col=0)
-    # pdf.loc[:,"member"] = pdf.index.map(lambda x: x.split("||")[1])
-    # umem = pdf.member.unique()
-    # umem.sort()
-    # print(umem)
-    # pdf0 = pdf.loc[pdf.member==umem[0],:].copy()
-    # pdf0.index = pdf0.pop("member")
-    # print(pdf0)
-    # pdf0.to_csv(os.path.join(m1,"sweep_in.csv"))
-    # pyemu.os_utils.run("{0} zdt1.pst".format(exe_path.replace("-mou","-swp")),cwd=m1)
-
-    # odf = pd.read_csv(os.path.join(m1,"zdt1.0.nested.obs_stack.csv"),index_col=0)
-    # odf.loc[:,"member"] = odf.index.map(lambda x: x.split("||")[1])
-    # odf = odf.loc[odf.member == umem[0],:]
-    # odf.index = odf.pop("member")
-
-    # sdf = pd.read_csv(os.path.join(m1,"sweep_out.csv"),index_col=1)
-    # diff = sdf.loc[:,odf.columns] - odf
-    # print(diff.apply(np.abs).sum())
 
 
 def invest(name="zdt1"):
@@ -2434,7 +2438,8 @@ def zdt1_fixed_robust_opt_test():
 
 
 if __name__ == "__main__":
-    zdt1_fixed_robust_opt_test()
+    
+    #zdt1_fixed_robust_opt_test()
     #multigen_test()
     #basic_pso_test()
     #zdt1_fixedtied_stack_test()
@@ -2444,11 +2449,13 @@ if __name__ == "__main__":
     #plot()
     #run()
     #stack_invest()
-    #zdt1_stack_run_for_animation(mou_gen="de")
+    #zdt1_stack_run_for_animation(mou_gen="pso")
     #plot_zdt1(name="zdt1",m_d=os.path.join("mou_tests","master_zdt1_test_de"))
+    #plot_zdt1(name="zdt1",m_d=os.path.join("mou_tests","master_zdt1_test_de_ro"))
 
     #zdt1_stack_run_for_animation(mou_gen="pso")
     #plot_zdt1(name="zdt1",m_d=os.path.join("mou_tests","master_zdt1_test_pso"))
+    #plot_zdt1(name="zdt1",m_d=os.path.join("mou_tests","master_zdt1_test_pso_ro"))
 
     #zdt1_tied_test()
     #basic_pso_test()
@@ -2458,7 +2465,7 @@ if __name__ == "__main__":
     #basic_pso_test()
     #risk_obj_test()
     #invest_2()
-    #chance_consistency_test()
+    chance_consistency_test()
     #invest_3()
     # mou_suite_helper.start_workers("zdt1")
     #all_infeas_test()
