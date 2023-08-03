@@ -2431,15 +2431,27 @@ def zdt1_fixed_robust_opt_test():
         for v in oe1.loc[:,f].values:
             if v not in vals:
                 print(v,vals)
-                raise Exception("not found")       
+                raise Exception("not found") 
 
+    pe0 = pe0.iloc[:5,:]
+    pe0.to_csv(os.path.join(t_d,"init_pop.csv"))
+    oe0 = pd.read_csv(os.path.join(m1,"zdt1.0.obs_pop.csv"),index_col=0)
+    oe0 = oe0.iloc[:5,:]
+    oe0.to_csv(os.path.join(t_d,"init_obs_pop.csv"))
+    pst.pestpp_options["mou_obs_population_restart_file"] = "init_obs_pop.csv"
+
+    pst.control_data.noptmax = 3
+    pst.write(os.path.join(t_d,"zdt1.pst"))
+
+    pyemu.os_utils.start_workers(t_d,exe_path,"zdt1.pst",10,worker_root="mou_tests",
+                                 master_dir=m1,verbose=True,port=port)
 
 
 
 
 if __name__ == "__main__":
     
-    #zdt1_fixed_robust_opt_test()
+    zdt1_fixed_robust_opt_test()
     #multigen_test()
     #basic_pso_test()
     #zdt1_fixedtied_stack_test()
@@ -2465,7 +2477,7 @@ if __name__ == "__main__":
     #basic_pso_test()
     #risk_obj_test()
     #invest_2()
-    chance_consistency_test()
+    #chance_consistency_test()
     #invest_3()
     # mou_suite_helper.start_workers("zdt1")
     #all_infeas_test()
