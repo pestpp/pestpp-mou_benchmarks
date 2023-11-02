@@ -2470,8 +2470,8 @@ def gpr_compare_invest():
     gpr_t_d = os.path.join("mou_tests",case+"_gpr_template")
     pyemu.helpers.prep_for_gpr(pst_fname,dv_pops,obs_pops,gpr_t_d=gpr_t_d,nverf=50,plot_fits=True)
     gpr_m_d = gpr_t_d.replace("template","master")
-        if os.path.exists(gpr_m_d):
-             shutil.rmtree(gpr_m_d)
+    if os.path.exists(gpr_m_d):
+         shutil.rmtree(gpr_m_d)
     pyemu.os_utils.start_workers(gpr_t_d, exe_path,  case+".pst", 20, worker_root="mou_tests",
                                          master_dir=gpr_m_d, verbose=True, port=port)
     
