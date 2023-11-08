@@ -2454,7 +2454,7 @@ def gpr_compare_invest():
     pst.pestpp_options["mou_generator"] = "pso"
     pst.pestpp_options["opt_risk"] = 0.5
     pst.control_data.noptmax = 30
-    pop_size = 50
+    pop_size = 100
     pst.pestpp_options["mou_population_size"] = pop_size
     pst.pestpp_options["mou_save_population_every"] = 1
     pst.write(os.path.join(t_d, case+".pst"))
@@ -2472,10 +2472,10 @@ def gpr_compare_invest():
     pyemu.helpers.prep_for_gpr(pst_fname,dv_pops,obs_pops,gpr_t_d=gpr_t_d,nverf=int(pop_size*.1),plot_fits=True)
     gpst = pyemu.Pst(os.path.join(gpr_t_d,case+".pst"))
     gpr_m_d = gpr_t_d.replace("template","master")
-    if os.path.exists(gpr_m_d):
-         shutil.rmtree(gpr_m_d)
-    pyemu.os_utils.start_workers(gpr_t_d, exe_path,  case+".pst", 20, worker_root="mou_tests",
-                                         master_dir=gpr_m_d, verbose=True, port=port)
+    # if os.path.exists(gpr_m_d):
+    #      shutil.rmtree(gpr_m_d)
+    # pyemu.os_utils.start_workers(gpr_t_d, exe_path,  case+".pst", 20, worker_root="mou_tests",
+    #                                      master_dir=gpr_m_d, verbose=True, port=port)
     
     o1 = pd.read_csv(os.path.join(m_d,case+".{0}.obs_pop.csv".format(pst.control_data.noptmax)))
     o2 = pd.read_csv(os.path.join(gpr_m_d,case+".{0}.obs_pop.csv".format(gpst.control_data.noptmax)))
@@ -2491,15 +2491,18 @@ def gpr_compare_invest():
 
     # now lets try an inner-outer scheme...
     
-    gpst.control_data.noptmax = 10
+    gpst.control_data.noptmax = 30
     gpst.write(os.path.join(gpr_t_d,case+".pst"),version=2)
     gpr_t_d_iter = gpr_t_d+"_outeriter{0}".format(0)
+    if os.path.exists(gpr_t_d_iter):
+        shutil.rmtree(gpr_t_d_iter)
+    shutil.copytree(gpr_t_d,gpr_t_d_iter)
     for iouter in range(1,4):
         #run the gpr emulator
         gpr_m_d_iter = gpr_t_d_iter.replace("template","master")
         if os.path.exists(gpr_m_d_iter):
              shutil.rmtree(gpr_m_d_iter)
-        pyemu.os_utils.start_workers(gpr_t_d, exe_path,  case+".pst", 20, worker_root="mou_tests",
+        pyemu.os_utils.start_workers(gpr_t_d_iter, exe_path,  case+".pst", 20, worker_root="mou_tests",
                                          master_dir=gpr_m_d_iter, verbose=True, port=port)
         # now run the final dv pop thru the "complex" model
         final_gpr_dvpop_fname = os.path.join(gpr_m_d_iter,case+".{0}.archive.dv_pop.csv".format(gpst.control_data.noptmax))
@@ -2522,13 +2525,16 @@ def gpr_compare_invest():
         gpr_t_d_iter = gpr_t_d+"_outeriter{0}".format(iouter)
         pyemu.helpers.prep_for_gpr(pst_fname,dv_pops,obs_pops,gpr_t_d=gpr_t_d_iter,nverf=int(pop_size*.1),plot_fits=True)
         gpst_iter = pyemu.Pst(os.path.join(gpr_t_d_iter,case+".pst"))
+        aggdf = pd.read_csv(os.path.join(gpr_t_d,"gpr_aggregate_training_data.csv"),index_col=0)
+        #aggdf = aggdf.loc[:,gpst.par_names]
+        #aggdf = aggdf.iloc[-pop_size:,:]
+        aggdf.index = ["outeriter{0}_member{1}".format(iouter,i) for i in range(aggdf.shape[0])]
         restart_gpr_dvpop_fname = "gpr_restart_dvpop_outeriter{0}.csv".format(iouter)
-        shutil.copy2(os.path.join(complex_m_d_iter,case+".0.dv_pop.csv"),os.path.join(gpr_m_d_iter,restart_gpr_dvpop_fname))
+        aggdf.to_csv(restart_gpr_dvpop_fname)
+        shutil.copy2(os.path.join(complex_m_d_iter,case+".0.dv_pop.csv"),os.path.join(gpr_t_d_iter,restart_gpr_dvpop_fname))
         gpst_iter.pestpp_options["mou_dv_population_file"] = restart_gpr_dvpop_fname
         gpst_iter.control_data.noptmax = gpst.control_data.noptmax
         gpst_iter.write(os.path.join(gpr_t_d_iter,case+".pst"),version=2)
-
-
 
     o2 = pd.read_csv(os.path.join(gpr_m_d_iter,case+".{0}.obs_pop.csv".format(gpst.control_data.noptmax)))
     fig,axes = plt.subplots(1,2,figsize=(10,5))
