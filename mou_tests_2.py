@@ -2471,14 +2471,19 @@ def gpr_compare_invest():
     gpr_t_d = os.path.join("mou_tests",case+"_gpr_template")
     pyemu.helpers.prep_for_gpr(pst_fname,dv_pops,obs_pops,gpr_t_d=gpr_t_d,nverf=int(pop_size*.1),plot_fits=True)
     gpst = pyemu.Pst(os.path.join(gpr_t_d,case+".pst"))
+    shutil.copy2(os.path.join(m_d,case+".0.dv_pop.csv"),os.path.join(gpr_t_d,"initial_dv_pop.csv"))
+    gpst.pestpp_options["mou_dv_population_file"] = "initial_dv_pop.csv"
+    gpst.control_data.noptmax = 30
+    gpst.write(os.path.join(gpr_t_d,case+".pst"),version=2)
+
     gpr_m_d = gpr_t_d.replace("template","master")
     # if os.path.exists(gpr_m_d):
     #      shutil.rmtree(gpr_m_d)
     # pyemu.os_utils.start_workers(gpr_t_d, exe_path,  case+".pst", 20, worker_root="mou_tests",
     #                                      master_dir=gpr_m_d, verbose=True, port=port)
-    
-    o1 = pd.read_csv(os.path.join(m_d,case+".{0}.obs_pop.csv".format(pst.control_data.noptmax)))
-    o2 = pd.read_csv(os.path.join(gpr_m_d,case+".{0}.obs_pop.csv".format(gpst.control_data.noptmax)))
+    #
+    o1 = pd.read_csv(os.path.join(m_d,case+".{0}.obs_pop.csv".format(max(0,pst.control_data.noptmax))))
+    o2 = pd.read_csv(os.path.join(gpr_m_d,case+".{0}.obs_pop.csv".format(max(0,gpst.control_data.noptmax))))
 
     import matplotlib.pyplot as plt
     
@@ -2488,7 +2493,7 @@ def gpr_compare_invest():
     plt.tight_layout()
     plt.savefig("gpr_compare_noiter.pdf")
     plt.close(fig)
-
+    #exit()
     # now lets try an inner-outer scheme...
     
     gpst.control_data.noptmax = 30
@@ -2505,7 +2510,7 @@ def gpr_compare_invest():
         pyemu.os_utils.start_workers(gpr_t_d_iter, exe_path,  case+".pst", 20, worker_root="mou_tests",
                                          master_dir=gpr_m_d_iter, verbose=True, port=port)
         # now run the final dv pop thru the "complex" model
-        final_gpr_dvpop_fname = os.path.join(gpr_m_d_iter,case+".{0}.archive.dv_pop.csv".format(gpst.control_data.noptmax))
+        final_gpr_dvpop_fname = os.path.join(gpr_m_d_iter,case+".archive.dv_pop.csv")
         assert os.path.exists(final_gpr_dvpop_fname)
         complex_model_dvpop_fname = os.path.join(t_d,"gpr_outeriter{0}_dvpop.csv".format(iouter))
         if os.path.exists(complex_model_dvpop_fname):
@@ -2525,24 +2530,22 @@ def gpr_compare_invest():
         gpr_t_d_iter = gpr_t_d+"_outeriter{0}".format(iouter)
         pyemu.helpers.prep_for_gpr(pst_fname,dv_pops,obs_pops,gpr_t_d=gpr_t_d_iter,nverf=int(pop_size*.1),plot_fits=True)
         gpst_iter = pyemu.Pst(os.path.join(gpr_t_d_iter,case+".pst"))
-        aggdf = pd.read_csv(os.path.join(gpr_t_d,"gpr_aggregate_training_data.csv"),index_col=0)
-        #aggdf = aggdf.loc[:,gpst.par_names]
-        #aggdf = aggdf.iloc[-pop_size:,:]
-        aggdf.index = ["outeriter{0}_member{1}".format(iouter,i) for i in range(aggdf.shape[0])]
+        #aggdf = pd.read_csv(os.path.join(gpr_t_d,"gpr_aggregate_training_data.csv"),index_col=0)
+        #aggdf.index = ["outeriter{0}_member{1}".format(iouter,i) for i in range(aggdf.shape[0])]
         restart_gpr_dvpop_fname = "gpr_restart_dvpop_outeriter{0}.csv".format(iouter)
-        aggdf.to_csv(restart_gpr_dvpop_fname)
+        #aggdf.to_csv(os.path.join(gpr_t_d_iter,restart_gpr_dvpop_fname))
         shutil.copy2(os.path.join(complex_m_d_iter,case+".0.dv_pop.csv"),os.path.join(gpr_t_d_iter,restart_gpr_dvpop_fname))
         gpst_iter.pestpp_options["mou_dv_population_file"] = restart_gpr_dvpop_fname
         gpst_iter.control_data.noptmax = gpst.control_data.noptmax
         gpst_iter.write(os.path.join(gpr_t_d_iter,case+".pst"),version=2)
 
-    o2 = pd.read_csv(os.path.join(gpr_m_d_iter,case+".{0}.obs_pop.csv".format(gpst.control_data.noptmax)))
-    fig,axes = plt.subplots(1,2,figsize=(10,5))
-    axes[0].scatter(o1.obj_1,o1.obj_2)
-    axes[1].scatter(o2.obj_1,o2.obj_2)
-    plt.tight_layout()
-    plt.savefig("gpr_compare_iterscheme.pdf")
-    plt.close(fig)
+        o2 = pd.read_csv(os.path.join(gpr_m_d_iter,case+".{0}.obs_pop.csv".format(gpst.control_data.noptmax)))
+        fig,axes = plt.subplots(1,2,figsize=(10,5))
+        axes[0].scatter(o1.obj_1,o1.obj_2)
+        axes[1].scatter(o2.obj_1,o2.obj_2)
+        plt.tight_layout()
+        plt.savefig("gpr_compare_iterscheme_{0}.pdf".format(iouter))
+        plt.close(fig)
 
 
     
