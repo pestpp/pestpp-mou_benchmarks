@@ -2476,10 +2476,10 @@ def gpr_compare_invest():
     gpst.write(os.path.join(gpr_t_d,case+".pst"),version=2)
 
     gpr_m_d = gpr_t_d.replace("template","master")
-    if os.path.exists(gpr_m_d):
-         shutil.rmtree(gpr_m_d)
-    pyemu.os_utils.start_workers(gpr_t_d, exe_path,  case+".pst", 20, worker_root="mou_tests",
-                                         master_dir=gpr_m_d, verbose=True, port=port)
+    # if os.path.exists(gpr_m_d):
+    #      shutil.rmtree(gpr_m_d)
+    # pyemu.os_utils.start_workers(gpr_t_d, exe_path,  case+".pst", 20, worker_root="mou_tests",
+    #                                      master_dir=gpr_m_d, verbose=True, port=port)
 
     o1 = pd.read_csv(os.path.join(m_d,case+".{0}.obs_pop.csv".format(max(0,pst.control_data.noptmax))))
     o2 = pd.read_csv(os.path.join(gpr_m_d,case+".{0}.obs_pop.csv".format(max(0,gpst.control_data.noptmax))))
@@ -2525,7 +2525,7 @@ def gpr_compare_invest():
             as_front_map = {member:front for member,front in zip(arc_sum.member,arc_sum.nsga2_front)}
             as_crowd_map = {member: crowd for member, crowd in zip(arc_sum.member, arc_sum.nsga2_crowding_distance)}
             as_feas_map = {member: feas for member, feas in zip(arc_sum.member, arc_sum.feasible_distance)}
-            as_gen_map = {member: feas for member, gen in zip(arc_sum.member, arc_sum.generation)}
+            as_gen_map = {member: gen for member, gen in zip(arc_sum.member, arc_sum.generation)}
 
             dvpop.loc[:,"front"] = dvpop.index.map(lambda x: as_front_map.get(x,np.nan))
             dvpop.loc[:, "crowd"] = dvpop.index.map(lambda x: as_crowd_map.get(x, np.nan))
