@@ -2460,7 +2460,6 @@ def gpr_compare_invest():
     pst.write(os.path.join(t_d, case+".pst"))
     if not os.path.exists(m_d):
     
-    
         pyemu.os_utils.start_workers(t_d, exe_path,  case+".pst", 20, worker_root="mou_tests",
                                     master_dir=m_d, verbose=True, port=port)
     # use the initial population files for training
@@ -2477,11 +2476,11 @@ def gpr_compare_invest():
     gpst.write(os.path.join(gpr_t_d,case+".pst"),version=2)
 
     gpr_m_d = gpr_t_d.replace("template","master")
-    # if os.path.exists(gpr_m_d):
-    #      shutil.rmtree(gpr_m_d)
-    # pyemu.os_utils.start_workers(gpr_t_d, exe_path,  case+".pst", 20, worker_root="mou_tests",
-    #                                      master_dir=gpr_m_d, verbose=True, port=port)
-    #
+    if os.path.exists(gpr_m_d):
+         shutil.rmtree(gpr_m_d)
+    pyemu.os_utils.start_workers(gpr_t_d, exe_path,  case+".pst", 20, worker_root="mou_tests",
+                                         master_dir=gpr_m_d, verbose=True, port=port)
+
     o1 = pd.read_csv(os.path.join(m_d,case+".{0}.obs_pop.csv".format(max(0,pst.control_data.noptmax))))
     o2 = pd.read_csv(os.path.join(gpr_m_d,case+".{0}.obs_pop.csv".format(max(0,gpst.control_data.noptmax))))
 
@@ -2502,27 +2501,63 @@ def gpr_compare_invest():
     if os.path.exists(gpr_t_d_iter):
         shutil.rmtree(gpr_t_d_iter)
     shutil.copytree(gpr_t_d,gpr_t_d_iter)
-    for iouter in range(1,4):
+    for iouter in range(1,3):
         #run the gpr emulator
         gpr_m_d_iter = gpr_t_d_iter.replace("template","master")
+        complex_m_d_iter = t_d.replace("template", "master_complex_retrain_outeriter{0}".format(iouter))
         if os.path.exists(gpr_m_d_iter):
-             shutil.rmtree(gpr_m_d_iter)
+            shutil.rmtree(gpr_m_d_iter)
         pyemu.os_utils.start_workers(gpr_t_d_iter, exe_path,  case+".pst", 20, worker_root="mou_tests",
-                                         master_dir=gpr_m_d_iter, verbose=True, port=port)
+                                        master_dir=gpr_m_d_iter, verbose=True, port=port)
+        #o2 = pd.read_csv(os.path.join(gpr_m_d_iter,case+".{0}.obs_pop.csv".format(gpst.control_data.noptmax)))
+
         # now run the final dv pop thru the "complex" model
         final_gpr_dvpop_fname = os.path.join(gpr_m_d_iter,case+".archive.dv_pop.csv")
         assert os.path.exists(final_gpr_dvpop_fname)
         complex_model_dvpop_fname = os.path.join(t_d,"gpr_outeriter{0}_dvpop.csv".format(iouter))
         if os.path.exists(complex_model_dvpop_fname):
             os.remove(complex_model_dvpop_fname)
-        shutil.copy2(final_gpr_dvpop_fname,complex_model_dvpop_fname)
+        # load the gpr archive and do something clever to pick new points to eval
+        # with the complex model
+        dvpop = pd.read_csv(final_gpr_dvpop_fname,index_col=0)
+        if dvpop.shape[0] > pop_size:
+            arc_sum = pd.read_csv(os.path.join(gpr_m_d_iter,case+".pareto.archive.summary.csv"))
+            as_front_map = {member:front for member,front in zip(arc_sum.member,arc_sum.nsga2_front)}
+            as_crowd_map = {member: crowd for member, crowd in zip(arc_sum.member, arc_sum.nsga2_crowding_distance)}
+            as_feas_map = {member: feas for member, feas in zip(arc_sum.member, arc_sum.feasible_distance)}
+            as_gen_map = {member: feas for member, gen in zip(arc_sum.member, arc_sum.generation)}
+
+            dvpop.loc[:,"front"] = dvpop.index.map(lambda x: as_front_map.get(x,np.nan))
+            dvpop.loc[:, "crowd"] = dvpop.index.map(lambda x: as_crowd_map.get(x, np.nan))
+            dvpop.loc[:,"feas"] = dvpop.index.map(lambda x: as_feas_map.get(x,np.nan))
+            dvpop.loc[:, "gen"] = dvpop.index.map(lambda x: as_gen_map.get(x, np.nan))
+            #drop members that have missing archive info
+            dvpop = dvpop.dropna()
+            if dvpop.shape[0] > pop_size:
+                dvpop.sort_values(by=["gen","feas","front","crowd"],ascending=[False,True,True,False],inplace=True)
+                dvpop = dvpop.iloc[:pop_size,:]
+            dvpop.drop(["gen","feas","front","crowd"],axis=1,inplace=True)
+
+        #shutil.copy2(final_gpr_dvpop_fname,complex_model_dvpop_fname)
+        dvpop.to_csv(complex_model_dvpop_fname)
         pst.pestpp_options["mou_dv_population_file"] = os.path.split(complex_model_dvpop_fname)[1]
         pst.control_data.noptmax = -1
         pst.write(os.path.join(t_d,case+".pst"),version=2)
-        complex_m_d_iter = t_d.replace("template","master_complex_retrain_outeriter{0}".format(iouter))
+
         pyemu.os_utils.start_workers(t_d, exe_path,  case+".pst", 20, worker_root="mou_tests",
                                     master_dir=complex_m_d_iter, verbose=True, port=port)
-        
+
+        # plot the complex model results...
+        o2 = pd.read_csv(os.path.join(complex_m_d_iter, case + ".pareto.archive.summary.csv"))
+        o2 = o2.loc[o2.generation == o2.generation.max(), :]
+        o2 = o2.loc[o2.nsga2_front == 1, :]
+        fig, axes = plt.subplots(1, 2, figsize=(10, 5))
+        axes[0].scatter(o1.obj_1, o1.obj_2)
+        axes[1].scatter(o2.obj_1, o2.obj_2)
+        plt.tight_layout()
+        plt.savefig("gpr_compare_iterscheme_{0}.pdf".format(iouter))
+        plt.close(fig)
+
         # now add those complex model input-output pop files to the list and retrain
         # the gpr
         dv_pops.append(os.path.join(complex_m_d_iter,case+".0.dv_pop.csv"))
@@ -2539,16 +2574,6 @@ def gpr_compare_invest():
         gpst_iter.control_data.noptmax = gpst.control_data.noptmax
         gpst_iter.write(os.path.join(gpr_t_d_iter,case+".pst"),version=2)
 
-        o2 = pd.read_csv(os.path.join(gpr_m_d_iter,case+".{0}.obs_pop.csv".format(gpst.control_data.noptmax)))
-        fig,axes = plt.subplots(1,2,figsize=(10,5))
-        axes[0].scatter(o1.obj_1,o1.obj_2)
-        axes[1].scatter(o2.obj_1,o2.obj_2)
-        plt.tight_layout()
-        plt.savefig("gpr_compare_iterscheme_{0}.pdf".format(iouter))
-        plt.close(fig)
-
-
-    
 if __name__ == "__main__":
     gpr_compare_invest()
     
