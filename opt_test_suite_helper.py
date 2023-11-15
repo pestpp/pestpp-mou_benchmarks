@@ -70,7 +70,7 @@ def sch(x):
 
 def zdt1(x):
     g = 1 + 9 * np.sum(x[1:]) / (len(x) - 1)
-    return (x[0], g * (1 - np.sqrt(x[0] / g))),[]
+    return (x[0]*10, g * (1 - np.sqrt(x[0] / g))*10),[]
 
 def zdt2(x):
     g = 1 + 9 * np.sum(x[1:]) / (len(x) - 1)

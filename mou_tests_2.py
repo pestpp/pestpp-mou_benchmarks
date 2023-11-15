@@ -2447,7 +2447,7 @@ def zdt1_fixed_robust_opt_test():
                                  master_dir=m1,verbose=True,port=port)
 
 def gpr_compare_invest():
-    case = "zdt1"
+    case = "kur"
     m_d = os.path.join("mou_tests", case+"_gpr_baseline")
     t_d = mou_suite_helper.setup_problem(case, additive_chance=True, risk_obj=False)
     pst = pyemu.Pst(os.path.join(t_d, case+".pst"))
@@ -2459,7 +2459,6 @@ def gpr_compare_invest():
     pst.pestpp_options["mou_save_population_every"] = 1
     pst.write(os.path.join(t_d, case+".pst"))
     if not os.path.exists(m_d):
-    
         pyemu.os_utils.start_workers(t_d, exe_path,  case+".pst", 20, worker_root="mou_tests",
                                     master_dir=m_d, verbose=True, port=port)
     # use the initial population files for training
@@ -2476,23 +2475,27 @@ def gpr_compare_invest():
     gpst.write(os.path.join(gpr_t_d,case+".pst"),version=2)
 
     gpr_m_d = gpr_t_d.replace("template","master")
-    # if os.path.exists(gpr_m_d):
-    #      shutil.rmtree(gpr_m_d)
-    # pyemu.os_utils.start_workers(gpr_t_d, exe_path,  case+".pst", 20, worker_root="mou_tests",
-    #                                      master_dir=gpr_m_d, verbose=True, port=port)
+    if os.path.exists(gpr_m_d):
+         shutil.rmtree(gpr_m_d)
+    pyemu.os_utils.start_workers(gpr_t_d, exe_path,  case+".pst", 20, worker_root="mou_tests",
+                                        master_dir=gpr_m_d, verbose=True, port=port)
 
-    o1 = pd.read_csv(os.path.join(m_d,case+".{0}.obs_pop.csv".format(max(0,pst.control_data.noptmax))))
-    o2 = pd.read_csv(os.path.join(gpr_m_d,case+".{0}.obs_pop.csv".format(max(0,gpst.control_data.noptmax))))
+    #o1 = pd.read_csv(os.path.join(m_d,case+".{0}.obs_pop.csv".format(max(0,pst.control_data.noptmax))))
+    o1 = pd.read_csv(os.path.join(m_d,case+".pareto.archive.summary.csv"))
+    o1 = o1.loc[o1.generation == o1.generation.max(), :]
+    o1 = o1.loc[o1.is_feasible == True, :]
+    o1 = o1.loc[o1.nsga2_front == 1, :]
+
 
     import matplotlib.pyplot as plt
-    
+    o2 = pd.read_csv(os.path.join(gpr_m_d, case + ".{0}.obs_pop.csv".format(max(0, gpst.control_data.noptmax))))
     fig,axes = plt.subplots(1,2,figsize=(10,5))
     axes[0].scatter(o1.obj_1,o1.obj_2)
     axes[1].scatter(o2.obj_1,o2.obj_2)
     plt.tight_layout()
-    plt.savefig("gpr_compare_noiter.pdf")
+    plt.savefig("gpr_{0}_compare_noiter.pdf".format(case))
     plt.close(fig)
-    #exit()
+
     # now lets try an inner-outer scheme...
     
     gpst.control_data.noptmax = 30
@@ -2501,7 +2504,7 @@ def gpr_compare_invest():
     if os.path.exists(gpr_t_d_iter):
         shutil.rmtree(gpr_t_d_iter)
     shutil.copytree(gpr_t_d,gpr_t_d_iter)
-    for iouter in range(1,3):
+    for iouter in range(1,4):
         #run the gpr emulator
         gpr_m_d_iter = gpr_t_d_iter.replace("template","master")
         complex_m_d_iter = t_d.replace("template", "master_complex_retrain_outeriter{0}".format(iouter))
@@ -2509,7 +2512,7 @@ def gpr_compare_invest():
             shutil.rmtree(gpr_m_d_iter)
         pyemu.os_utils.start_workers(gpr_t_d_iter, exe_path,  case+".pst", 20, worker_root="mou_tests",
                                         master_dir=gpr_m_d_iter, verbose=True, port=port)
-        #o2 = pd.read_csv(os.path.join(gpr_m_d_iter,case+".{0}.obs_pop.csv".format(gpst.control_data.noptmax)))
+        o2 = pd.read_csv(os.path.join(gpr_m_d_iter,case+".{0}.obs_pop.csv".format(gpst.control_data.noptmax)))
 
         # now run the final dv pop thru the "complex" model
         final_gpr_dvpop_fname = os.path.join(gpr_m_d_iter,case+".archive.dv_pop.csv")
@@ -2550,12 +2553,13 @@ def gpr_compare_invest():
         # plot the complex model results...
         o2 = pd.read_csv(os.path.join(complex_m_d_iter, case + ".pareto.archive.summary.csv"))
         o2 = o2.loc[o2.generation == o2.generation.max(), :]
+        #o2 = o2.loc[o2.is_feasible==True,:]
         o2 = o2.loc[o2.nsga2_front == 1, :]
         fig, axes = plt.subplots(1, 2, figsize=(10, 5))
         axes[0].scatter(o1.obj_1, o1.obj_2)
         axes[1].scatter(o2.obj_1, o2.obj_2)
         plt.tight_layout()
-        plt.savefig("gpr_compare_iterscheme_{0}.pdf".format(iouter))
+        plt.savefig("gpr_{0}_compare_iterscheme_{1}.pdf".format(case,iouter))
         plt.close(fig)
 
         # now add those complex model input-output pop files to the list and retrain
