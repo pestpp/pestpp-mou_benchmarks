@@ -1808,6 +1808,11 @@ def zdt1_tied_test():
     par.loc[others,"partied"] = first
     par.loc[others,"pargp"] = "tiedup"
     #par.loc[first,"parval1"] = 1.0
+    opars = par.loc[par.parnme.str.startswith("obj"),"parnme"]
+    par.loc[opars,"partrans"] = "log"
+    par.loc[opars,"parlbnd"] = 0.01
+    par.loc[opars,"parubnd"] = 2.
+    par.loc[opars,"parval1"] = 0.5
 
     #pst.pestpp_options["mou_dv_population_file"] = "prior.csv"
     #pst.pestpp_options["opt_chance_points"] = "single"
@@ -1828,8 +1833,12 @@ def zdt1_tied_test():
     m1 = os.path.join("mou_tests","zdt1_tied_test")
     pst.control_data.noptmax = 3
     pst.write(os.path.join(t_d,"zdt1.pst"))
-    pyemu.os_utils.start_workers(t_d,exe_path,"zdt1.pst",10,worker_root="mou_tests",
-                                 master_dir=m1,verbose=True,port=port)
+    #pyemu.os_utils.start_workers(t_d,exe_path,"zdt1.pst",10,worker_root="mou_tests",
+    #                             master_dir=m1,verbose=True,port=port)
+    if os.path.exists(m1):
+        shutil.rmtree(m1)
+    shutil.copytree(t_d,m1)
+    pyemu.os_utils.run("{0} {1}".format(exe_path,"zdt1.pst"),cwd=m1)
     for i in range(pst.control_data.noptmax+1):
         dp = pd.read_csv(os.path.join(m1,"zdt1.{0}.dv_pop.csv").format(i),index_col=0)
         op = pd.read_csv(os.path.join(m1, "zdt1.{0}.obs_pop.csv").format(i), index_col=0)
@@ -1851,9 +1860,24 @@ def zdt1_tied_test():
             d = np.abs(dp.loc[ii, others].values - dp.loc[ii, first]).sum()
             assert d == 0, d
 
+    shutil.copy2(os.path.join(m1,"zdt1.0.dv_pop.csv"),os.path.join(t_d,"dvpop.csv"))
+    org_dv = pd.read_csv(os.path.join(t_d,"dvpop.csv"),index_col=0)
+    pst.pestpp_options["mou_dv_population_file"] = "dvpop.csv"
+    pst.write(os.path.join(t_d,"zdt1_restart.pst"),version=2)
+    if os.path.exists(m1):
+        shutil.rmtree(m1)
+    shutil.copytree(t_d,m1)
+    pyemu.os_utils.run("{0} {1}".format(exe_path,"zdt1_restart.pst"),cwd=m1)
+    new_dv = pd.read_csv(os.path.join(t_d,"dvpop.csv"),index_col=0)
+    diff = np.abs(org_dv.values - new_dv.values)
+    print(diff.max())
+    assert diff.max() < 1.0e-6
+
+            
+
     pst.pestpp_options["save_binary"] = True
     pst.write(os.path.join(t_d, "zdt1.pst"))
-    m1 = os.path.join("mou_tests", "zdt1_tied_test")
+    m1 = os.path.join("mou_tests", "zdt1_tied_test_bin")
     pyemu.os_utils.start_workers(t_d, exe_path, "zdt1.pst", 10, worker_root="mou_tests",
                                  master_dir=m1, verbose=True, port=port)
     for i in range(pst.control_data.noptmax + 1):
@@ -2579,7 +2603,7 @@ def gpr_compare_invest():
         gpst_iter.write(os.path.join(gpr_t_d_iter,case+".pst"),version=2)
 
 if __name__ == "__main__":
-    gpr_compare_invest()
+    #gpr_compare_invest()
     
     #zdt1_fixed_robust_opt_test()
     #multigen_test()
@@ -2599,7 +2623,7 @@ if __name__ == "__main__":
     #plot_zdt1(name="zdt1",m_d=os.path.join("mou_tests","master_zdt1_test_pso"))
     #plot_zdt1(name="zdt1",m_d=os.path.join("mou_tests","master_zdt1_test_pso_ro"))
 
-    #zdt1_tied_test()
+    zdt1_tied_test()
     #basic_pso_test()
 
     #shutil.copy2(os.path.join("..", "bin", "win", "pestpp-mou.exe"),
