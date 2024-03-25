@@ -2602,7 +2602,51 @@ def gpr_compare_invest():
         gpst_iter.control_data.noptmax = gpst.control_data.noptmax
         gpst_iter.write(os.path.join(gpr_t_d_iter,case+".pst"),version=2)
 
+
+def zdt1_chance_schedule_test():
+    t_d = mou_suite_helper.setup_problem("zdt1",True,True)
+    pst = pyemu.Pst(os.path.join(t_d,"zdt1.pst"))
+    
+
+
+    # pst.pestpp_options["opt_recalc_chance_every"] = 1000
+    gens_in = [0,10,15,16,17,18,19,20]
+    with open(os.path.join(t_d,"chance_schedule.dat"),'w') as f:
+        f.write("0,True\n")
+        f.write("10,True\n")
+        for gen in range(15,20):
+            f.write("{0},True\n".format(gen))
+    pst.pestpp_options["opt_chance_schedule"] = "chance_schedule.dat"
+
+
+    pst.pestpp_options["opt_dec_var_groups"] = "decvars"
+    pst.pestpp_options["mou_save_population_every"] = 1
+    #pst.pestpp_options["opt_stack_size"] = 10
+    #pst.pestpp_options["opt_par_stack"] = "prior.csv"
+    pst.pestpp_options["mou_generator"] = "de"
+    pst.pestpp_options["mou_population_size"] = 10
+    pst.pestpp_options["opt_stack_size"] = 10
+    pst.pestpp_options["opt_risk"] = 0.95
+    pst.control_data.noptmax = 20
+    pst.write(os.path.join(t_d,"zdt1.pst"))
+    pyemu.os_utils.run("{0} {1}".format(exe_path,"zdt1.pst"),cwd=t_d)
+    t_d = os.path.join("mou_tests","zdt1_template")
+
+    # chance_files = [f for f in os.listdir(t_d) if "stack_summary." in f]
+    # print(chance_files)
+    # for f in chance_files:
+    #     gen = int(f.split(".")[1])
+    #     print(gen)
+    #     if gen not in gens_in:
+    #         raise Exception(str(gen))
+    #     gens_in.remove(gen)
+    # if len(gens_in) > 0:
+    #     raise Exception(str(gens_in))
+    
+
 if __name__ == "__main__":
+    zdt1_chance_schedule_test()
+    exit()
     #gpr_compare_invest()
     
     #zdt1_fixed_robust_opt_test()
