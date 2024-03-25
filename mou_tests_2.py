@@ -2609,12 +2609,10 @@ def zdt1_chance_schedule_test():
     
 
 
-    # pst.pestpp_options["opt_recalc_chance_every"] = 1000
-    gens_in = [0,10,15,16,17,18,19,20]
-    with open(os.path.join(t_d,"chance_schedule.dat"),'w') as f:
-        f.write("0,True\n")
-        f.write("10,True\n")
-        for gen in range(15,20):
+    pst.pestpp_options["opt_recalc_chance_every"] = 1000
+    gens_in = [0,5,8,9,10]
+    with open(os.path.join(t_d,"chance_schedule.dat"),'w') as f:  
+        for gen in gens_in:
             f.write("{0},True\n".format(gen))
     pst.pestpp_options["opt_chance_schedule"] = "chance_schedule.dat"
 
@@ -2625,12 +2623,20 @@ def zdt1_chance_schedule_test():
     #pst.pestpp_options["opt_par_stack"] = "prior.csv"
     pst.pestpp_options["mou_generator"] = "de"
     pst.pestpp_options["mou_population_size"] = 10
-    pst.pestpp_options["opt_stack_size"] = 10
+    pst.pestpp_options["opt_stack_size"] = 5
     pst.pestpp_options["opt_risk"] = 0.95
-    pst.control_data.noptmax = 20
+    pst.control_data.noptmax = 11
     pst.write(os.path.join(t_d,"zdt1.pst"))
     pyemu.os_utils.run("{0} {1}".format(exe_path,"zdt1.pst"),cwd=t_d)
     t_d = os.path.join("mou_tests","zdt1_template")
+    with open(os.path.join(t_d,"zdt1.rec"),'r') as f:
+        for line in f:
+            if "chance runs for generation" in line:
+                gen = int(line.strip().split()[-1])
+                gens_in.remove(gen)
+    if len(gens_in) > 0:
+        raise Exception(str(gens_in))
+
 
     # chance_files = [f for f in os.listdir(t_d) if "stack_summary." in f]
     # print(chance_files)
