@@ -2463,7 +2463,6 @@ def zdt1_fixed_robust_opt_test():
     oe0 = oe0.iloc[:5,:]
     oe0.to_csv(os.path.join(t_d,"init_obs_pop.csv"))
     pst.pestpp_options["mou_obs_population_restart_file"] = "init_obs_pop.csv"
-
     pst.control_data.noptmax = 3
     pst.write(os.path.join(t_d,"zdt1.pst"))
 
@@ -2472,15 +2471,18 @@ def zdt1_fixed_robust_opt_test():
 
 def gpr_compare_invest():
     from sklearn.gaussian_process import GaussianProcessRegressor
-    case = "constr"
+    case = "kur"
     m_d = os.path.join("mou_tests", case+"_gpr_baseline")
     t_d = mou_suite_helper.setup_problem(case, additive_chance=True, risk_obj=False)
     pst = pyemu.Pst(os.path.join(t_d, case+".pst"))
     pst.pestpp_options["mou_generator"] = "pso"
     pst.pestpp_options["opt_risk"] = 0.5
-    pst.control_data.noptmax = 30
+   
     pop_size = 100
-    num_workers = 30
+    num_workers = 50
+    noptmax_full = 100
+    noptmax_inner = 50
+    pst.control_data.noptmax = noptmax_full 
     pst.pestpp_options["mou_population_size"] = pop_size
     pst.pestpp_options["mou_save_population_every"] = 1
     pst.write(os.path.join(t_d, case+".pst"))
@@ -2497,7 +2499,7 @@ def gpr_compare_invest():
     gpst = pyemu.Pst(os.path.join(gpr_t_d,case+".pst"))
     shutil.copy2(os.path.join(m_d,case+".0.dv_pop.csv"),os.path.join(gpr_t_d,"initial_dv_pop.csv"))
     gpst.pestpp_options["mou_dv_population_file"] = "initial_dv_pop.csv"
-    gpst.control_data.noptmax = 30
+    gpst.control_data.noptmax = noptmax_full
     gpst.write(os.path.join(gpr_t_d,case+".pst"),version=2)
 
     gpr_m_d = gpr_t_d.replace("template","master")
@@ -2524,7 +2526,7 @@ def gpr_compare_invest():
 
     # now lets try an inner-outer scheme...
     
-    gpst.control_data.noptmax = 30
+    gpst.control_data.noptmax = noptmax_inner
     gpst.write(os.path.join(gpr_t_d,case+".pst"),version=2)
     gpr_t_d_iter = gpr_t_d+"_outeriter{0}".format(0)
     if os.path.exists(gpr_t_d_iter):
