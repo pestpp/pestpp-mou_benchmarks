@@ -2471,7 +2471,8 @@ def zdt1_fixed_robust_opt_test():
                                  master_dir=m1,verbose=True,port=port)
 
 def gpr_compare_invest():
-    case = "kur"
+    from sklearn.gaussian_process import GaussianProcessRegressor
+    case = "constr"
     m_d = os.path.join("mou_tests", case+"_gpr_baseline")
     t_d = mou_suite_helper.setup_problem(case, additive_chance=True, risk_obj=False)
     pst = pyemu.Pst(os.path.join(t_d, case+".pst"))
@@ -2479,11 +2480,12 @@ def gpr_compare_invest():
     pst.pestpp_options["opt_risk"] = 0.5
     pst.control_data.noptmax = 30
     pop_size = 100
+    num_workers = 30
     pst.pestpp_options["mou_population_size"] = pop_size
     pst.pestpp_options["mou_save_population_every"] = 1
     pst.write(os.path.join(t_d, case+".pst"))
     if not os.path.exists(m_d):
-        pyemu.os_utils.start_workers(t_d, exe_path,  case+".pst", 20, worker_root="mou_tests",
+        pyemu.os_utils.start_workers(t_d, exe_path,  case+".pst", num_workers, worker_root="mou_tests",
                                     master_dir=m_d, verbose=True, port=port)
     # use the initial population files for training
     dv_pops = [os.path.join(m_d,"{0}.0.dv_pop.csv".format(case))]
@@ -2501,7 +2503,7 @@ def gpr_compare_invest():
     gpr_m_d = gpr_t_d.replace("template","master")
     if os.path.exists(gpr_m_d):
          shutil.rmtree(gpr_m_d)
-    pyemu.os_utils.start_workers(gpr_t_d, exe_path,  case+".pst", 20, worker_root="mou_tests",
+    pyemu.os_utils.start_workers(gpr_t_d, exe_path,  case+".pst", num_workers, worker_root="mou_tests",
                                         master_dir=gpr_m_d, verbose=True, port=port)
 
     #o1 = pd.read_csv(os.path.join(m_d,case+".{0}.obs_pop.csv".format(max(0,pst.control_data.noptmax))))
@@ -2534,7 +2536,7 @@ def gpr_compare_invest():
         complex_m_d_iter = t_d.replace("template", "master_complex_retrain_outeriter{0}".format(iouter))
         if os.path.exists(gpr_m_d_iter):
             shutil.rmtree(gpr_m_d_iter)
-        pyemu.os_utils.start_workers(gpr_t_d_iter, exe_path,  case+".pst", 20, worker_root="mou_tests",
+        pyemu.os_utils.start_workers(gpr_t_d_iter, exe_path,  case+".pst", num_workers, worker_root="mou_tests",
                                         master_dir=gpr_m_d_iter, verbose=True, port=port)
         o2 = pd.read_csv(os.path.join(gpr_m_d_iter,case+".{0}.obs_pop.csv".format(gpst.control_data.noptmax)))
 
@@ -2571,7 +2573,7 @@ def gpr_compare_invest():
         pst.control_data.noptmax = -1
         pst.write(os.path.join(t_d,case+".pst"),version=2)
 
-        pyemu.os_utils.start_workers(t_d, exe_path,  case+".pst", 20, worker_root="mou_tests",
+        pyemu.os_utils.start_workers(t_d, exe_path,  case+".pst", num_workers, worker_root="mou_tests",
                                     master_dir=complex_m_d_iter, verbose=True, port=port)
 
         # plot the complex model results...
@@ -2625,6 +2627,8 @@ def zdt1_chance_schedule_test():
     pst.pestpp_options["mou_population_size"] = 10
     pst.pestpp_options["opt_stack_size"] = 5
     pst.pestpp_options["opt_risk"] = 0.95
+    pst.pestpp_options["opt_chance_points"] = "all"
+    pst.pestpp_options["opt_recalc_chance_every"] = 10000
     pst.control_data.noptmax = 11
     pst.write(os.path.join(t_d,"zdt1.pst"))
     pyemu.os_utils.run("{0} {1}".format(exe_path,"zdt1.pst"),cwd=t_d)
@@ -2651,9 +2655,9 @@ def zdt1_chance_schedule_test():
     
 
 if __name__ == "__main__":
-    zdt1_chance_schedule_test()
-    exit()
-    #gpr_compare_invest()
+    #zdt1_chance_schedule_test()
+    
+    gpr_compare_invest()
     
     #zdt1_fixed_robust_opt_test()
     #multigen_test()
@@ -2673,7 +2677,7 @@ if __name__ == "__main__":
     #plot_zdt1(name="zdt1",m_d=os.path.join("mou_tests","master_zdt1_test_pso"))
     #plot_zdt1(name="zdt1",m_d=os.path.join("mou_tests","master_zdt1_test_pso_ro"))
 
-    zdt1_tied_test()
+    #zdt1_tied_test()
     #basic_pso_test()
 
     #shutil.copy2(os.path.join("..", "bin", "win", "pestpp-mou.exe"),
