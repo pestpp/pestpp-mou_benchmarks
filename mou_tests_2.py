@@ -2517,9 +2517,9 @@ def gpr_compare_invest():
 
     import matplotlib.pyplot as plt
     o2 = pd.read_csv(os.path.join(gpr_m_d, case + ".{0}.obs_pop.csv".format(max(0, gpst.control_data.noptmax))))
-    fig,axes = plt.subplots(1,2,figsize=(10,5))
-    axes[0].scatter(o1.obj_1,o1.obj_2)
-    axes[1].scatter(o2.obj_1,o2.obj_2)
+    fig,ax = plt.subplots(1,1,figsize=(5,5))
+    ax.scatter(o1.obj_1,o1.obj_2,c="r",s=10)
+    ax.scatter(o2.obj_1,o2.obj_2,c="0.5",s=10,alpha=0.5)
     plt.tight_layout()
     plt.savefig("gpr_{0}_compare_noiter.pdf".format(case))
     plt.close(fig)
@@ -2583,9 +2583,9 @@ def gpr_compare_invest():
         o2 = o2.loc[o2.generation == o2.generation.max(), :]
         #o2 = o2.loc[o2.is_feasible==True,:]
         o2 = o2.loc[o2.nsga2_front == 1, :]
-        fig, axes = plt.subplots(1, 2, figsize=(10, 5))
-        axes[0].scatter(o1.obj_1, o1.obj_2)
-        axes[1].scatter(o2.obj_1, o2.obj_2)
+        fig, ax = plt.subplots(1, 1, figsize=(5, 5))
+        ax.scatter(o1.obj_1, o1.obj_2,c="r",s=10)
+        ax.scatter(o2.obj_1, o2.obj_2,c="0.5",s=10,alpha=0.5)
         plt.tight_layout()
         plt.savefig("gpr_{0}_compare_iterscheme_{1}.pdf".format(case,iouter))
         plt.close(fig)
