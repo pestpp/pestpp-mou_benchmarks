@@ -2469,17 +2469,51 @@ def zdt1_fixed_robust_opt_test():
     pyemu.os_utils.start_workers(t_d,exe_path,"zdt1.pst",10,worker_root="mou_tests",
                                  master_dir=m1,verbose=True,port=port)
 
+def gpr_run_riskobj_baselines():
+    pop_size = 100
+    num_workers = 10
+    noptmax_full = 200
+    stack_size = 50  
+    cases = ["zdt1","constr"]
+    for case in cases:
+        m_d = os.path.join("mou_tests", case+"_riskobj_gpr_baseline")
+        t_d = mou_suite_helper.setup_problem(case, additive_chance=True, risk_obj=True)
+        pst = pyemu.Pst(os.path.join(t_d, case+".pst"))
+        pst.pestpp_options["mou_generator"] = "pso"
+        
+        pst.pestpp_options["opt_risk"] = 0.95
+        pst.pestpp_options["opt_stack_size"] = stack_size
+        pst.pestpp_options["opt_recalc_chance_every"] = 10000
+        pst.pestpp_options["opt_chance_points"] = "all"
+       
+        
+        pst.control_data.noptmax = noptmax_full 
+        pst.pestpp_options["mou_population_size"] = pop_size
+        pst.pestpp_options["mou_save_population_every"] = 1
+        pst.write(os.path.join(t_d, "pest.pst"))
+       
+        pyemu.os_utils.start_workers(t_d, exe_path,  "pest.pst", num_workers, worker_root="mou_tests",
+                                    master_dir=m_d, verbose=True, port=port)
+
+
 def gpr_compare_invest():
     from sklearn.gaussian_process import GaussianProcessRegressor
-    case = "kur"
+    case = "zdt1"
+    use_chances = True
     m_d = os.path.join("mou_tests", case+"_gpr_baseline")
     t_d = mou_suite_helper.setup_problem(case, additive_chance=True, risk_obj=False)
     pst = pyemu.Pst(os.path.join(t_d, case+".pst"))
     pst.pestpp_options["mou_generator"] = "pso"
-    pst.pestpp_options["opt_risk"] = 0.5
+    if use_chances:
+        pst.pestpp_options["opt_risk"] = 0.95
+        pst.pestpp_options["opt_stack_size"] = 50
+        pst.pestpp_options["opt_recalc_chance_every"] = 10000
+        pst.pestpp_options["opt_chance_points"] = "single"
+    else:
+        pst.pestpp_options["opt_risk"] = 0.5
    
     pop_size = 100
-    num_workers = 50
+    num_workers = 10
     noptmax_full = 100
     noptmax_inner = 50
     pst.control_data.noptmax = noptmax_full 
@@ -2658,8 +2692,8 @@ def zdt1_chance_schedule_test():
 
 if __name__ == "__main__":
     #zdt1_chance_schedule_test()
-    
-    gpr_compare_invest()
+    gpr_run_riskobj_baselines()
+    #gpr_compare_invest()
     
     #zdt1_fixed_robust_opt_test()
     #multigen_test()
