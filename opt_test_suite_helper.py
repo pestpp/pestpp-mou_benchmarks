@@ -124,13 +124,13 @@ def binh(x):
     return (f1,f2),[]
 
 def helper(func):
-    pdf = pd.read_csv("dv.dat",delim_whitespace=True,index_col=0, header=None, names=["parnme","parval1"])
+    pdf = pd.read_csv("dv.dat",sep='\s+',index_col=0, header=None, names=["parnme","parval1"])
     #obj1,obj2 = func(pdf.values)
     objs,constrs = func(pdf.values)
     
     if os.path.exists("additive_par.dat"):
         obj1,obj2 = objs[0],objs[1]
-        cdf = pd.read_csv("additive_par.dat", delim_whitespace=True, index_col=0,header=None, names=["parnme","parval1"])
+        cdf = pd.read_csv("additive_par.dat", sep='\s+', index_col=0,header=None, names=["parnme","parval1"])
         obj1[0] += cdf.parval1.values[0]
         obj2[0] += cdf.parval1.values[1]
         for i in range(len(constrs)):

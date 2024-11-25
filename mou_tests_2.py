@@ -1826,7 +1826,7 @@ def zdt1_tied_test():
     pst.control_data.noptmax = 0
     pst.write(os.path.join(t_d,"zdt1.pst"))
     pyemu.os_utils.run("{0} {1}".format(exe_path,"zdt1.pst"),cwd=t_d)
-    df = pd.read_csv(os.path.join(t_d,"dv.dat"),header=None,names=["dv","val"],delim_whitespace=True)
+    df = pd.read_csv(os.path.join(t_d,"dv.dat"),header=None,names=["dv","val"],sep='\s+')
     df.index = df.dv
     assert (df.loc[others,"val"] - df.loc[first,"val"]).apply(lambda x: np.abs(x)).sum() == 0.0
 
@@ -2137,7 +2137,7 @@ def zdt1_fixed_scaleoffset_test():
     pst.control_data.noptmax = 0
     pst.write(os.path.join(t_d,"zdt1.pst"))
     pyemu.os_utils.run("{0} {1}".format(exe_path,"zdt1.pst"),cwd=t_d)
-    df = pd.read_csv(os.path.join(t_d,"dv.dat"),header=None,names=["dv","val"],delim_whitespace=True)
+    df = pd.read_csv(os.path.join(t_d,"dv.dat"),header=None,names=["dv","val"],sep='\s+')
     df.index = df.dv 
 
     print(df.loc[others,:])
@@ -2149,7 +2149,7 @@ def zdt1_fixed_scaleoffset_test():
     pst.write(os.path.join(t_d,"zdt1.pst"))
     
     pyemu.os_utils.run("{0} {1}".format(exe_path,"zdt1.pst"),cwd=t_d)
-    df = pd.read_csv(os.path.join(t_d,"dv.dat"),header=None,names=["dv","val"],delim_whitespace=True)
+    df = pd.read_csv(os.path.join(t_d,"dv.dat"),header=None,names=["dv","val"],sep='\s+')
     df.index = df.dv 
 
     print(df.loc[others,:])
@@ -2164,7 +2164,7 @@ def zdt1_fixedtied_stack_test():
     #df.to_csv(os.path.join(t_d,"prior.csv"))
     pst = pyemu.Pst(os.path.join(t_d,"zdt1.pst"))
     
-    df = pd.read_csv(os.path.join(t_d,"dv.dat"),header=None,names=["dv","val"],delim_whitespace=True) 
+    df = pd.read_csv(os.path.join(t_d,"dv.dat"),header=None,names=["dv","val"],sep='\s+') 
     ins_file = os.path.join(t_d,"dv.dat.ins")
     with open(ins_file,'w') as f:
         f.write("pif ~\n")
@@ -2172,7 +2172,7 @@ def zdt1_fixedtied_stack_test():
             f.write("l1 w !{0}!\n".format(name))
     pst.add_observations(ins_file,ins_file.replace(".ins",""),pst_path=".")
 
-    df = pd.read_csv(os.path.join(t_d,"additive_par.dat"),header=None,names=["dv","val"],delim_whitespace=True) 
+    df = pd.read_csv(os.path.join(t_d,"additive_par.dat"),header=None,names=["dv","val"],sep='\s+') 
     ins_file = os.path.join(t_d,"additive_par.dat.ins")
     with open(ins_file,'w') as f:
         f.write("pif ~\n")
@@ -2214,7 +2214,7 @@ def zdt1_fixedtied_stack_test():
     pst.control_data.noptmax = 0
     pst.write(os.path.join(t_d,"zdt1.pst"))
     pyemu.os_utils.run("{0} {1}".format(exe_path,"zdt1.pst"),cwd=t_d)
-    df = pd.read_csv(os.path.join(t_d,"dv.dat"),header=None,names=["dv","val"],delim_whitespace=True)
+    df = pd.read_csv(os.path.join(t_d,"dv.dat"),header=None,names=["dv","val"],sep='\s+')
     df.index = df.dv
     assert (df.loc[df.dv!=others[0],"val"] - df.loc[first,"val"]).apply(lambda x: np.abs(x)).sum() == 0.0
     df.loc[others[0],"val"] == par.loc[others[0],"parubnd"]
@@ -2384,7 +2384,7 @@ def zdt1_fixed_robust_opt_test():
     t_d = mou_suite_helper.setup_problem("zdt1",True,False)
     pst = pyemu.Pst(os.path.join(t_d,"zdt1.pst"))
     
-    df = pd.read_csv(os.path.join(t_d,"dv.dat"),header=None,names=["dv","val"],delim_whitespace=True) 
+    df = pd.read_csv(os.path.join(t_d,"dv.dat"),header=None,names=["dv","val"],sep='\s+') 
     ins_file = os.path.join(t_d,"dv.dat.ins")
     with open(ins_file,'w') as f:
         f.write("pif ~\n")
@@ -2392,7 +2392,7 @@ def zdt1_fixed_robust_opt_test():
             f.write("l1 w !{0}!\n".format(name))
     pst.add_observations(ins_file,ins_file.replace(".ins",""),pst_path=".")
 
-    df = pd.read_csv(os.path.join(t_d,"additive_par.dat"),header=None,names=["dv","val"],delim_whitespace=True) 
+    df = pd.read_csv(os.path.join(t_d,"additive_par.dat"),header=None,names=["dv","val"],sep='\s+') 
     ins_file = os.path.join(t_d,"additive_par.dat.ins")
     with open(ins_file,'w') as f:
         f.write("pif ~\n")
@@ -2415,7 +2415,7 @@ def zdt1_fixed_robust_opt_test():
     pst.control_data.noptmax = 0
     pst.write(os.path.join(t_d,"zdt1.pst"))
     pyemu.os_utils.run("{0} {1}".format(exe_path,"zdt1.pst"),cwd=t_d)
-    df = pd.read_csv(os.path.join(t_d,"additive_par.dat"),header=None,names=["dv","val"],delim_whitespace=True)
+    df = pd.read_csv(os.path.join(t_d,"additive_par.dat"),header=None,names=["dv","val"],sep='\s+')
     assert np.all(par.loc[df.dv.values,"parval1"].values == df.loc[:,"val"].values)
   
     m1 = os.path.join("mou_tests","zdt1_fixed_robust_opt_test")
@@ -2499,7 +2499,7 @@ def gpr_run_riskobj_baselines():
 def gpr_compare_invest():
     from sklearn.gaussian_process import GaussianProcessRegressor
     case = "zdt1"
-    use_chances = True
+    use_chances = False
     m_d = os.path.join("mou_tests", case+"_gpr_baseline")
     t_d = mou_suite_helper.setup_problem(case, additive_chance=True, risk_obj=False)
     pst = pyemu.Pst(os.path.join(t_d, case+".pst"))
@@ -2692,8 +2692,8 @@ def zdt1_chance_schedule_test():
 
 if __name__ == "__main__":
     #zdt1_chance_schedule_test()
-    gpr_run_riskobj_baselines()
-    #gpr_compare_invest()
+    #gpr_run_riskobj_baselines()
+    gpr_compare_invest()
     
     #zdt1_fixed_robust_opt_test()
     #multigen_test()
