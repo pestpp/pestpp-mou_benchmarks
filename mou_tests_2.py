@@ -2001,14 +2001,15 @@ def plot_zdt1(name="zdt1",m_d=None):
             c = dvdf.loc[gdf.real_name.values,"_risk_"].values
         #print(g,c)
         ax.scatter(gdf.obj_1.values,gdf.obj_2.values,marker=".",s=20,c=c,cmap="jet_r")
-        ax.set_xlim(2,-0.75)
-        ax.set_ylim(-1,7)
-        #ax.set_xticklabels([])
-        #ax.set_yticklabels([])
-        #ax.set_xlabel("increasing quality",fontsize=12)
-        #ax.set_ylabel("increasing cost",fontsize=12)
-        #ax.set_yticks([])
-        #ax.set_xticks([])
+
+        gdf = pd.read_csv(os.path.join(m_d,"{0}.{1}.obs_pop.csv".format(name,g)))
+        dvdf = pd.read_csv(os.path.join(m_d,"{0}.{1}.dv_pop.csv".format(name,g)))
+        dvdf.index = dvdf.real_name
+        ax.scatter(gdf.obj_1.values,gdf.obj_2.values,marker='.',s=20,c='0.5',alpha=0.5)
+        #ax.set_xlim(2,-0.75)
+        #ax.set_ylim(-1,1)
+        ax.set_xlim(50,-0.75)
+        ax.set_ylim(-1,50)
         ax.grid()
         cax = fig.colorbar(mpl.cm.ScalarMappable(cmap="jet_r"),ax=ax,orientation="vertical",
             shrink=0.8,location="right",pad=.025)
@@ -2469,177 +2470,6 @@ def zdt1_fixed_robust_opt_test():
     pyemu.os_utils.start_workers(t_d,exe_path,"zdt1.pst",10,worker_root="mou_tests",
                                  master_dir=m1,verbose=True,port=port)
 
-def gpr_run_riskobj_baselines():
-    pop_size = 100
-    num_workers = 10
-    noptmax_full = 200
-    stack_size = 50  
-    cases = ["zdt1","constr"]
-    for case in cases:
-        m_d = os.path.join("mou_tests", case+"_riskobj_gpr_baseline")
-        t_d = mou_suite_helper.setup_problem(case, additive_chance=True, risk_obj=True)
-        pst = pyemu.Pst(os.path.join(t_d, case+".pst"))
-        pst.pestpp_options["mou_generator"] = "pso"
-        
-        pst.pestpp_options["opt_risk"] = 0.95
-        pst.pestpp_options["opt_stack_size"] = stack_size
-        pst.pestpp_options["opt_recalc_chance_every"] = 10000
-        pst.pestpp_options["opt_chance_points"] = "all"
-       
-        
-        pst.control_data.noptmax = noptmax_full 
-        pst.pestpp_options["mou_population_size"] = pop_size
-        pst.pestpp_options["mou_save_population_every"] = 1
-        pst.write(os.path.join(t_d, "pest.pst"))
-       
-        pyemu.os_utils.start_workers(t_d, exe_path,  "pest.pst", num_workers, worker_root="mou_tests",
-                                    master_dir=m_d, verbose=True, port=port)
-
-
-def gpr_compare_invest():
-    from sklearn.gaussian_process import GaussianProcessRegressor
-    case = "zdt1"
-    use_chances = False
-    m_d = os.path.join("mou_tests", case+"_gpr_baseline")
-    t_d = mou_suite_helper.setup_problem(case, additive_chance=True, risk_obj=False)
-    pst = pyemu.Pst(os.path.join(t_d, case+".pst"))
-    pst.pestpp_options["mou_generator"] = "pso"
-    if use_chances:
-        pst.pestpp_options["opt_risk"] = 0.95
-        pst.pestpp_options["opt_stack_size"] = 50
-        pst.pestpp_options["opt_recalc_chance_every"] = 10000
-        pst.pestpp_options["opt_chance_points"] = "single"
-    else:
-        pst.pestpp_options["opt_risk"] = 0.5
-   
-    pop_size = 100
-    num_workers = 10
-    noptmax_full = 100
-    noptmax_inner = 50
-    pst.control_data.noptmax = noptmax_full 
-    pst.pestpp_options["mou_population_size"] = pop_size
-    pst.pestpp_options["mou_save_population_every"] = 1
-    pst.write(os.path.join(t_d, case+".pst"))
-    if not os.path.exists(m_d):
-        pyemu.os_utils.start_workers(t_d, exe_path,  case+".pst", num_workers, worker_root="mou_tests",
-                                    master_dir=m_d, verbose=True, port=port)
-    # use the initial population files for training
-    dv_pops = [os.path.join(m_d,"{0}.0.dv_pop.csv".format(case))]
-    obs_pops = [f.replace("dv_","obs_") for f in dv_pops]
-
-    pst_fname = os.path.join(m_d,case+".pst")
-    gpr_t_d = os.path.join("mou_tests",case+"_gpr_template")
-    pyemu.helpers.prep_for_gpr(pst_fname,dv_pops,obs_pops,gpr_t_d=gpr_t_d,nverf=int(pop_size*.1),plot_fits=True)
-    gpst = pyemu.Pst(os.path.join(gpr_t_d,case+".pst"))
-    shutil.copy2(os.path.join(m_d,case+".0.dv_pop.csv"),os.path.join(gpr_t_d,"initial_dv_pop.csv"))
-    gpst.pestpp_options["mou_dv_population_file"] = "initial_dv_pop.csv"
-    gpst.control_data.noptmax = noptmax_full
-    gpst.write(os.path.join(gpr_t_d,case+".pst"),version=2)
-
-    gpr_m_d = gpr_t_d.replace("template","master")
-    if os.path.exists(gpr_m_d):
-         shutil.rmtree(gpr_m_d)
-    pyemu.os_utils.start_workers(gpr_t_d, exe_path,  case+".pst", num_workers, worker_root="mou_tests",
-                                        master_dir=gpr_m_d, verbose=True, port=port)
-
-    #o1 = pd.read_csv(os.path.join(m_d,case+".{0}.obs_pop.csv".format(max(0,pst.control_data.noptmax))))
-    o1 = pd.read_csv(os.path.join(m_d,case+".pareto.archive.summary.csv"))
-    o1 = o1.loc[o1.generation == o1.generation.max(), :]
-    o1 = o1.loc[o1.is_feasible == True, :]
-    o1 = o1.loc[o1.nsga2_front == 1, :]
-
-
-    import matplotlib.pyplot as plt
-    o2 = pd.read_csv(os.path.join(gpr_m_d, case + ".{0}.obs_pop.csv".format(max(0, gpst.control_data.noptmax))))
-    fig,ax = plt.subplots(1,1,figsize=(5,5))
-    ax.scatter(o1.obj_1,o1.obj_2,c="r",s=10)
-    ax.scatter(o2.obj_1,o2.obj_2,c="0.5",s=10,alpha=0.5)
-    plt.tight_layout()
-    plt.savefig("gpr_{0}_compare_noiter.pdf".format(case))
-    plt.close(fig)
-
-    # now lets try an inner-outer scheme...
-    
-    gpst.control_data.noptmax = noptmax_inner
-    gpst.write(os.path.join(gpr_t_d,case+".pst"),version=2)
-    gpr_t_d_iter = gpr_t_d+"_outeriter{0}".format(0)
-    if os.path.exists(gpr_t_d_iter):
-        shutil.rmtree(gpr_t_d_iter)
-    shutil.copytree(gpr_t_d,gpr_t_d_iter)
-    for iouter in range(1,4):
-        #run the gpr emulator
-        gpr_m_d_iter = gpr_t_d_iter.replace("template","master")
-        complex_m_d_iter = t_d.replace("template", "master_complex_retrain_outeriter{0}".format(iouter))
-        if os.path.exists(gpr_m_d_iter):
-            shutil.rmtree(gpr_m_d_iter)
-        pyemu.os_utils.start_workers(gpr_t_d_iter, exe_path,  case+".pst", num_workers, worker_root="mou_tests",
-                                        master_dir=gpr_m_d_iter, verbose=True, port=port)
-        o2 = pd.read_csv(os.path.join(gpr_m_d_iter,case+".{0}.obs_pop.csv".format(gpst.control_data.noptmax)))
-
-        # now run the final dv pop thru the "complex" model
-        final_gpr_dvpop_fname = os.path.join(gpr_m_d_iter,case+".archive.dv_pop.csv")
-        assert os.path.exists(final_gpr_dvpop_fname)
-        complex_model_dvpop_fname = os.path.join(t_d,"gpr_outeriter{0}_dvpop.csv".format(iouter))
-        if os.path.exists(complex_model_dvpop_fname):
-            os.remove(complex_model_dvpop_fname)
-        # load the gpr archive and do something clever to pick new points to eval
-        # with the complex model
-        dvpop = pd.read_csv(final_gpr_dvpop_fname,index_col=0)
-        if dvpop.shape[0] > pop_size:
-            arc_sum = pd.read_csv(os.path.join(gpr_m_d_iter,case+".pareto.archive.summary.csv"))
-            as_front_map = {member:front for member,front in zip(arc_sum.member,arc_sum.nsga2_front)}
-            as_crowd_map = {member: crowd for member, crowd in zip(arc_sum.member, arc_sum.nsga2_crowding_distance)}
-            as_feas_map = {member: feas for member, feas in zip(arc_sum.member, arc_sum.feasible_distance)}
-            as_gen_map = {member: gen for member, gen in zip(arc_sum.member, arc_sum.generation)}
-
-            dvpop.loc[:,"front"] = dvpop.index.map(lambda x: as_front_map.get(x,np.nan))
-            dvpop.loc[:, "crowd"] = dvpop.index.map(lambda x: as_crowd_map.get(x, np.nan))
-            dvpop.loc[:,"feas"] = dvpop.index.map(lambda x: as_feas_map.get(x,np.nan))
-            dvpop.loc[:, "gen"] = dvpop.index.map(lambda x: as_gen_map.get(x, np.nan))
-            #drop members that have missing archive info
-            dvpop = dvpop.dropna()
-            if dvpop.shape[0] > pop_size:
-                dvpop.sort_values(by=["gen","feas","front","crowd"],ascending=[False,True,True,False],inplace=True)
-                dvpop = dvpop.iloc[:pop_size,:]
-            dvpop.drop(["gen","feas","front","crowd"],axis=1,inplace=True)
-
-        #shutil.copy2(final_gpr_dvpop_fname,complex_model_dvpop_fname)
-        dvpop.to_csv(complex_model_dvpop_fname)
-        pst.pestpp_options["mou_dv_population_file"] = os.path.split(complex_model_dvpop_fname)[1]
-        pst.control_data.noptmax = -1
-        pst.write(os.path.join(t_d,case+".pst"),version=2)
-
-        pyemu.os_utils.start_workers(t_d, exe_path,  case+".pst", num_workers, worker_root="mou_tests",
-                                    master_dir=complex_m_d_iter, verbose=True, port=port)
-
-        # plot the complex model results...
-        o2 = pd.read_csv(os.path.join(complex_m_d_iter, case + ".pareto.archive.summary.csv"))
-        o2 = o2.loc[o2.generation == o2.generation.max(), :]
-        #o2 = o2.loc[o2.is_feasible==True,:]
-        o2 = o2.loc[o2.nsga2_front == 1, :]
-        fig, ax = plt.subplots(1, 1, figsize=(5, 5))
-        ax.scatter(o1.obj_1, o1.obj_2,c="r",s=10)
-        ax.scatter(o2.obj_1, o2.obj_2,c="0.5",s=10,alpha=0.5)
-        plt.tight_layout()
-        plt.savefig("gpr_{0}_compare_iterscheme_{1}.pdf".format(case,iouter))
-        plt.close(fig)
-
-        # now add those complex model input-output pop files to the list and retrain
-        # the gpr
-        dv_pops.append(os.path.join(complex_m_d_iter,case+".0.dv_pop.csv"))
-        obs_pops.append(os.path.join(complex_m_d_iter,case+".0.obs_pop.csv"))
-        gpr_t_d_iter = gpr_t_d+"_outeriter{0}".format(iouter)
-        pyemu.helpers.prep_for_gpr(pst_fname,dv_pops,obs_pops,gpr_t_d=gpr_t_d_iter,nverf=int(pop_size*.1),plot_fits=True)
-        gpst_iter = pyemu.Pst(os.path.join(gpr_t_d_iter,case+".pst"))
-        #aggdf = pd.read_csv(os.path.join(gpr_t_d,"gpr_aggregate_training_data.csv"),index_col=0)
-        #aggdf.index = ["outeriter{0}_member{1}".format(iouter,i) for i in range(aggdf.shape[0])]
-        restart_gpr_dvpop_fname = "gpr_restart_dvpop_outeriter{0}.csv".format(iouter)
-        #aggdf.to_csv(os.path.join(gpr_t_d_iter,restart_gpr_dvpop_fname))
-        shutil.copy2(os.path.join(complex_m_d_iter,case+".0.dv_pop.csv"),os.path.join(gpr_t_d_iter,restart_gpr_dvpop_fname))
-        gpst_iter.pestpp_options["mou_dv_population_file"] = restart_gpr_dvpop_fname
-        gpst_iter.control_data.noptmax = gpst.control_data.noptmax
-        gpst_iter.write(os.path.join(gpr_t_d_iter,case+".pst"),version=2)
-
 
 def zdt1_chance_schedule_test():
     t_d = mou_suite_helper.setup_problem("zdt1",True,True)
@@ -2690,13 +2520,160 @@ def zdt1_chance_schedule_test():
     #     raise Exception(str(gens_in))
     
 
+def basic_empcov_invest(case="hosaki"):
+
+    t_d = mou_suite_helper.setup_problem(case, additive_chance=True, risk_obj=False)
+    pst = pyemu.Pst(os.path.join(t_d, case+".pst"))
+    pst.pestpp_options["mou_generator"] = "empcov"
+    pst.pestpp_options["opt_risk"] = 0.95
+    pst.control_data.noptmax = 20
+    pst.pestpp_options["mou_population_size"] = 10
+    pst.pestpp_options["mou_save_population_every"] = 1
+    pst.write(os.path.join(t_d, case+".pst"))
+    m_d = os.path.join("mou_tests", case+"_empcov_master_risk")
+    pyemu.os_utils.start_workers(t_d, exe_path,  case+".pst", 50, worker_root="mou_tests",
+                                master_dir=m_d, verbose=True, port=port)
+    assert os.path.exists(os.path.join(m_d,"{0}.{1}.fosm.jcb".format(case,pst.control_data.noptmax)))
+
+    for i in range(0,pst.control_data.noptmax+1):
+        dv_file = os.path.join(m_d,"{0}.{1}.dv_pop.csv".format(case,i))
+        oe_file = os.path.join(m_d,"{0}.{1}.obs_pop.csv".format(case,i))
+        assert os.path.exists(dv_file)
+        assert os.path.exists(oe_file)
+        dv_pso = pd.read_csv(dv_file)
+        oe_pso = pd.read_csv(oe_file)
+        assert dv_pso.shape[0] == oe_pso.shape[0]
+
+    # pst.pestpp_options["mou_generator"] = "de"
+    # pst.pestpp_options["opt_risk"] = 0.95
+    # pst.pestpp_options["mou_save_population_every"] = 1
+    # pst.write(os.path.join(t_d, case+".pst"))
+    # m_d = os.path.join("mou_tests", case+"_de_master_risk")
+    #pyemu.os_utils.start_workers(t_d, exe_path, case+".pst", 20, worker_root="mou_tests",
+    #                             master_dir=m_d, verbose=True, port=port)
+    # assert os.path.exists(os.path.join(m_d, "{0}.{1}.fosm.jcb".format(case, pst.control_data.noptmax)))
+
+    # for i in range(0,pst.control_data.noptmax+1):
+    #     dv_file = os.path.join(m_d,"{0}.{1}.dv_pop.csv".format(case,i))
+    #     oe_file = os.path.join(m_d,"{0}.{1}.obs_pop.csv".format(case,i))
+    #     assert os.path.exists(dv_file)
+    #     assert os.path.exists(oe_file)
+    #     dv_de = pd.read_csv(dv_file)
+    #     oe_de = pd.read_csv(oe_file)
+    #     assert dv_de.shape[0] == oe_de.shape[0]
+
+    method = mou_suite_helper.zdt1
+    x0 = np.linspace(0,1,10000)
+    o1,o2 = [],[]
+    for xx0 in x0:
+        x = np.zeros(30)
+        x[0] = xx0
+        ret_vals = method(x)
+        o1.append(ret_vals[0][0])
+        o2.append(ret_vals[0][1])
+    
+
+    # o1 = np.array(o1)
+    # o2 = np.array(o2)
+    # diff = np.abs(o1.min() - oe_pso.loc[:,"obj_1"].values.min()) 
+    # #print(diff)
+    # assert diff < 1.0e-4
+    # diff = np.abs(o1.max() - oe_pso.loc[:,"obj_1"].values.max()) 
+    # #print(diff)
+    # assert diff < 1.0e-4
+
+    # diff = np.abs(o2.min() - oe_pso.loc[:,"obj_2"].values.min()) 
+    # print(diff)
+    # #assert diff < 1.0e-4
+    
+    # opt_1,opt_2 = o1.min(),o2.min()
+    # opt = np.array([opt_1,opt_2])
+    # truth = np.array([o1,o2]).transpose()
+    # #print(truth)
+    # #print(opt)
+    # dist = [(opt-t).sum()**2 for t in truth]
+    # knee_idx = np.argmin(dist)
+    # #print(knee_idx,dist[knee_idx],truth[knee_idx])
+    # knee = truth[knee_idx]
+
+    # knee_dist = [(knee-sol).sum()**2 for sol in oe_pso.loc[:,["obj_1","obj_2"]].values]
+    # #print(knee_dist)
+    # knee_sol_idx = np.argmin(knee_dist)
+    
+    # knee_sol = oe_pso.loc[:,["obj_1","obj_2"]].values[knee_sol_idx]
+    # #print(knee_sol_idx,knee_sol)
+
+    # dist = (knee - knee_sol).sum()**2
+    # print(dist)
+    #assert dist < 0.001
+
+    # import matplotlib.pyplot as plt
+    # fig,axes = plt.subplots(1,2,figsize=(10,5))
+    # axes[0].plot(o1,o2)
+    # axes[0].scatter(oe_pso.loc[:,"obj_1"].values,oe_pso.loc[:,"obj_2"])
+    # axes[1].plot(o1,o2)
+    # axes[1].scatter(oe_de.loc[:,"obj_1"].values,oe_de.loc[:,"obj_2"])
+    # plt.show()
+
+def plot_hosaki(m_d):
+    import matplotlib.pyplot as plt
+    import matplotlib as mpl
+    name = "hosaki"
+    pst = pyemu.Pst(os.path.join(m_d,"{0}.pst".format(name)))
+    df = pd.read_csv(os.path.join(m_d,"{0}.pareto.archive.summary.csv".format(name)))
+    gens = df.generation.unique()
+    gens.sort()
+    plt_d = m_d+"_plots"
+    if os.path.exists(plt_d):
+        shutil.rmtree(plt_d)
+    os.makedirs(plt_d)
+    for i,g in enumerate(gens):
+        #gdf = df.loc[df.generation==g,:].copy()
+        gdf = pd.read_csv(os.path.join(m_d,"{0}.{1}.archive.obs_pop.csv".format(name,g)))
+        dvdf = pd.read_csv(os.path.join(m_d,"{0}.{1}.archive.dv_pop.csv".format(name,g)))
+        dvdf.index = dvdf.real_name
+        fig,ax = plt.subplots(1,1,figsize=(5.5,5))
+        c = 'b'
+        if "_risk_" in dvdf.columns:
+            c = dvdf.loc[gdf.real_name.values,"_risk_"].values
+        #print(g,c)
+        ax.scatter(dvdf.dv_0.values,dvdf.dv_1.values,marker=".",s=20,c=c,cmap="jet_r")
+
+        gdf = pd.read_csv(os.path.join(m_d,"{0}.{1}.obs_pop.csv".format(name,g)))
+        dvdf = pd.read_csv(os.path.join(m_d,"{0}.{1}.dv_pop.csv".format(name,g)))
+        dvdf.index = dvdf.real_name
+        ax.scatter(dvdf.dv_0.values,dvdf.dv_1.values,marker='.',s=20,c='0.5',alpha=0.5)
+        #ax.set_xlim(2,-0.75)
+        #ax.set_ylim(-1,1)
+        ax.set_xlim(0,5)
+        ax.set_ylim(0,5)
+        ax.grid()
+        cax = fig.colorbar(mpl.cm.ScalarMappable(cmap="jet_r"),ax=ax,orientation="vertical",
+            shrink=0.8,location="right",pad=.025)
+        cax.set_ticks([0.05,0.5,0.95])
+        cax.set_ticklabels(["tolerant","neutral","averse"],rotation=90,fontsize=12,va="center")
+        #cax.set_label("increasing reliability",fontsize=12)
+        ax.set_title("generation {0:03d}".format(g),loc="left",fontsize=12)
+        plt.tight_layout()
+        plt.savefig(os.path.join(plt_d,"mou_{0:03d}.png".format(i)),dpi=400)
+        plt.close(fig)
+
+    fps = 15
+    pyemu.os_utils.run("ffmpeg -i mou_{0:03d}.png -vf palettegen=256 palette.png".format(i),cwd=plt_d)
+    pyemu.os_utils.run("ffmpeg -r {0} -y -s 1920X1080 -i mou_%03d.png -i palette.png -filter_complex \"scale=720:-1:flags=lanczos[x];[x][1:v]paletteuse\" logo.gif".format(fps),
+            cwd=plt_d)
+
+
+
 if __name__ == "__main__":
     #zdt1_chance_schedule_test()
     #gpr_run_riskobj_baselines()
-    gpr_compare_invest()
+    #gpr_compare_invest()
     
     #zdt1_fixed_robust_opt_test()
     #multigen_test()
+    basic_empcov_invest()
+    plot_hosaki(m_d=os.path.join("mou_tests","hosaki_empcov_master_risk"))
     #basic_pso_test()
     #zdt1_fixedtied_stack_test()
     #zdt1_fixed_scaleoffset_test()
@@ -2706,7 +2683,7 @@ if __name__ == "__main__":
     #run()
     #stack_invest()
     #zdt1_stack_run_for_animation(mou_gen="pso")
-    #plot_zdt1(name="zdt1",m_d=os.path.join("mou_tests","master_zdt1_test_de"))
+    #plot_zdt1(name="zdt1",m_d=os.path.join("mou_tests","zdt1_empcov_master_risk"))
     #plot_zdt1(name="zdt1",m_d=os.path.join("mou_tests","master_zdt1_test_de_ro"))
 
     #zdt1_stack_run_for_animation(mou_gen="pso")

@@ -123,6 +123,15 @@ def binh(x):
     f2 = (x[0] - 5)**2 + (x[1]-5)**2
     return (f1,f2),[]
 
+def hosaki(x):    
+    pval1 = x[0]
+    pval2 = x[1]
+    term1 = (pval2**2)*np.e**(-pval2)
+    term2 = 1. - (8.*(pval1)) + (7.*(pval1**2))
+    term3 = (-(7./3.)*(pval1**3)) + (0.25*(pval1**4))
+    sim = (term2 + term3) * term1
+    return (sim,np.array([-999])),[]
+
 def helper(func):
     pdf = pd.read_csv("dv.dat",sep='\s+',index_col=0, header=None, names=["parnme","parval1"])
     #obj1,obj2 = func(pdf.values)
@@ -171,6 +180,8 @@ def setup_problem(name,additive_chance=False, risk_obj=False, self_adaptive=Fals
         num_dv = 100
     elif name.lower() == "binh":
         num_dv = 2
+    elif name.lower() == "hosaki":
+        num_dv = 2 
 
     # write a generic template file for the dec vars
     tpl_file = "dv.dat.tpl".format(name)
@@ -230,7 +241,7 @@ def setup_problem(name,additive_chance=False, risk_obj=False, self_adaptive=Fals
                 f.write("l1 w !const_{0}!\n".format(i))
         else:
             f.write("l1 w !obj_1!\n")
-            if name.lower() not in ["rosen","ackley","rosenc"]:
+            if name.lower() not in ["rosen","ackley","rosenc","hosaki"]:
                 f.write("l1 w !obj_2!\n")
             else:
                 f.write("l1\n")
@@ -379,6 +390,15 @@ def setup_problem(name,additive_chance=False, risk_obj=False, self_adaptive=Fals
         par.loc["dv_1","parubnd"] = 10
         par.loc["dv_1","parval1"] = -1.
 
+    elif name.lower() == "hosaki":
+        par.loc["dv_0","parlbnd"] = 0
+        par.loc["dv_0","parubnd"] = 5
+        par.loc["dv_0","parval1"] = 2.5
+        par.loc["dv_1","parlbnd"] = 0
+        par.loc["dv_1","parubnd"] = 5
+        par.loc["dv_1","parval1"] = 2.5
+    
+
 
     adf = pst.add_parameters(os.path.join(test_d,additive_chance_tpl_file),pst_path=".")
     print(adf)
@@ -471,7 +491,7 @@ def setup_problem(name,additive_chance=False, risk_obj=False, self_adaptive=Fals
 
            
     pst.pestpp_options["opt_dec_var_groups"] = "decvars"
-    if name.lower() in ["rosen","rosenc"]:
+    if name.lower() in ["rosen","rosenc","hosaki"]:
         pst.pestpp_options["mou_objectives"] = "obj_1"
     else:
         pst.pestpp_options["mou_objectives"] = "obj_1,obj_2"
