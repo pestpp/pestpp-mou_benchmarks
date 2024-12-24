@@ -129,7 +129,7 @@ def test_risk_obj():
                                  verbose=True,
                                  port=port)
 
-    test_files = ["zdt1.0.obs_pop.csv","zdt1.0.obs_stack.csv","zdt1.0.obs_pop.chance.csv"]
+    test_files = ["zdt1.0.obs_pop.csv","zdt1.0.obs_stack.csv","zdt1.0.chance.obs_pop.csv"]
     for test_file in test_files:
         df1 = pd.read_csv(os.path.join(m1,test_file),index_col=0)
         df2 = pd.read_csv(os.path.join(m2, test_file), index_col=0)
@@ -165,7 +165,7 @@ def test_restart_single():
     pyemu.os_utils.start_workers(t_d, exe_path, "zdt1.pst", 35, worker_root="mou_tests",
                                  master_dir=m2, verbose=True,port=port)
 
-    chance_file = "zdt1.0.obs_pop.chance.csv"
+    chance_file = "zdt1.0.chance.obs_pop.csv"
     d1 = pd.read_csv(os.path.join(m1,chance_file),index_col=0)
     d2 = pd.read_csv(os.path.join(m2, chance_file), index_col=0)
     d = (d1-d2).apply(lambda x: np.abs(x))
@@ -199,7 +199,7 @@ def test_restart_all():
     pyemu.os_utils.start_workers(t_d, exe_path, "zdt1.pst", 35, worker_root="mou_tests",
                                  master_dir=m2, verbose=True,port=port)
 
-    chance_file = "zdt1.0.obs_pop.chance.csv"
+    chance_file = "zdt1.0.chance.obs_pop.csv"
     d1 = pd.read_csv(os.path.join(m1, chance_file), index_col=0)
     d2 = pd.read_csv(os.path.join(m2, chance_file), index_col=0)
     d = (d1 - d2).apply(lambda x: np.abs(x))
@@ -232,7 +232,7 @@ def test_restart_all():
     pyemu.os_utils.start_workers(t_d, exe_path, "zdt1.pst", 35, worker_root="mou_tests",
                                  master_dir=m2, verbose=True,port=port)
 
-    chance_file = "zdt1.0.obs_pop.chance.csv"
+    chance_file = "zdt1.0.chance.obs_pop.csv"
     d1 = pd.read_csv(os.path.join(m1, chance_file), index_col=0)
     d2 = pd.read_csv(os.path.join(m2, chance_file), index_col=0)
     d = (d1 - d2).apply(lambda x: np.abs(x))
@@ -287,7 +287,7 @@ def chance_consistency_test():
         
 
     print(mname,o1,o2)
-    df = pd.read_csv(os.path.join(m1,"constr.0.obs_pop.chance.csv"),index_col=0)
+    df = pd.read_csv(os.path.join(m1,"constr.0.chance.obs_pop.csv"),index_col=0)
     d1 = np.abs(df.loc[mname,:].iloc[0] - o1)
     d2 = np.abs(df.loc[mname,:].iloc[1] - o2)
     print(mname,o1,df.loc[mname,:].iloc[0],d1,o2,df.loc[mname,:].iloc[1],d2)
@@ -1148,8 +1148,8 @@ def risk_obj_test():
     d = (op1 - op2).apply(lambda x: np.abs(x))
     print(d.max())
     assert d.max().max() < 1.0e-10,d.max().max()
-    op1 = pd.read_csv(os.path.join(m1, "constr.0.obs_pop.chance.csv"), index_col=0)
-    op2 = pd.read_csv(os.path.join(m2, "constr.0.obs_pop.chance.csv"), index_col=0)
+    op1 = pd.read_csv(os.path.join(m1, "constr.0.chance.obs_pop.csv"), index_col=0)
+    op2 = pd.read_csv(os.path.join(m2, "constr.0.chance.obs_pop.csv"), index_col=0)
     d = (op1 - op2).apply(lambda x: np.abs(x))
     print(d.max())
     assert d.max().max() < 1.0e-10, d.max().max()
@@ -1177,8 +1177,8 @@ def risk_obj_test():
     d = (op1 - op2).apply(lambda x: np.abs(x))
     print(d.max())
     assert d.max().max() < 1.0e-10, d.max().max()
-    op1 = pd.read_csv(os.path.join(m1, "constr.0.obs_pop.chance.csv"), index_col=0)
-    op2 = pd.read_csv(os.path.join(m2, "constr.0.obs_pop.chance.csv"), index_col=0)
+    op1 = pd.read_csv(os.path.join(m1, "constr.0.chance.obs_pop.csv"), index_col=0)
+    op2 = pd.read_csv(os.path.join(m2, "constr.0.chance.obs_pop.csv"), index_col=0)
     d = (op1 - op2).apply(lambda x: np.abs(x))
     print(d.max())
     assert d.max().max() < 1.0e-10, d.max().max()
@@ -2495,6 +2495,7 @@ def zdt1_chance_schedule_test():
     pst.pestpp_options["opt_risk"] = 0.95
     pst.pestpp_options["opt_chance_points"] = "all"
     pst.pestpp_options["opt_recalc_chance_every"] = 10000
+    
     pst.control_data.noptmax = 11
     pst.write(os.path.join(t_d,"zdt1.pst"))
     pyemu.os_utils.run("{0} {1}".format(exe_path,"zdt1.pst"),cwd=t_d)
@@ -2666,14 +2667,16 @@ def plot_hosaki(m_d):
 
 
 if __name__ == "__main__":
+    test_restart_all()
+    #chance_consistency_test()
     #zdt1_chance_schedule_test()
     #gpr_run_riskobj_baselines()
     #gpr_compare_invest()
     
     #zdt1_fixed_robust_opt_test()
     #multigen_test()
-    basic_empcov_invest()
-    plot_hosaki(m_d=os.path.join("mou_tests","hosaki_empcov_master_risk"))
+    #basic_empcov_invest()
+    #plot_hosaki(m_d=os.path.join("mou_tests","hosaki_empcov_master_risk"))
     #basic_pso_test()
     #zdt1_fixedtied_stack_test()
     #zdt1_fixed_scaleoffset_test()
