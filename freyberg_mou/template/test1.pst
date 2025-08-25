@@ -1,0 +1,30 @@
+pcf version=2
+* control data keyword
+pestmode                                 estimation
+noptmax                                1
+svdmode                                 1
+maxsing                          10000000
+eigthresh                           1e-06
+eigwrite                                1
+overdue_giveup_fac             3
+overdue_giveup_minutes         0.5
+opt_dec_var_groups             decvars
+opt_direction                  max
+opt_objective_function         obj_well
+mou_dv_population_file         pest.0.dv_pop.csv
+mou_obs_population_restart_file        pest.0.obs_pop.csv
+mou_objectives                 oname:cum_otype:lst_usecol:sfr_totim:4383.5,oname:cum_otype:lst_usecol:wel_totim:4383.5
+mou_population_size            5
+mou_save_population_every      1
+* parameter groups external
+pest.pargp_data.csv
+* parameter data external
+pest.par_data.csv
+* observation data external
+pest.obs_data.csv
+* model command line
+python forward_run.py
+* model input external
+pest.tplfile_data.csv
+* model output external
+pest.insfile_data.csv
